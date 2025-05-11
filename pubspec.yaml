@@ -34,6 +34,37 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  web_socket_channel: ^3.0.3
+  share_plus: ^11.0.0
+  screenshot: ^3.0.0
+  qr_flutter: ^4.1.0
+  qr_code_scanner: ^1.0.1
+  network_info_plus: ^6.1.4
+  bonsoir: ^5.1.11
+  shared_preferences: ^2.5.3
+  flutter_colorpicker: ^1.1.0
+  intl: ^0.20.2
+  vibration: ^3.1.3
+  audioplayers: ^6.4.0
+  flame: ^1.28.1
+  lottie: ^3.3.1
+  google_fonts: ^6.2.1
+  glassmorphism: ^3.0.0
+  flutter_animate: ^4.5.2
+  connectivity_plus: ^6.1.4
+  flutter_neumorphic: ^3.2.0
+  permission_handler: ^12.0.0+1
+  flutter_bluetooth_serial: ^0.4.0
+  wifi_iot: ^0.3.19+2
+  firebase_core: ^3.13.0
+  firebase_auth: ^5.5.3
+  cloud_firestore: ^5.6.7
+  hive: ^2.2.3
+  flutter_riverpod: ^2.6.1
+  dio: ^5.8.0+1
+  firebase_messaging: ^15.2.5
+  cloud_functions: ^5.5.0
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
@@ -51,6 +82,10 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  assets:
+    - assets/images/
+    - assets/images/pathogens/
+    - assets/images/antibodies/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
@@ -73,11 +108,11 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
+  fonts:
+    - family: MIXONE
+      fonts:
+        - asset: assets/fonts/MIXONE.ttf
+  #     - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro
   #     fonts:
