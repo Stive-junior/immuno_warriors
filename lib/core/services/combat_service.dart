@@ -1,3 +1,4 @@
+
 import 'dart:math';
 import 'package:immuno_warriors/domain/entities/combat/antibody_entity.dart';
 import 'package:immuno_warriors/domain/entities/combat/pathogen_entity.dart';
@@ -201,3 +202,4 @@ class CombatService {
     }
   }
 }
+

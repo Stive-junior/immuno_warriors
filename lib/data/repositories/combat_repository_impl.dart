@@ -9,6 +9,7 @@ import 'package:immuno_warriors/core/services/combat_service.dart';
 import 'package:immuno_warriors/core/services/mutation_service.dart';
 import 'package:immuno_warriors/core/services/gemini_service.dart';
 import 'package:immuno_warriors/data/models/combat_report_model.dart';
+import 'package:immuno_warriors/core/services/auth_service.dart';
 
 class CombatRepositoryImpl implements CombatRepository {
   final GeminiRemoteDataSource _geminiRemoteDataSource;
@@ -16,13 +17,18 @@ class CombatRepositoryImpl implements CombatRepository {
   final CombatService _combatService = CombatService();
   final MutationService _mutationService = MutationService();
   final GeminiService _geminiService = GeminiService(); // Instance du service Gemini
+  final AuthService _authService; // Instance de AuthService
   final Uuid _uuid = Uuid();
 
   CombatRepositoryImpl({
     required GeminiRemoteDataSource geminiRemoteDataSource,
     required CombatLocalDataSource combatLocalDataSource,
+    required AuthService authService, // Inject AuthService
   })  : _geminiRemoteDataSource = geminiRemoteDataSource,
-        _combatLocalDataSource = combatLocalDataSource;
+        _combatLocalDataSource = combatLocalDataSource,
+        _authService = authService;
+
+  String? get _currentUserId => _authService.currentUser?.uid;
 
   @override
   Future<CombatReportModel> simulateCombat({
@@ -30,6 +36,12 @@ class CombatRepositoryImpl implements CombatRepository {
     required List<PathogenEntity> pathogens,
     required String baseId,
   }) async {
+    final userId = _currentUserId;
+    if (userId == null) {
+      AppLogger.warning('No user ID available to simulate combat.');
+      throw StateError('User not authenticated.');
+    }
+
     final mutatedPathogens = pathogens.map((pathogen) => _mutationService.applyMutation(pathogen)).toList();
 
     final combatResult = _combatService.simulateCombat(
@@ -148,9 +160,9 @@ class CombatRepositoryImpl implements CombatRepository {
   }
 
   @override
-  Future<List<CombatReportModel>> getCombatHistory() async {
+  Future<List<CombatReportModel>?> getCombatHistory() async {
     try {
-      return await _combatLocalDataSource.getCombatHistory();
+      return await _combatLocalDataSource.getCombatHistory() as List<CombatReportModel>;
     } catch (e) {
       AppLogger.error('Error getting combat history: $e');
       rethrow;

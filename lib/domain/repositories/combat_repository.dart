@@ -17,7 +17,7 @@ abstract class CombatRepository {
   Future<void> saveCombatResult(CombatReportModel combatResult);
 
   /// Retrieves combat history.
-  Future<List<CombatReportModel>> getCombatHistory();
+  Future<List<CombatReportModel>?> getCombatHistory();
 
   Future<String?> getCombatTacticalAdvice({String? gameState, String? enemyBaseInfo});
 

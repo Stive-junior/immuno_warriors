@@ -19,26 +19,41 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
     return UserModel(
       id: fields[0] as String,
       email: fields[1] as String,
-      resources: fields[2] as int,
-      researchPoints: fields[3] as int,
-      bioMaterials: fields[4] as int,
+      username: fields[2] as String?,
+      avatarUrl: fields[3] as String?,
+      createdAt: fields[4] as DateTime?,
+      lastLogin: fields[5] as DateTime?,
+      resources: (fields[6] as Map?)?.cast<String, dynamic>(),
+      progression: (fields[7] as Map?)?.cast<String, dynamic>(),
+      achievements: (fields[8] as Map?)?.cast<String, bool>(),
+      inventory: (fields[9] as List?)?.cast<dynamic>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.email)
       ..writeByte(2)
-      ..write(obj.resources)
+      ..write(obj.username)
       ..writeByte(3)
-      ..write(obj.researchPoints)
+      ..write(obj.avatarUrl)
       ..writeByte(4)
-      ..write(obj.bioMaterials);
+      ..write(obj.createdAt)
+      ..writeByte(5)
+      ..write(obj.lastLogin)
+      ..writeByte(6)
+      ..write(obj.resources)
+      ..writeByte(7)
+      ..write(obj.progression)
+      ..writeByte(8)
+      ..write(obj.achievements)
+      ..writeByte(9)
+      ..write(obj.inventory);
   }
 
   @override

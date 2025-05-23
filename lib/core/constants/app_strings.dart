@@ -1,20 +1,90 @@
+import 'package:flutter/src/widgets/framework.dart';
+
 class AppStrings {
-  // Nom de l'application
-  static const String appName = 'ImmunoWarriors';
+  static const String initialization = 'Initialisation...';
+  static const String loadingResources = 'Chargement des ressources...';
+  static const String preparingInterface = 'Préparation de l\'interface...';
+  static const String almostDone = 'Presque terminé...';
+
+  static const String appName = 'Immuno Warriors';
+  static const String appNameShort = 'I-Warriors';
+  static const String accessingProfiles = 'Accès aux Profils';
+  static const String help = 'Aide';
+  static const String theme = 'Thème';
+  static const String gemini = 'Gémeaux';
+  static const String profileDatabase = 'Base de Données des Profils';
+  static const String accessingSecureData = 'Accès aux Données Sécurisées...';
+  static const String noProfilesFound = 'Aucun profil trouvé.';
+  static const String noProfilesFoundFuturistic =
+      'Aucun profil détecté dans le réseau neuronal.';
+  static const String profileLoadError =
+      'Erreur lors du chargement des profils';
+  static const String addNewAccount = 'Ajouter un Nouveau Compte';
+  static const String unknownUser = 'Utilisateur Inconnu';
+  static const String noProfilesAvailable =
+      'Aucun profil utilisateur disponible.';
+  static const String lightTheme = 'Thème Clair';
+  static const String darkTheme = 'Thème Sombre';
+  static const String systemTheme = 'Thème Système';
 
   // Écrans d'authentification
+
+  static const String invalidProfileId = 'ID de profil invalide.';
+  static const String profileNotFound = 'Profil non trouvé.';
+  static const String profileAuthentication = 'Authentification du Profil';
+  static const String enterPassword = 'Entrez le mot de passe';
+  static const String authenticate = 'Authentifier';
+
   static const String loginTitle = 'Connexion';
-  static const String registerTitle = 'Inscription';
+  static const String authentication = 'Authentification';
+  static const String authenticating = 'Authentification...';
   static const String emailLabel = 'Adresse e-mail';
   static const String passwordLabel = 'Mot de passe';
   static const String loginButton = 'Se connecter';
-  static const String registerButton = "S'inscrire";
   static const String forgotPassword = 'Mot de passe oublié ?';
-  static const String registerSuccess = 'Inscription réussie ! Veuillez vous connecter.';
-  static const String loginFailed = 'Échec de la connexion. Veuillez vérifier vos informations.';
-  static const String registerFailed = 'Échec de la registration. Veuillez vérifier vos informations.';
+  static const String registerSuccess =
+      'Inscription réussie ! Veuillez vous connecter.';
+  static const String loginFailed =
+      'Échec de la connexion. Veuillez vérifier vos informations.';
+  static const String registerFailed =
+      'Échec de la registration. Veuillez vérifier vos informations.';
   static const String invalidEmail = 'Adresse e-mail invalide.';
   static const String invalidPassword = 'Mot de passe invalide.';
+  static String emailNotVerified =
+      'Votre e-mail n\'a pas été vérifié. Veuillez vérifier votre boîte de réception.';
+  static String noCurrentUser = 'Aucun utilisateur connecté.';
+
+  static const String enterEmailForPasswordReset =
+      'Veuillez entrer votre email pour réinitialiser le mot de passe.';
+  static const String passwordResetEmailSent =
+      'Un email de réinitialisation de mot de passe a été envoyé à votre adresse.';
+  static const String passwordResetFailed =
+      'Échec de l\'envoi de l\'email de réinitialisation. Veuillez réessayer.';
+  static const String loadingProfile = 'Chargement du profil...';
+
+  static const String registerButton =
+      'S\'inscrire'; // Ajouté pour ProfileAuthOptionsScreen
+  static const String registerTitle =
+      'Créer un Nouveau Cyber-Guerrier'; // Ajouté pour RegisterScreen
+  static const String emailHint = 'Adresse Email'; // Ajouté pour RegisterScreen
+  static const String passwordHint =
+      'Mot de Passe'; // Ajouté pour RegisterScreen
+  static const String confirmPasswordHint =
+      'Confirmer le Mot de Passe'; // Ajouté pour RegisterScreen
+  static const String passwordMismatch =
+      'Les mots de passe ne correspondent pas.'; // Ajouté pour RegisterScreen
+  static const String registerAccount =
+      'Créer le Compte'; // Ajouté pour RegisterScreen
+  static const String orConnectWith =
+      'Ou connectez-vous avec :'; // Ajouté pour RegisterScreen
+  static const String signInWithGoogle =
+      'Connexion avec Google'; // Ajouté pour RegisterScreen
+  static const String signInWithFacebook =
+      'Connexion avec Facebook'; // Ajouté pour RegisterScreen
+  static const String alreadyHaveAccount =
+      'Vous avez déjà un compte ?'; // Ajouté pour RegisterScreen
+  static const String signInHere =
+      'Connectez-vous ici'; // Ajouté pour RegisterScreen
 
   // Écran d'accueil (Dashboard)
   static const String dashboardTitle = 'Tableau de bord';
@@ -67,11 +137,15 @@ class AppStrings {
 
   // Messages d'erreur
   static const String errorTitle = 'Erreur';
-  static const String errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
-  static const String networkError = 'Erreur de réseau. Veuillez vérifier votre connexion.';
+  static const String errorMessage =
+      'Une erreur est survenue. Veuillez réessayer.';
+  static const String networkError =
+      'Erreur de réseau. Veuillez vérifier votre connexion.';
   static const String firebaseError = 'Erreur Firebase : ';
   static const String geminiError = 'Erreur Gemini : ';
   static const String hiveError = 'Erreur Hive : ';
+  static const String signOutFailed =
+      'Échec de la déconnexion. Veuillez réessayer.';
 
   // Messages de succès
   static const String successTitle = 'Succès';
@@ -87,5 +161,26 @@ class AppStrings {
   static const String next = 'Suivant';
   static const String close = 'Fermer';
 
-// Ajoute d'autres chaînes au besoin
+  static const String noUsersFound = " ";
+
+  static String hiveInitializationFailed =
+      'Failed to initialize local storage. The app may not function correctly.';
+
+  static const String weakPassword = "Le mot de passe est trop faible";
+
+
+  static const String chooseYourAvatar = 'Choisissez votre Avatar';
+  static const String enterUsername = 'Nom d\'Utilisateur';
+  static const String profileCreated = 'Profil créé avec succès !';
+  static const String welcomeToImmunoWarriors = 'Bienvenue, Cyber-Guerrier !';
+  static const String noInternetConnection = 'Pas de connexion internet. Veuillez vérifier votre connexion.';
+
+  static String continueButtonText = "GO";
+
+  static const String authWelcomeTitle = "Bienvenue dans votre Système Immunitaire Virtuel";
+  static const String authWelcomeSubtitle = "Sélectionnez votre mode d'accès pour commencer";
+  static const String loginDescription = "Accédez à votre espace sécurisé avec vos identifiants existants";
+  static const String registerDescription = "Rejoignez notre communauté et créez votre profil immunitaire";
+  static const String needHelp = "Besoin d'aide ?";
+  static const String selectTheme = "Sélectionnez un Thème";
 }

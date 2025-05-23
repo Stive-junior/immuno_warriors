@@ -32,8 +32,7 @@ class BioForgeService {
     } catch (e) {
       AppLogger.error('Error adding pathogen to base: $e');
       rethrow;
-    }
-  }
+    }}
 
   /// Removes a pathogen from the BaseVirale.
   Future<BaseViraleEntity> removePathogenFromBase(
@@ -86,6 +85,4 @@ class BioForgeService {
       rethrow;
     }
   }
-
-
 }

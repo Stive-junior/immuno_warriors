@@ -8,11 +8,11 @@ class ShimmerLoader extends StatelessWidget {
   final Color? highlightColor;
 
   const ShimmerLoader({
-    Key? key,
+    super.key,
     required this.child,
     this.baseColor,
     this.highlightColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

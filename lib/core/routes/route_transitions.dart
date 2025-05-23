@@ -25,6 +25,7 @@ class FadeRoute extends PageRouteBuilder {
           opacity: animation,
           child: child,
         ),
+    transitionDuration: const Duration(milliseconds: 300),
   );
 }
 
@@ -79,6 +80,7 @@ class SlideRightRoute extends PageRouteBuilder {
           ).animate(animation),
           child: child,
         ),
+    transitionDuration: const Duration(milliseconds: 300),
   );
 }
 
@@ -106,6 +108,7 @@ class SlideUpRoute extends PageRouteBuilder {
           ).animate(animation),
           child: child,
         ),
+    transitionDuration: const Duration(milliseconds: 300),
   );
 }
 
@@ -133,6 +136,7 @@ class SlideDownRoute extends PageRouteBuilder {
           ).animate(animation),
           child: child,
         ),
+    transitionDuration: const Duration(milliseconds: 300),
   );
 }
 
@@ -160,6 +164,7 @@ class RotationRoute extends PageRouteBuilder {
           ).animate(animation),
           child: child,
         ),
+    transitionDuration: const Duration(milliseconds: 300),
   );
 }
 
@@ -187,5 +192,6 @@ class ScaleRoute extends PageRouteBuilder {
           ).animate(animation),
           child: child,
         ),
+    transitionDuration: const Duration(milliseconds: 300),
   );
 }

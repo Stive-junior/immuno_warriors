@@ -10,8 +10,8 @@ class GetCombatHistoryUseCase {
 
   Future<List<CombatReportEntity>> execute() async {
     try {
-      final List<CombatReportModel> combatHistoryModels = await _combatRepository.getCombatHistory();
-      return combatHistoryModels.map((model) => CombatReportEntity(
+      final List<CombatReportModel>? combatHistoryModels = await _combatRepository.getCombatHistory();
+      return combatHistoryModels?.map((model) => CombatReportEntity(
         combatId: model.combatId,
         date: model.date,
         result: model.result,
@@ -23,7 +23,7 @@ class GetCombatHistoryUseCase {
         baseId: model.baseId,
         antibodiesUsed: model.antibodiesUsed,
         pathogenFought: model.pathogenFought,
-      )).toList();
+      )).toList() ?? [];
     } catch (e) {
       if (kDebugMode) {
         print('Error getting combat history: $e');

@@ -6,7 +6,16 @@ class ScreenUtils {
     return MediaQuery.of(context).size.width;
   }
 
+  static double screenWidth(BuildContext context) {
+    return MediaQuery.of(context).size.width;
+  }
+
+
   static double getScreenHeight(BuildContext context) {
+    return MediaQuery.of(context).size.height;
+  }
+
+  static double screenHeight(BuildContext context) {
     return MediaQuery.of(context).size.height;
   }
 
@@ -31,7 +40,7 @@ class ScreenUtils {
 
   // Vérifier si l'écran est grand (par exemple, une tablette)
   static bool isLargeScreen(BuildContext context) {
-    return getScreenWidth(context) > 900; // Valeur arbitraire, à ajuster selon les besoins
+    return getScreenWidth(context) > 900;
   }
 
 

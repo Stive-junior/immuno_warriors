@@ -1,32 +1,42 @@
-
 class UserEntity {
   final String id;
   final String email;
-  final int resources;
-  final int researchPoints;
-  final int bioMaterials;
+  final String? username;
+  final String? avatarUrl;
+  final DateTime? createdAt;
+  final DateTime? lastLogin;
+  final Map<String, dynamic>? resources;
+  final Map<String, dynamic>? progression;
+  final Map<String, bool>? achievements;
+  final List<dynamic>? inventory;
 
-  UserEntity({
+  const UserEntity({
     required this.id,
     required this.email,
-    required this.resources,
-    required this.researchPoints,
-    required this.bioMaterials,
+    this.username,
+    this.avatarUrl,
+    this.createdAt,
+    this.lastLogin,
+    this.resources,
+    this.progression,
+    this.achievements,
+    this.inventory,
   });
 
-  UserEntity copyWith({
-    String? id,
-    String? email,
-    int? resources,
-    int? researchPoints,
-    int? bioMaterials,
-  }) {
+  factory UserEntity.fromJson(Map<String, dynamic> json) {
     return UserEntity(
-      id: id ?? this.id,
-      email: email ?? this.email,
-      resources: resources ?? this.resources,
-      researchPoints: researchPoints ?? this.researchPoints,
-      bioMaterials: bioMaterials ?? this.bioMaterials,
+      id: json['id'] as String,
+      email: json['email'] as String,
+      username: json['username'] as String?,
+      avatarUrl: json['avatarUrl'] as String?,
+      createdAt: json['createdAt']?.toDate(),
+      lastLogin: json['lastLogin']?.toDate(),
+      resources: json['resources'] as Map<String, dynamic>?,
+      progression: json['progression'] as Map<String, dynamic>?,
+      achievements: (json['achievements'] as Map<String, dynamic>?)?.map(
+            (k, v) => MapEntry(k, v as bool),
+      ),
+      inventory: json['inventory'] as List<dynamic>?,
     );
   }
 
@@ -34,11 +44,42 @@ class UserEntity {
     return {
       'id': id,
       'email': email,
+      'username': username,
+      'avatarUrl': avatarUrl,
+      'createdAt': createdAt?.toIso8601String(),
+      'lastLogin': lastLogin?.toIso8601String(),
       'resources': resources,
-      'researchPoints': researchPoints,
-      'bioMaterials': bioMaterials,
+      'progression': progression,
+      'achievements': achievements,
+      'inventory': inventory,
     };
   }
 
+
+  UserEntity copyWith({
+    String? id,
+    String? email,
+    String? username,
+    String? avatarUrl,
+    DateTime? createdAt,
+    required DateTime lastLogin,
+    Map<String, dynamic>? resources,
+    Map<String, dynamic>? progression,
+    Map<String, bool>? achievements,
+    List<dynamic>? inventory,
+  }) {
+    return UserEntity(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      username: username ?? this.username,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      createdAt: createdAt ?? this.createdAt,
+      lastLogin: lastLogin,
+      resources: resources ?? this.resources,
+      progression: progression ?? this.progression,
+      achievements: achievements ?? this.achievements,
+      inventory: inventory ?? this.inventory,
+    );
+  }
 
 }

@@ -1,4 +1,3 @@
-// data/datasources/remote/combat_report_datasource.dart
 
 import 'package:dio/dio.dart';
 import 'package:immuno_warriors/core/network/dio_client.dart';
@@ -29,23 +28,6 @@ class CombatReportRemoteDataSource {
     }
   }
 
-  /// Retrieves all combat reports from the remote API.
-  Future<List<CombatReportModel>> getAllCombatReports() async {
-    try {
-      final response = await _dioClient.get(
-        ApiEndpoints.combatLog, // Assuming this is the endpoint for all reports
-      );
-      return (response.data as List)
-          .map((json) => CombatReportModel.fromJson(json))
-          .toList();
-    } on DioException catch (e) {
-      _handleDioError(e);
-      rethrow;
-    } catch (e) {
-      _handleGenericError(e);
-      rethrow;
-    }
-  }
 
   /// Creates a new combat report on the remote API.
   Future<CombatReportModel> createCombatReport(CombatReportModel report) async {

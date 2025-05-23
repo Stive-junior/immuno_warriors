@@ -16,7 +16,7 @@ Voici une représentation schématique de l'architecture complète du projet "Im
 │   ├── extensions/            # Extensions Dart/Flutter
 │   │   ├── context_extension.dart # Utilitaires pour BuildContext
 │   │   └── string_extension.dart # Méthodes pour String
-│   ├── network/               # Couche réseau
+│   ├── network/            # Couche réseau
 │   │   ├── api_endpoints.dart # URLs des API
 │   │   ├── dio_client.dart    # Client HTTP
 │   │   └── network_info.dart  # Vérification de la connectivité

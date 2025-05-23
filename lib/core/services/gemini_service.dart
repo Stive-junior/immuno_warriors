@@ -1,65 +1,90 @@
+// Votre fichier : lib/data/services/gemini_service.dart (ou similaire)
+
 import 'package:dio/dio.dart';
 import 'package:immuno_warriors/core/network/dio_client.dart';
 import 'package:immuno_warriors/core/network/api_endpoints.dart';
 import 'package:immuno_warriors/core/utils/app_logger.dart';
 import 'package:immuno_warriors/data/models/api/gemini_response.dart';
-import 'package:immuno_warriors/core/services/local_storage_service.dart'; // Import LocalStorageService
 
-/// Provides services for interacting with the Gemini API.
 class GeminiService {
   final DioClient _dioClient = DioClient();
-  final _localStorageService = LocalStorageService(); // Instance of LocalStorageService
 
-  /// Generates a chronicle of a combat using the Gemini API.
   Future<String> generateCombatChronicle(String combatSummary) async {
     try {
       final response = await _dioClient.post(
-        ApiEndpoints.geminiChat,
-        data: {
-          'prompt':
-          '${combatSummary.trim()} Agis comme un chroniqueur de guerre épique. Rédige un récit détaillé et captivant de la bataille en utilisant un style littéraire et immersif.',
-          'max_tokens': 200,
-        },
+        ApiEndpoints.generateCombatChronicle,
+        data: {'combatSummary': combatSummary},
       );
 
       final geminiResponse = GeminiResponse.fromJson(response.data);
-      await _localStorageService.saveGeminiResponse(geminiResponse); // Save to Hive
       return geminiResponse.text;
     } on DioException catch (e) {
-      AppLogger.log('Gemini API Error: ${e.message}');
-      throw Exception('Failed to generate combat chronicle.');
+      AppLogger.error(
+        'Erreur API (Chroniques de Combat): ${e.message}',
+        error: e,
+      );
+      throw Exception(
+        'Échec de la génération de la chronique de combat via l\'API.',
+      );
     } catch (e) {
-      AppLogger.log('Error generating combat chronicle: $e');
+      AppLogger.error(
+        'Erreur inattendue lors de la génération de la chronique de combat: $e',
+        error: e,
+      );
       rethrow;
     }
   }
 
-  /// Gets tactical advice from the Gemini API.
-  Future<String> getTacticalAdvice(String gameState, String enemyBaseInfo) async {
+  Future<String> getTacticalAdvice(
+    String gameState,
+    String enemyBaseInfo,
+  ) async {
     try {
       final response = await _dioClient.post(
-        ApiEndpoints.geminiChat,
-        data: {
-          'prompt':
-          '${gameState.trim()} ${enemyBaseInfo.trim()} Agis comme un conseiller militaire expérimenté dans un jeu de stratégie de défense immunitaire. Fournis des conseils tactiques détaillés et exploitables.',
-          'max_tokens': 150,
-        },
+        ApiEndpoints.getTacticalAdvice,
+        data: {'gameState': gameState, 'enemyBaseInfo': enemyBaseInfo},
       );
 
       final geminiResponse = GeminiResponse.fromJson(response.data);
-      await _localStorageService.saveGeminiResponse(geminiResponse); // Save to Hive
       return geminiResponse.text;
     } on DioException catch (e) {
-      AppLogger.log('Gemini API Error: ${e.message}');
-      throw Exception('Failed to get tactical advice.');
+      AppLogger.error(
+        'Erreur API (Conseils Tactiques): ${e.message}',
+        error: e,
+      );
+      throw Exception(
+        'Échec de l\'obtention des conseils tactiques via l\'API.',
+      );
     } catch (e) {
-      AppLogger.log('Error getting tactical advice: $e');
+      AppLogger.error(
+        'Erreur inattendue lors de l\'obtention des conseils tactiques: $e',
+        error: e,
+      );
       rethrow;
     }
   }
 
 
-  List<GeminiResponse> getStoredGeminiResponses() {
-    return _localStorageService.getGeminiResponses();
+  Future<List<dynamic>> getStoredGeminiResponses() async {
+    try {
+      final response = await _dioClient.get(
+        ApiEndpoints.getStoredGeminiResponses,
+      );
+      // Le backend renvoie une liste d'objets JSON.
+      // Assurez-vous que le type de retour correspond à ce que vous attendez.
+      return response.data as List<dynamic>; // Cast en List<dynamic>
+    } on DioException catch (e) {
+      AppLogger.error(
+        'Erreur lors de la récupération des réponses Gemini stockées: ${e.message}',
+        error: e,
+      );
+      throw Exception('Échec de la récupération des réponses Gemini stockées.');
+    } catch (e) {
+      AppLogger.error(
+        'Erreur inattendue lors de la récupération des réponses Gemini stockées: $e',
+        error: e,
+      );
+      rethrow;
+    }
   }
 }

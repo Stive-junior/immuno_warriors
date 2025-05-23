@@ -5,14 +5,14 @@ import 'package:lottie/lottie.dart';
 
 class EmptyState extends StatelessWidget {
   final String? message;
-  final String? animationAsset; // Chemin vers l'asset Lottie
-  final double? animationWidth; // Largeur de l'animation
-  final double? animationHeight; // Hauteur de l'animation
+  final String? animationAsset;
+  final double? animationWidth;
+  final double? animationHeight;
 
   const EmptyState({
     super.key,
     this.message,
-    this.animationAsset, // Utilise l'asset Lottie
+    this.animationAsset,
     this.animationWidth,
     this.animationHeight,
   });

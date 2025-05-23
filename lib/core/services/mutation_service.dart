@@ -69,7 +69,6 @@ class MutationService {
     return pathogen.copyWith(health: newHealth);
   }
 
-
   // PathogenEntity _increaseSpeed(PathogenEntity pathogen) {
   //   final newSpeed =
   //       pathogen.attackSpeed * GameConstants.mutationSpeedMultiplier;
@@ -94,6 +93,4 @@ class MutationService {
     return attackDiff > GameConstants.majorMutationThreshold ||
         healthDiff > GameConstants.majorMutationThreshold;
   }
-
-
 }

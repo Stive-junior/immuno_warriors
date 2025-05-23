@@ -1,18 +1,11 @@
-
 class ApiEndpoints {
-  // Base URL de l'API.  Peut être configuré pour différents environnements (dev, prod).
-  static const String baseUrl = 'https://your-api.com/api'; // Remplacez par votre URL
+  static const String baseUrl = 'http://10.0.2.2:3000/api';
 
-  // Points de terminaison pour l'authentification
-  static const String login = '/auth/login';
-  static const String register = '/auth/register';
-  static const String forgotPassword = '/auth/forgot-password';
-  static const String resetPassword = '/auth/reset-password';
   static const String verifyToken = '/auth/verify-token';
 
   // Points de terminaison pour les données utilisateur
+
   static const String userProfile = '/user/profile';
-  static const String userSettings = '/user/settings';
   static const String userResources = '/user/resources';
   static const String userInventory = '/user/inventory';
 
@@ -20,11 +13,11 @@ class ApiEndpoints {
   static const String combatStart = '/combat/start';
   static const String combatEnd = '/combat/end';
   static const String combatReport = '/combat/report';
-  static const String combatLog = '/combat/log';
 
   // Points de terminaison pour la recherche
   static const String researchTree = '/research/tree';
-  static const String researchNode = '/research/node/{nodeId}'; // Exemple avec paramètre
+  static const String researchNode =
+      '/research/node/{nodeId}'; // Exemple avec paramètre
   static const String researchProgress = '/research/progress';
   static const String researchUnlock = '/research/unlock';
 
@@ -44,9 +37,11 @@ class ApiEndpoints {
   static const String threatScannerScan = '/threat-scanner/scan';
   static const String threatScannerNearby = '/threat-scanner/nearby';
 
-  // Points de terminaison pour Gemini (si utilisé directement)
-  static const String geminiChat = '/gemini/chat'; // Exemple
-
+  static const String geminiChat = '/gemini/chat';
+  static const String generateCombatChronicle =
+      '/gemini/generate-combat-chronicle';
+  static const String getTacticalAdvice = '/gemini/get-tactical-advice';
+  static const String getStoredGeminiResponses = '/gemini/stored-responses';
 
   /// Exemple d'utilisation d'un paramètre dans un point de terminaison.
   static String researchNodeUrl(String nodeId) {

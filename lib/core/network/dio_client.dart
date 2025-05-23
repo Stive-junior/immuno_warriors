@@ -1,47 +1,74 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'api_endpoints.dart';
 import '../utils/app_logger.dart';
 
-/// A wrapper around the Dio HTTP client.
-///
-/// Provides methods for making API requests and handling responses.
 class DioClient {
   final Dio _dio;
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
-  /// Creates a DioClient instance.
-  ///
-  /// The [baseUrl] is the base URL for all API requests.
   DioClient({String? baseUrl})
-      : _dio = Dio(
-    BaseOptions(
-      baseUrl: baseUrl ?? ApiEndpoints.baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
-    ),
-  ) {
+    : _dio = Dio(
+        BaseOptions(
+          baseUrl: baseUrl ?? ApiEndpoints.baseUrl,
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
+        ),
+      ) {
     if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(
-        error: true,
-        requestBody: true,
-        responseBody: true,
-        requestHeader: true,
-      ));
+      _dio.interceptors.add(
+        LogInterceptor(
+          error: true,
+          requestBody: true,
+          responseBody: true,
+          requestHeader: true,
+        ),
+      );
     }
+
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final user = _firebaseAuth.currentUser;
+          if (user != null) {
+            // Obtient le token ID Firebase pour l'utilisateur actuellement connecté
+            final idToken = await user.getIdToken();
+            // Ajoute le token dans le header Authorization
+            options.headers['Authorization'] = 'Bearer $idToken';
+            AppLogger.info(
+              'DioClient: Ajout du header Authorization avec token Firebase.',
+            );
+          } else {
+            AppLogger.warning(
+              'DioClient: Aucun utilisateur Firebase authentifié. La requête continuera sans header Authorization.',
+            );
+          }
+          return handler.next(options); // Continue la requête
+        },
+        onError: (DioException e, handler) {
+          // Gérer les erreurs spécifiques, par exemple les erreurs 401 (Non autorisé)
+          if (e.response?.statusCode == 401) {
+            AppLogger.error(
+              'DioClient: Accès non autorisé (401). Le token Firebase est peut-être invalide ou expiré.',
+              error: e,
+            );
+          }
+          return handler.next(e);
+        },
+      ),
+    );
   }
 
-  /// Sends a GET request to the specified [endpoint].
-  ///
-  /// [queryParameters] are added to the URL.
-  /// [options] are additional Dio request options.
-  /// [cancelToken] can be used to cancel the request.
+  // Les méthodes GET, POST, PUT, DELETE restent inchangées,
+  // l'intercepteur s'occupe d'ajouter le token.
   Future<Response> get(
-      String endpoint, {
-        Map<String, dynamic>? queryParameters,
-        Options? options,
-        CancelToken? cancelToken,
-      }) async {
+    String endpoint, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
     try {
       final response = await _dio.get(
         endpoint,
@@ -51,25 +78,20 @@ class DioClient {
       );
       return response;
     } on DioException catch (e) {
-      _handleDioError(e); // Utilisation de la méthode de gestion d'erreur
+      _handleDioError(e);
       rethrow;
     } catch (e) {
-      _handleGenericError(e); // Utilisation de la méthode de gestion d'erreur
+      _handleGenericError(e);
       rethrow;
     }
   }
 
-  /// Sends a POST request to the specified [endpoint].
-  ///
-  /// [data] is the request body.
-  /// [options] are additional Dio request options.
-  /// [cancelToken] can be used to cancel the request.
   Future<Response> post(
-      String endpoint, {
-        dynamic data,
-        Options? options,
-        CancelToken? cancelToken,
-      }) async {
+    String endpoint, {
+    dynamic data,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
     try {
       final response = await _dio.post(
         endpoint,
@@ -79,56 +101,45 @@ class DioClient {
       );
       return response;
     } on DioException catch (e) {
-      _handleDioError(e); // Utilisation de la méthode de gestion d'erreur
+      _handleDioError(e);
       rethrow;
     } catch (e) {
-      _handleGenericError(e); // Utilisation de la méthode de gestion d'erreur
+      _handleGenericError(e);
       rethrow;
     }
   }
 
-  /// Sends a PUT request to the specified [endpoint].
-  ///
-  /// [data] is the request body.
-  /// [queryParameters] are added to the URL.
-  /// [options] are additional Dio request options.
-  /// [cancelToken] can be used to cancel the request.
   Future<Response> put(
-      String endpoint, {
-        dynamic data,
-        Map<String, dynamic>? queryParameters, // Ajout des queryParameters
-        Options? options,
-        CancelToken? cancelToken,
-      }) async {
+    String endpoint, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
     try {
       final response = await _dio.put(
         endpoint,
         data: data,
-        queryParameters: queryParameters, // Utilisation des queryParameters
+        queryParameters: queryParameters,
         options: options,
         cancelToken: cancelToken,
       );
       return response;
     } on DioException catch (e) {
-      _handleDioError(e); // Utilisation de la méthode de gestion d'erreur
+      _handleDioError(e);
       rethrow;
     } catch (e) {
-      _handleGenericError(e); // Utilisation de la méthode de gestion d'erreur
+      _handleGenericError(e);
       rethrow;
     }
   }
 
-  /// Sends a DELETE request to the specified [endpoint].
-  ///
-  /// [data] is the request body.
-  /// [options] are additional Dio request options.
-  /// [cancelToken] can be used to cancel the request.
   Future<Response> delete(
-      String endpoint, {
-        dynamic data,
-        Options? options,
-        CancelToken? cancelToken,
-      }) async {
+    String endpoint, {
+    dynamic data,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
     try {
       final response = await _dio.delete(
         endpoint,
@@ -138,25 +149,27 @@ class DioClient {
       );
       return response;
     } on DioException catch (e) {
-      _handleDioError(e); // Utilisation de la méthode de gestion d'erreur
+      _handleDioError(e);
       rethrow;
     } catch (e) {
-      _handleGenericError(e); // Utilisation de la méthode de gestion d'erreur
+      _handleGenericError(e);
       rethrow;
     }
   }
 
-  // Méthode de gestion des erreurs Dio
   void _handleDioError(DioException e) {
-    String errorMessage = 'Dio Error: ${e.message}';
+    String errorMessage = 'Erreur Dio: ${e.message}';
     if (e.response != null) {
-      errorMessage += ' - Status Code: ${e.response!.statusCode} - Data: ${e.response!.data}';
+      errorMessage +=
+          ' - Code Statut: ${e.response!.statusCode} - Données: ${e.response!.data}';
+      if (e.response!.data is Map && e.response!.data.containsKey('message')) {
+        errorMessage += ' - Détails: ${e.response!.data['message']}';
+      }
     }
-    AppLogger.error('Generic Error: $errorMessage $e');
+    AppLogger.error('Erreur API: $errorMessage', error: e);
   }
 
-  // Méthode de gestion des erreurs génériques
   void _handleGenericError(dynamic e) {
-    AppLogger.error('Generic Error: $e');
+    AppLogger.error('Erreur inattendue: $e', error: e);
   }
 }
