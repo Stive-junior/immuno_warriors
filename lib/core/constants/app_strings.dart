@@ -1,5 +1,6 @@
-import 'package:flutter/src/widgets/framework.dart';
-
+/// UI strings for Immuno Warriors.
+///
+/// This file organizes strings by context for better maintainability.
 class AppStrings {
   static const String initialization = 'Initialisation...';
   static const String loadingResources = 'Chargement des ressources...';
@@ -8,10 +9,15 @@ class AppStrings {
 
   static const String appName = 'Immuno Warriors';
   static const String appNameShort = 'I-Warriors';
-  static const String accessingProfiles = 'Accès aux Profils';
   static const String help = 'Aide';
   static const String theme = 'Thème';
   static const String gemini = 'Gémeaux';
+  static const String continueButtonText = 'GO';
+  static const String noInternetConnection =
+      'Pas de connexion internet. Veuillez vérifier votre connexion.';
+  static const String welcomeToImmunoWarriors = 'Bienvenue, Cyber-Guerrier !';
+
+  static const String accessingProfiles = 'Accès aux Profils';
   static const String profileDatabase = 'Base de Données des Profils';
   static const String accessingSecureData = 'Accès aux Données Sécurisées...';
   static const String noProfilesFound = 'Aucun profil trouvé.';
@@ -23,18 +29,31 @@ class AppStrings {
   static const String unknownUser = 'Utilisateur Inconnu';
   static const String noProfilesAvailable =
       'Aucun profil utilisateur disponible.';
+  static const String noUsersFound = ' ';
+  static const String chooseYourAvatar = 'Choisissez votre Avatar';
+  static const String enterUsername = 'Nom d\'Utilisateur';
+  static const String profileCreated = 'Profil créé avec succès !';
+
+  /// Strings for theme selection.
   static const String lightTheme = 'Thème Clair';
   static const String darkTheme = 'Thème Sombre';
   static const String systemTheme = 'Thème Système';
+  static const String selectTheme = 'Sélectionnez un Thème';
 
-  // Écrans d'authentification
-
+  static const String authWelcomeTitle =
+      'Bienvenue dans votre Système Immunitaire Virtuel';
+  static const String authWelcomeSubtitle =
+      'Sélectionnez votre mode d\'accès pour commencer';
+  static const String loginDescription =
+      'Accédez à votre espace sécurisé avec vos identifiants existants';
+  static const String registerDescription =
+      'Rejoignez notre communauté et créez votre profil immunitaire';
+  static const String needHelp = 'Besoin d\'aide ?';
   static const String invalidProfileId = 'ID de profil invalide.';
   static const String profileNotFound = 'Profil non trouvé.';
   static const String profileAuthentication = 'Authentification du Profil';
   static const String enterPassword = 'Entrez le mot de passe';
   static const String authenticate = 'Authentifier';
-
   static const String loginTitle = 'Connexion';
   static const String authentication = 'Authentification';
   static const String authenticating = 'Authentification...';
@@ -50,10 +69,9 @@ class AppStrings {
       'Échec de la registration. Veuillez vérifier vos informations.';
   static const String invalidEmail = 'Adresse e-mail invalide.';
   static const String invalidPassword = 'Mot de passe invalide.';
-  static String emailNotVerified =
+  static const String emailNotVerified =
       'Votre e-mail n\'a pas été vérifié. Veuillez vérifier votre boîte de réception.';
-  static String noCurrentUser = 'Aucun utilisateur connecté.';
-
+  static const String noCurrentUser = 'Aucun utilisateur connecté.';
   static const String enterEmailForPasswordReset =
       'Veuillez entrer votre email pour réinitialiser le mot de passe.';
   static const String passwordResetEmailSent =
@@ -61,32 +79,22 @@ class AppStrings {
   static const String passwordResetFailed =
       'Échec de l\'envoi de l\'email de réinitialisation. Veuillez réessayer.';
   static const String loadingProfile = 'Chargement du profil...';
-
-  static const String registerButton =
-      'S\'inscrire'; // Ajouté pour ProfileAuthOptionsScreen
-  static const String registerTitle =
-      'Créer un Nouveau Cyber-Guerrier'; // Ajouté pour RegisterScreen
-  static const String emailHint = 'Adresse Email'; // Ajouté pour RegisterScreen
-  static const String passwordHint =
-      'Mot de Passe'; // Ajouté pour RegisterScreen
-  static const String confirmPasswordHint =
-      'Confirmer le Mot de Passe'; // Ajouté pour RegisterScreen
+  static const String registerButton = 'S\'inscrire';
+  static const String registerTitle = 'Créer un Nouveau Cyber-Guerrier';
+  static const String emailHint = 'Adresse Email';
+  static const String passwordHint = 'Mot de Passe';
+  static const String confirmPasswordHint = 'Confirmer le Mot de Passe';
   static const String passwordMismatch =
-      'Les mots de passe ne correspondent pas.'; // Ajouté pour RegisterScreen
-  static const String registerAccount =
-      'Créer le Compte'; // Ajouté pour RegisterScreen
-  static const String orConnectWith =
-      'Ou connectez-vous avec :'; // Ajouté pour RegisterScreen
-  static const String signInWithGoogle =
-      'Connexion avec Google'; // Ajouté pour RegisterScreen
-  static const String signInWithFacebook =
-      'Connexion avec Facebook'; // Ajouté pour RegisterScreen
-  static const String alreadyHaveAccount =
-      'Vous avez déjà un compte ?'; // Ajouté pour RegisterScreen
-  static const String signInHere =
-      'Connectez-vous ici'; // Ajouté pour RegisterScreen
+      'Les mots de passe ne correspondent pas.';
+  static const String registerAccount = 'Créer le Compte';
+  static const String orConnectWith = 'Ou connectez-vous avec :';
+  static const String signInWithGoogle = 'Connexion avec Google';
+  static const String signInWithFacebook = 'Connexion avec Facebook';
+  static const String alreadyHaveAccount = 'Vous avez déjà un compte ?';
+  static const String signInHere = 'Connectez-vous ici';
+  static const String weakPassword = 'Le mot de passe est trop faible';
 
-  // Écran d'accueil (Dashboard)
+  /// Strings for the dashboard screen.
   static const String dashboardTitle = 'Tableau de bord';
   static const String energy = 'Énergie';
   static const String bioMaterials = 'Bio-matériaux';
@@ -94,7 +102,7 @@ class AppStrings {
   static const String geminiAdvice = 'Conseil de l\'analyste IA';
   static const String resources = 'Ressources';
 
-  // Écran de combat
+  /// Strings for the combat screen.
   static const String combatTitle = 'Simulateur de Combat';
   static const String attack = 'Attaquer';
   static const String defend = 'Défendre';
@@ -105,7 +113,7 @@ class AppStrings {
   static const String combatStart = 'Début du combat';
   static const String combatSummary = 'Résumé du combat';
 
-  // Écran de recherche
+  /// Strings for the research screen.
   static const String researchTitle = 'Laboratoire de Recherche';
   static const String researchPoints = 'Points de recherche';
   static const String unlock = 'Débloquer';
@@ -113,7 +121,7 @@ class AppStrings {
   static const String researchProgress = 'Progression de la recherche';
   static const String researchComplete = 'Recherche terminée !';
 
-  // Écran BioForge
+  /// Strings for the BioForge screen.
   static const String bioForgeTitle = 'BioForge';
   static const String deploy = 'Déployer';
   static const String saveConfiguration = 'Enregistrer la configuration';
@@ -121,21 +129,20 @@ class AppStrings {
   static const String pathogenSlots = 'Emplacements de pathogènes';
   static const String defenseGrid = 'Grille de défense';
 
-  // Écran War Archive
   static const String warArchiveTitle = 'Archives de Guerre';
   static const String combatReports = 'Rapports de combat';
   static const String generateChronicle = 'Générer la chronique';
   static const String chronicle = 'Chronique';
   static const String noReports = 'Aucun rapport de combat disponible.';
 
-  // Écran Threat Scanner
+  /// Strings for the threat scanner screen.
   static const String threatScannerTitle = 'Scanner de Menaces';
   static const String scan = 'Scanner';
   static const String nearbyBases = 'Bases ennemies à proximité';
   static const String noBasesFound = 'Aucune base ennemie détectée.';
   static const String scanInProgress = 'Analyse en cours...';
 
-  // Messages d'erreur
+  /// Error messages.
   static const String errorTitle = 'Erreur';
   static const String errorMessage =
       'Une erreur est survenue. Veuillez réessayer.';
@@ -146,12 +153,15 @@ class AppStrings {
   static const String hiveError = 'Erreur Hive : ';
   static const String signOutFailed =
       'Échec de la déconnexion. Veuillez réessayer.';
+  static const String hiveInitializationFailed =
+      'Échec de l\'initialisation du stockage local. L\'application peut ne pas fonctionner correctement.';
+  static const String retry = 'Réessayer';
 
-  // Messages de succès
+  /// Success messages.
   static const String successTitle = 'Succès';
   static const String successMessage = 'Opération réussie !';
 
-  // Textes communs
+  /// Common UI strings.
   static const String ok = 'OK';
   static const String cancel = 'Annuler';
   static const String confirm = 'Confirmer';
@@ -161,26 +171,10 @@ class AppStrings {
   static const String next = 'Suivant';
   static const String close = 'Fermer';
 
-  static const String noUsersFound = " ";
-
-  static String hiveInitializationFailed =
-      'Failed to initialize local storage. The app may not function correctly.';
-
-  static const String weakPassword = "Le mot de passe est trop faible";
-
-
-  static const String chooseYourAvatar = 'Choisissez votre Avatar';
-  static const String enterUsername = 'Nom d\'Utilisateur';
-  static const String profileCreated = 'Profil créé avec succès !';
-  static const String welcomeToImmunoWarriors = 'Bienvenue, Cyber-Guerrier !';
-  static const String noInternetConnection = 'Pas de connexion internet. Veuillez vérifier votre connexion.';
-
-  static String continueButtonText = "GO";
-
-  static const String authWelcomeTitle = "Bienvenue dans votre Système Immunitaire Virtuel";
-  static const String authWelcomeSubtitle = "Sélectionnez votre mode d'accès pour commencer";
-  static const String loginDescription = "Accédez à votre espace sécurisé avec vos identifiants existants";
-  static const String registerDescription = "Rejoignez notre communauté et créez votre profil immunitaire";
-  static const String needHelp = "Besoin d'aide ?";
-  static const String selectTheme = "Sélectionnez un Thème";
+  static const String research = 'Research';
+  static const String settings = 'Settings';
+  static const String achievement = 'Achievement';
+  static const String system = 'System';
+  static const String level = 'Level';
+  static const String geminiTitle = 'Gemini';
 }

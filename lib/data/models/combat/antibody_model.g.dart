@@ -8,7 +8,7 @@ part of 'antibody_model.dart';
 
 class AntibodyModelAdapter extends TypeAdapter<AntibodyModel> {
   @override
-  final int typeId = 1;
+  final int typeId = 14;
 
   @override
   AntibodyModel read(BinaryReader reader) {

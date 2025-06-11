@@ -1,10 +1,13 @@
+/// Styles and theme for Immuno Warriors.
+///
+/// This file defines text styles and the application theme.
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_assets.dart';
 
-
 class AppStyles {
-  // Styles de texte
+  /// --- Text Styles ---
+  /// Large title style (28pt, bold).
   static const TextStyle titleLarge = TextStyle(
     fontSize: 28,
     fontWeight: FontWeight.bold,
@@ -12,6 +15,7 @@ class AppStyles {
     fontFamily: AppAssets.titleFont,
   );
 
+  /// Medium title style (22pt, w600).
   static const TextStyle titleMedium = TextStyle(
     fontSize: 22,
     fontWeight: FontWeight.w600,
@@ -19,6 +23,7 @@ class AppStyles {
     fontFamily: AppAssets.titleFont,
   );
 
+  /// Small title style (18pt, w500).
   static const TextStyle titleSmall = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w500,
@@ -26,24 +31,28 @@ class AppStyles {
     fontFamily: AppAssets.titleFont,
   );
 
+  /// Large body style (16pt).
   static const TextStyle bodyLarge = TextStyle(
     fontSize: 16,
     color: AppColors.text,
     fontFamily: AppAssets.mainFont,
   );
 
+  /// Medium body style (14pt, secondary text).
   static const TextStyle bodyMedium = TextStyle(
     fontSize: 14,
     color: AppColors.textSecondary,
     fontFamily: AppAssets.mainFont,
   );
 
+  /// Small body style (12pt, secondary text).
   static const TextStyle bodySmall = TextStyle(
     fontSize: 12,
     color: AppColors.textSecondary,
     fontFamily: AppAssets.mainFont,
   );
 
+  /// Button text style (16pt, bold).
   static const TextStyle buttonText = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.bold,
@@ -51,10 +60,14 @@ class AppStyles {
     fontFamily: AppAssets.mainFont,
   );
 
-  // Thème de l'application
+  /// --- Theme ---
+  /// Application theme.
   static final ThemeData appTheme = ThemeData(
     primaryColor: AppColors.primary,
-    colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary, brightness: Brightness.dark),
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: AppColors.primary,
+      brightness: Brightness.dark,
+    ),
     scaffoldBackgroundColor: AppColors.background,
     textTheme: TextTheme(
       displayLarge: titleLarge,
@@ -119,5 +132,4 @@ class AppStyles {
       unselectedLabelStyle: bodySmall,
     ),
   );
-
 }

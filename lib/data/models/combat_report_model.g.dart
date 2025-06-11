@@ -8,7 +8,7 @@ part of 'combat_report_model.dart';
 
 class CombatReportModelAdapter extends TypeAdapter<CombatReportModel> {
   @override
-  final int typeId = 5;
+  final int typeId = 11;
 
   @override
   CombatReportModel read(BinaryReader reader) {
@@ -19,7 +19,7 @@ class CombatReportModelAdapter extends TypeAdapter<CombatReportModel> {
     return CombatReportModel(
       combatId: fields[0] as String,
       date: fields[1] as DateTime,
-      result: fields[2] as String,
+      result: fields[2] as CombatResult,
       log: (fields[3] as List).cast<String>(),
       damageDealt: fields[4] as int,
       damageTaken: fields[5] as int,

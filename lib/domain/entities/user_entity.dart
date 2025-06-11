@@ -1,85 +1,50 @@
-class UserEntity {
-  final String id;
-  final String email;
-  final String? username;
-  final String? avatarUrl;
-  final DateTime? createdAt;
-  final DateTime? lastLogin;
-  final Map<String, dynamic>? resources;
-  final Map<String, dynamic>? progression;
-  final Map<String, bool>? achievements;
-  final List<dynamic>? inventory;
+/// Represents a user in Immuno Warriors.
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:equatable/equatable.dart';
 
-  const UserEntity({
-    required this.id,
-    required this.email,
-    this.username,
-    this.avatarUrl,
-    this.createdAt,
-    this.lastLogin,
-    this.resources,
-    this.progression,
-    this.achievements,
-    this.inventory,
-  });
+part 'user_entity.freezed.dart';
+part 'user_entity.g.dart';
 
-  factory UserEntity.fromJson(Map<String, dynamic> json) {
-    return UserEntity(
-      id: json['id'] as String,
-      email: json['email'] as String,
-      username: json['username'] as String?,
-      avatarUrl: json['avatarUrl'] as String?,
-      createdAt: json['createdAt']?.toDate(),
-      lastLogin: json['lastLogin']?.toDate(),
-      resources: json['resources'] as Map<String, dynamic>?,
-      progression: json['progression'] as Map<String, dynamic>?,
-      achievements: (json['achievements'] as Map<String, dynamic>?)?.map(
-            (k, v) => MapEntry(k, v as bool),
-      ),
-      inventory: json['inventory'] as List<dynamic>?,
-    );
-  }
+@freezed
+class UserEntity with _$UserEntity, EquatableMixin {
+  const UserEntity._();
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'email': email,
-      'username': username,
-      'avatarUrl': avatarUrl,
-      'createdAt': createdAt?.toIso8601String(),
-      'lastLogin': lastLogin?.toIso8601String(),
-      'resources': resources,
-      'progression': progression,
-      'achievements': achievements,
-      'inventory': inventory,
-    };
-  }
-
-
-  UserEntity copyWith({
-    String? id,
-    String? email,
+  const factory UserEntity({
+    required String id,
+    required String email,
     String? username,
-    String? avatarUrl,
+    @JsonKey(name: 'avatarUrl') String? avatar,
     DateTime? createdAt,
-    required DateTime lastLogin,
+    DateTime? lastLogin,
     Map<String, dynamic>? resources,
     Map<String, dynamic>? progression,
     Map<String, bool>? achievements,
     List<dynamic>? inventory,
-  }) {
-    return UserEntity(
-      id: id ?? this.id,
-      email: email ?? this.email,
-      username: username ?? this.username,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
-      createdAt: createdAt ?? this.createdAt,
-      lastLogin: lastLogin,
-      resources: resources ?? this.resources,
-      progression: progression ?? this.progression,
-      achievements: achievements ?? this.achievements,
-      inventory: inventory ?? this.inventory,
-    );
+  }) = _UserEntity;
+
+  factory UserEntity.fromJson(Map<String, dynamic> json) =>
+      _$UserEntityFromJson(json);
+
+  /// Checks if the user has enough resources for a cost.
+  bool hasResources(String resourceType, int requiredAmount) {
+    final resourceValue = (resources?[resourceType] as num?)?.toInt() ?? 0;
+    return resourceValue >= requiredAmount;
   }
 
+  /// Display name for UI, using AppStrings.
+  String get displayName => username ?? email.split('@').first;
+
+  @override
+  List<Object?> get props => [
+    id,
+    email,
+    username,
+    avatar,
+    createdAt,
+    lastLogin,
+    resources,
+    progression,
+    achievements,
+    inventory,
+  ];
 }

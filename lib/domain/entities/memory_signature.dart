@@ -1,17 +1,33 @@
-class MemorySignature {
-  final String pathogenType;
-  final double attackBonus;
-  final double defenseBonus;
-  final DateTime expiryDate;
+// Represents a memory signature for pathogen encounters in Immuno Warriors.
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:equatable/equatable.dart';
 
-  MemorySignature({
-    required this.pathogenType,
-    required this.attackBonus,
-    required this.defenseBonus,
-    required this.expiryDate,
-  });
+part 'memory_signature.freezed.dart';
+part 'memory_signature.g.dart';
 
-  bool isValid() {
-    return expiryDate.isAfter(DateTime.now());
-  }
+@freezed
+class MemorySignature with _$MemorySignature, EquatableMixin {
+  const MemorySignature._();
+
+  const factory MemorySignature({
+    required String pathogenType,
+    required double attackBonus,
+    required double defenseBonus,
+    required DateTime expiryDate,
+  }) = _MemorySignature;
+
+  factory MemorySignature.fromJson(Map<String, dynamic> json) =>
+      _$MemorySignatureFromJson(json);
+
+  /// Checks if the signature is valid, including a 1-hour grace period.
+  bool isValid() =>
+      expiryDate.isAfter(DateTime.now().subtract(const Duration(hours: 1)));
+
+  @override
+  List<Object?> get props => [
+    pathogenType,
+    attackBonus,
+    defenseBonus,
+    expiryDate,
+  ];
 }

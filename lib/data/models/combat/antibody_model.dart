@@ -1,10 +1,11 @@
+// Model for storing antibody data locally in Immuno Warriors.
 import 'package:hive/hive.dart';
 import '../../../core/constants/pathogen_types.dart';
 import '../../../domain/entities/combat/antibody_entity.dart';
 
 part 'antibody_model.g.dart';
 
-@HiveType(typeId: 1)
+@HiveType(typeId: 14)
 class AntibodyModel extends HiveObject {
   @HiveField(0)
   final String id;
@@ -43,35 +44,10 @@ class AntibodyModel extends HiveObject {
     this.specialAbility,
   });
 
-  factory AntibodyModel.fromJson(Map<String, dynamic> json) {
-    return AntibodyModel(
-      id: json['id'] as String,
-      type: _decodeAntibodyType(json['type'] as String),
-      attackType: _decodeAttackType(json['attackType'] as String),
-      damage: json['damage'] as int,
-      range: json['range'] as int,
-      cost: json['cost'] as int,
-      efficiency: (json['efficiency'] as num).toDouble(),
-      name: json['name'] as String,
-      health: json['health'] as int,
-      maxHealth: json['maxHealth'] as int,
-      specialAbility: json['specialAbility'] as String?,
-    );
-  }
+  factory AntibodyModel.fromJson(Map<String, dynamic> json) =>
+      AntibodyModel.fromEntity(AntibodyEntity.fromJson(json));
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'type': _encodeAntibodyType(type),
-    'attackType': _encodeAttackType(attackType),
-    'damage': damage,
-    'range': range,
-    'cost': cost,
-    'efficiency': efficiency,
-    'name': name,
-    'health': health,
-    'maxHealth': maxHealth,
-    'specialAbility': specialAbility,
-  };
+  Map<String, dynamic> toJson() => toEntity().toJson();
 
   factory AntibodyModel.fromEntity(AntibodyEntity entity) {
     return AntibodyModel(
@@ -105,41 +81,5 @@ class AntibodyModel extends HiveObject {
     );
   }
 
-  static AntibodyType _decodeAntibodyType(String value) {
-    switch (value) {
-      case 'igG':
-        return AntibodyType.igG;
-      case 'igM':
-        return AntibodyType.igM;
-      case 'igA':
-        return AntibodyType.igA;
-      case 'igD':
-        return AntibodyType.igD;
-      case 'igE':
-        return AntibodyType.igE;
-      default:
-        throw ArgumentError('Unknown AntibodyType: $value');
-    }
-  }
-
-  static String _encodeAntibodyType(AntibodyType type) {
-    return type.toString().split('.').last;
-  }
-
-  static AttackType _decodeAttackType(String value) {
-    switch (value) {
-      case 'physical':
-        return AttackType.physical;
-      case 'chemical':
-        return AttackType.chemical;
-      case 'energy':
-        return AttackType.energy;
-      default:
-        throw ArgumentError('Unknown AttackType: $value');
-    }
-  }
-
-  static String _encodeAttackType(AttackType type) {
-    return type.toString().split('.').last;
-  }
+  bool get isDeployable => health > 0 && cost >= 0;
 }

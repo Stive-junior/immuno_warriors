@@ -15,7 +15,7 @@ class App extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system, // Or ThemeMode.dark for always dark
+      themeMode: ThemeMode.system,
       routerConfig: appRouter,
       builder: (context, child) {
         return GestureDetector(

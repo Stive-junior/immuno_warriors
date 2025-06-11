@@ -6,6 +6,7 @@ import 'package:lottie/lottie.dart';
 import 'package:immuno_warriors/core/constants/app_assets.dart';
 import 'package:immuno_warriors/core/constants/app_strings.dart';
 import 'package:immuno_warriors/core/routes/route_names.dart';
+import '../../core/utils/app_logger.dart';
 import '../../shared/ui/app_colors.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -64,21 +65,21 @@ class _MegaSplashScreenState extends ConsumerState<SplashScreen>
           curve: const Interval(0.0, 1.0, curve: Curves.linear),
         )
     );
-        _pulseAnimation = TweenSequence<double>([
-        TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.2), weight: 50),
-    TweenSequenceItem(tween: Tween(begin: 1.2, end: 1.0), weight: 50),
+    _pulseAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.2), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.2, end: 1.0), weight: 50),
     ]).animate(
-    CurvedAnimation(
-    parent: _controller,
-    curve: const Interval(0.0, 1.0, curve: Curves.easeInOut),
-    ));
+        CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.0, 1.0, curve: Curves.easeInOut),
+        ));
 
     _controller.forward().then((_) {
-    if (mounted) {
-    setState(() {
-    _showContinueButton = true;
-    });
-    }
+      if (mounted) {
+        setState(() {
+          _showContinueButton = true;
+        });
+      }
     });
 
     _initializeApp();
@@ -192,12 +193,12 @@ class _MegaSplashScreenState extends ConsumerState<SplashScreen>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
-            color: AppColors.primaryColor.withOpacity(0.5),
+            color: AppColors.secondaryColor.withOpacity(0.5),
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryColor.withOpacity(0.3),
+              color: AppColors.secondaryAccentColor.withOpacity(0.3),
               blurRadius: 20,
               spreadRadius: 5,
             ),
@@ -315,31 +316,40 @@ class _MegaSplashScreenState extends ConsumerState<SplashScreen>
                         child: _buildBubbleEffect(_progressValue),
                       ),
 
-
                       AnimatedBuilder(
                         animation: _controller,
                         builder: (context, child) {
                           return Positioned(
-                            left: _progressValue * (size.width * 0.7 - 30),
+                            left: _progressValue * (size.width * 0.7 - 40),
+                            top: 0,
+                            right: 0,
+                            bottom: 0,
                             child: Container(
-                              width: 30,
-                              height: 30,
+                              width: 90, // Taille augmentée
+                              height: 90, // Taille augmentée
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.secondaryColor,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.secondaryAccentColor,
-                                    blurRadius: 5,
-                                    spreadRadius: 5,
-                                  ),
-                                ],
+
+
+                              ),
+                              child: ClipOval(
+                                child: Image.asset(
+                                  AppAssets.splashVirus,
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    AppLogger.error('Error loading image', error: error, stackTrace: stackTrace);
+                                    return Container(
+                                      color: AppColors.primaryColor,
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                           );
                         },
                       ),
-
 
                       Center(
                         child: Text(
@@ -400,7 +410,7 @@ class _MegaSplashScreenState extends ConsumerState<SplashScreen>
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 25),
 
 
                 if (_showContinueButton)

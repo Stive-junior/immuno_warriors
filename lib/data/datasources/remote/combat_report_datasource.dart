@@ -15,7 +15,7 @@ class CombatReportRemoteDataSource {
   Future<CombatReportModel> getCombatReport(String reportId) async {
     try {
       final response = await _dioClient.get(
-        ApiEndpoints.combatReport, // Assuming this is the endpoint for a single report
+        ApiEndpoints.combatReport,
         queryParameters: {'reportId': reportId},
       );
       return CombatReportModel.fromJson(response.data);

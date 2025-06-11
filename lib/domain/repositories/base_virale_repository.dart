@@ -1,23 +1,67 @@
-import 'package:immuno_warriors/domain/entities/base_virale_entity.dart';
-
-import '../entities/combat/pathogen_entity.dart'; // Assurez-vous d'avoir cette entité
+// Repository for managing viral base operations in Immuno Warriors.
+import 'package:dartz/dartz.dart';
+import 'package:immuno_warriors/core/constants/pathogen_types.dart';
+import '../entities/base_virale_entity.dart';
+import '../entities/combat/pathogen_entity.dart';
+import '../../data/models/base_viral_model.dart';
+import '../../core/exceptions/app_exception.dart';
 
 abstract class BaseViraleRepository {
-  Future<BaseViraleEntity?> getBaseViraleById(String id);
+  /// Retrieves a viral base by ID.
+  Future<Either<AppException, BaseViraleEntity?>> getBaseViraleById(String id);
 
-  Future<void> createBaseVirale(BaseViraleEntity baseVirale);
+  /// Creates a new viral base.
+  Future<Either<AppException, void>> createBaseVirale(
+    BaseViraleEntity baseVirale,
+  );
 
-  Future<void> updateBaseVirale(BaseViraleEntity baseVirale);
+  /// Updates an existing viral base.
+  Future<Either<AppException, void>> updateBaseVirale(
+    String baseId,
+    BaseViraleEntity baseVirale,
+  );
 
-  Future<List<BaseViraleEntity>> getBaseViralesForPlayer(String playerId);
+  /// Retrieves all viral bases for a player.
+  Future<Either<AppException, List<BaseViraleEntity>>> getBaseViralesForPlayer(
+    String playerId,
+  );
 
-  Future<List<BaseViraleEntity>> getAllBaseVirales(); // Ajouté pour la complétude
+  /// Retrieves all viral bases.
+  Future<Either<AppException, List<BaseViraleEntity>>> getAllBases();
 
-  Future<void> deleteBaseVirale(String id);
+  /// Deletes a viral base by ID.
+  Future<Either<AppException, void>> deleteBaseVirale(String id);
 
-  Future<BaseViraleEntity> addPathogenToBase(String baseId, PathogenEntity pathogen);
+  /// Adds a pathogen to a viral base.
+  Future<Either<AppException, BaseViraleEntity>> addPathogenToBase(
+    String baseId,
+    PathogenEntity pathogen,
+  );
 
-  Future<BaseViraleEntity> removePathogenFromBase(String baseId, PathogenEntity pathogen);
+  /// Removes a pathogen from a viral base.
+  Future<Either<AppException, BaseViraleEntity>> removePathogenFromBase(
+    String baseId,
+    PathogenEntity pathogen,
+  );
 
-  Future<BaseViraleEntity> updateBaseDefenses(String baseId, Map<int, int> newDefenses);
+  /// Updates defenses for a viral base.
+  Future<Either<AppException, BaseViraleEntity>> updateBaseDefenses(
+    String baseId,
+    Map<DefenseType, int> newDefenses,
+  );
+
+  /// Levels up a viral base.
+  Future<Either<AppException, BaseViraleEntity>> levelUpBase(String baseId);
+
+  /// Validates a viral base for combat readiness.
+  Future<Either<AppException, bool>> validateBaseForCombat(String baseId);
+
+  /// Caches a viral base locally.
+  Future<Either<AppException, void>> cacheBaseVirale(BaseViraleModel base);
+
+  /// Retrieves a cached viral base by ID.
+  Future<Either<AppException, BaseViraleModel?>> getCachedBaseVirale(String id);
+
+  /// Clears cached viral bases.
+  Future<Either<AppException, void>> clearCachedBases();
 }

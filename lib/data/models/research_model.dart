@@ -3,7 +3,7 @@ import '../../../domain/entities/research_entity.dart';
 
 part 'research_model.g.dart';
 
-@HiveType(typeId: 3)
+@HiveType(typeId: 10)
 class ResearchModel extends HiveObject {
   @HiveField(0)
   final String id;
@@ -12,7 +12,7 @@ class ResearchModel extends HiveObject {
   @HiveField(2)
   final String description;
   @HiveField(3)
-  final int cost;
+  final int researchCost;
   @HiveField(4)
   final List<String> prerequisites;
   @HiveField(5)
@@ -26,7 +26,7 @@ class ResearchModel extends HiveObject {
     required this.id,
     required this.name,
     required this.description,
-    required this.cost,
+    required this.researchCost,
     required this.prerequisites,
     required this.effects,
     required this.level,
@@ -38,7 +38,7 @@ class ResearchModel extends HiveObject {
       id: json['id'] as String,
       name: json['name'] as String,
       description: json['description'] as String,
-      cost: json['cost'] as int,
+      researchCost: json['cost'] as int,
       prerequisites: (json['prerequisites'] as List<dynamic>).cast<String>(),
       effects: json['effects'] as Map<String, dynamic>,
       level: json['level'] as int,
@@ -50,7 +50,7 @@ class ResearchModel extends HiveObject {
     'id': id,
     'name': name,
     'description': description,
-    'cost': cost,
+    'cost': researchCost,
     'prerequisites': prerequisites,
     'effects': effects,
     'level': level,
@@ -62,7 +62,7 @@ class ResearchModel extends HiveObject {
       id: entity.id,
       name: entity.name,
       description: entity.description,
-      cost: entity.cost,
+      researchCost: entity.researchCost,
       prerequisites: entity.prerequisites,
       effects: entity.effects,
       level: entity.level,
@@ -75,54 +75,14 @@ class ResearchModel extends HiveObject {
       id: id,
       name: name,
       description: description,
-      cost: cost,
+      researchCost: researchCost,
       prerequisites: prerequisites,
       effects: effects,
       level: level,
       isUnlocked: isUnlocked,
     );
   }
+
+  /// Validates research cost for UI display.
+  bool get isValid => researchCost >= 0 && id.isNotEmpty;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

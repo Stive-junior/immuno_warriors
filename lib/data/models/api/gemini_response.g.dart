@@ -8,7 +8,7 @@ part of 'gemini_response.dart';
 
 class GeminiResponseAdapter extends TypeAdapter<GeminiResponse> {
   @override
-  final int typeId = 1;
+  final int typeId = 15;
 
   @override
   GeminiResponse read(BinaryReader reader) {

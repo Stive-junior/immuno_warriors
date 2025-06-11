@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "/home/stive-junior/immuno_warriors/linux"
+    "cmake.sourceDirectory": "/home/stive-junior/immuno_warriors/linux",
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

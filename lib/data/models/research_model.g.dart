@@ -8,7 +8,7 @@ part of 'research_model.dart';
 
 class ResearchModelAdapter extends TypeAdapter<ResearchModel> {
   @override
-  final int typeId = 3;
+  final int typeId = 10;
 
   @override
   ResearchModel read(BinaryReader reader) {
@@ -20,7 +20,7 @@ class ResearchModelAdapter extends TypeAdapter<ResearchModel> {
       id: fields[0] as String,
       name: fields[1] as String,
       description: fields[2] as String,
-      cost: fields[3] as int,
+      researchCost: fields[3] as int,
       prerequisites: (fields[4] as List).cast<String>(),
       effects: (fields[5] as Map).cast<String, dynamic>(),
       level: fields[6] as int,
@@ -39,7 +39,7 @@ class ResearchModelAdapter extends TypeAdapter<ResearchModel> {
       ..writeByte(2)
       ..write(obj.description)
       ..writeByte(3)
-      ..write(obj.cost)
+      ..write(obj.researchCost)
       ..writeByte(4)
       ..write(obj.prerequisites)
       ..writeByte(5)

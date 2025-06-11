@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { auth } = require('../services/firebaseService');
+const  auth  = require('../services/firebaseService');
 
 // POST /api/auth/verify-token
 // Permet à l'application Flutter de vérifier si un token est toujours valide

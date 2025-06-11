@@ -5,14 +5,14 @@ import '../../domain/entities/combat/pathogen_entity.dart';
 
 part 'combat_report_model.g.dart';
 
-@HiveType(typeId: 5)
+@HiveType(typeId: 11)
 class CombatReportModel extends HiveObject {
   @HiveField(0)
   final String combatId;
   @HiveField(1)
   final DateTime date;
   @HiveField(2)
-  final String result;
+  final CombatResult result;
   @HiveField(3)
   final List<String> log;
   @HiveField(4)
@@ -48,22 +48,34 @@ class CombatReportModel extends HiveObject {
     return CombatReportModel(
       combatId: json['combatId'] as String,
       date: DateTime.parse(json['date'] as String),
-      result: json['result'] as String,
+      result: CombatResult.values.firstWhere(
+        (e) => e.toString().split('.').last == json['result'],
+      ),
       log: (json['log'] as List<dynamic>).cast<String>(),
       damageDealt: json['damageDealt'] as int,
       damageTaken: json['damageTaken'] as int,
       unitsDeployed: (json['unitsDeployed'] as List<dynamic>).cast<String>(),
       unitsLost: (json['unitsLost'] as List<dynamic>).cast<String>(),
       baseId: json['baseId'] as String,
-      antibodiesUsed: (json['antibodiesUsed'] as List<dynamic>?)?.map((item) => AntibodyEntity.fromJson(item as Map<String, dynamic>)).toList(),
-      pathogenFought: json['pathogenFought'] == null ? null : PathogenEntity.fromJson(json['pathogenFought'] as Map<String, dynamic>),
+      antibodiesUsed:
+          (json['antibodiesUsed'] as List<dynamic>?)
+              ?.map(
+                (item) => AntibodyEntity.fromJson(item as Map<String, dynamic>),
+              )
+              .toList(),
+      pathogenFought:
+          json['pathogenFought'] == null
+              ? null
+              : PathogenEntity.fromJson(
+                json['pathogenFought'] as Map<String, dynamic>,
+              ),
     );
   }
 
   Map<String, dynamic> toJson() => {
     'combatId': combatId,
     'date': date.toIso8601String(),
-    'result': result,
+    'result': result.toString().split('.').last,
     'log': log,
     'damageDealt': damageDealt,
     'damageTaken': damageTaken,
@@ -105,4 +117,8 @@ class CombatReportModel extends HiveObject {
       pathogenFought: pathogenFought,
     );
   }
+
+  /// Validates combat data for consistency.
+  bool get isValid =>
+      combatId.isNotEmpty && damageDealt >= 0 && damageTaken >= 0;
 }

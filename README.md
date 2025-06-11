@@ -1,5 +1,14 @@
 # Welcome to immuno_warriors
 
+// flutter pub run build_runner build --delete-conflicting-outputs
+
+
+Controllers : Les fichiers de controllers/ gèrent les requêtes HTTP et appellent les fonctions des services/ pour exécuter la logique métier. Ils dépendent donc fortement des services/. Ils utilisent également les utilitaires de utils/ (ex. errorUtils.js, logger.js) et les schémas de models/ pour valider les données.
+Repositories : Les fichiers de repositories/ interagissent directement avec Firestore pour les opérations CRUD. Ils n'ont pas de dépendances sur controllers/, services/, ou routes/, mais utilisent les schémas de models/ pour valider les données Firestore et les utilitaires de utils/ (ex. logger.js, errorUtils.js). Ils nécessitent firebase-admin pour l'accès à Firestore.
+Services : Les fichiers de services/ contiennent la logique métier et appellent les méthodes des repositories/ pour accéder aux données. Ils dépendent donc des repositories/ et utilisent les schémas de models/ et les utilitaires de utils/.
+Routes : Les fichiers de routes/ définissent les endpoints API et mappent les requêtes aux fonctions des controllers/. Ils dépendent donc des controllers/ et utilisent les middlewares de middleware/ (ex. authMiddleware.js) et les utilitaires de utils/ (ex. validationUtils.js).
+
+
 
 Voici une représentation schématique de l'architecture complète du projet "ImmunoWarriors", intégrant les nouvelles fonctionnalités et les modifications discutées :immuno_warriors/
 ├── main.dart                      # Initialisation Firebase/Hive + runApp
@@ -229,10 +238,4 @@ Analyse par rapport au Cahier des Charges :
         generate\_combat\_chronicle\_usecase.dart, get\_combat\_tactical\_advice\_usecase.dart: Cela couvre l'intégration avec Gemini.
     3.3. Systèmes de Survie Numériques :
         sign\_in\_usecase.dart, sign\_up\_usecase.dart, sign\_out\_usecase.dart: Cela couvre l'authentification.
-        get\_user\_progression\_usecase.dart, update\_user\_progression\_usecase.dart, get\_user\_achievements\_usecase.dart, update\_user\_achievements\_usecase.dart, get\_user\_settings\_usecase.dart, update\_user\_settings\_usecase.dart, save\_research\_progress\_usecase.dart, get\_research\_progress\_usecase.dart: Cela pourrait couvrir la gestion des profils utilisateur, de la progression, des succès, des paramètres et de l'état de la R&D.
-    3.8. Système de Combat Amélioré :
-        simulate\_combat\_usecase.dart: Cela devrait couvrir le déroulement du combat.
-    R&D :
-        unlock\_research\_usecase.dart, unlock\_research\_node\_usecase.dart, get\_research\_tree\_usecase.dart: Cela semble couvrir la recherche et développement.
-    Inventaire:
-        add_to_inventory_usecase.dart, remove_from_inventory_usecase.dart: Cela semble couvrir la gestion d'inventaire.
+        get\_user\_progression\_usecase.dart, update\_user\_progression\_usecase.dart, get\_user\_achievements\_usecase.dart, update\_user\_achievements\_usecase.dart, get\_user\_settings\_usecase.dart, update\_user\_settings\_usecase.

@@ -12,7 +12,8 @@ import 'package:immuno_warriors/domain/entities/user_entity.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static const String _usersCollection = 'users'; // Nom de la collection Firestore pour les utilisateurs
+  static const String _usersCollection =
+      'users'; // Nom de la collection Firestore pour les utilisateurs
 
   /// Retourne l'utilisateur Firebase actuellement connecté.
   User? get currentUser => _auth.currentUser;
@@ -49,10 +50,17 @@ class AuthService {
       // Utilise directement user.toJson() car UserEntity devrait avoir cette méthode
       // ou UserModel.fromEntity(user).toJson() si la conversion est nécessaire ici.
       // En supposant que UserEntity.toJson() existe et est suffisant pour Firestore.
-      await _firestore.collection(_usersCollection).doc(user.id).set(user.toJson());
+      await _firestore
+          .collection(_usersCollection)
+          .doc(user.id)
+          .set(user.toJson());
       AppLogger.info('User profile created in Firestore for ID: ${user.id}');
     } catch (e, stackTrace) {
-      AppLogger.error('Error creating user profile in Firestore for ID: ${user.id}', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error creating user profile in Firestore for ID: ${user.id}',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -62,10 +70,17 @@ class AuthService {
     AppLogger.info('Updating user profile in Firestore for ID: ${user.id}');
     try {
       // Utilise directement user.toJson() pour la mise à jour.
-      await _firestore.collection(_usersCollection).doc(user.id).update(user.toJson());
+      await _firestore
+          .collection(_usersCollection)
+          .doc(user.id)
+          .update(user.toJson());
       AppLogger.info('User profile updated in Firestore for ID: ${user.id}');
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating user profile in Firestore for ID: ${user.id}', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error updating user profile in Firestore for ID: ${user.id}',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -75,7 +90,7 @@ class AuthService {
     AppLogger.info('Fetching user profile from Firestore for ID: $uid');
     try {
       final DocumentSnapshot<Map<String, dynamic>> doc =
-      await _firestore.collection(_usersCollection).doc(uid).get();
+          await _firestore.collection(_usersCollection).doc(uid).get();
 
       if (doc.exists && doc.data() != null) {
         AppLogger.info('User profile found in Firestore for ID: $uid');
@@ -85,7 +100,11 @@ class AuthService {
       AppLogger.warning('User profile not found in Firestore for ID: $uid');
       return null;
     } catch (e, stackTrace) {
-      AppLogger.error('Error fetching user profile from Firestore for ID: $uid', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error fetching user profile from Firestore for ID: $uid',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -103,22 +122,21 @@ class AuthService {
     AppLogger.info('Attempting Firebase signUp for email: $email');
     try {
       // Étape 1: Création du compte d'authentification Firebase (email/password seulement)
-      final UserCredential userCredential =
-      await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
-        password: password.trim(),
-      );
+      final UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: email.trim(),
+            password: password.trim(),
+          );
 
       if (userCredential.user != null) {
         final String uid = userCredential.user!.uid;
         AppLogger.info('Firebase user created with UID: $uid');
 
-
         final UserEntity user = UserEntity(
           id: uid,
           email: userCredential.user!.email ?? email,
           username: username,
-          avatarUrl: avatarUrl,
+          avatar: avatarUrl,
           createdAt: DateTime.now(),
           lastLogin: DateTime.now(),
           resources: {
@@ -126,15 +144,10 @@ class AuthService {
             'researchPoints': GameConstants.initialBaseSlots,
             'bioMaterials': GameConstants.initialBioMaterials,
           },
-          progression: {
-            'level': 1,
-            'xp': 0,
-            'lastCombatDate': null,
-          },
+          progression: {'level': 1, 'xp': 0, 'lastCombatDate': null},
           achievements: {},
           inventory: [],
         );
-
 
         await _createUserInFirestore(user);
         AppLogger.info('User data saved to Firestore for new user: $email');
@@ -142,10 +155,18 @@ class AuthService {
       }
       return null;
     } on FirebaseAuthException catch (e) {
-      AppLogger.error('Firebase Auth Error during signUp: ${e.code} - ${e.message}');
-      throw Exception(_handleFirebaseAuthError(e.code)); // Lance l'exception avec le message formaté
+      AppLogger.error(
+        'Firebase Auth Error during signUp: ${e.code} - ${e.message}',
+      );
+      throw Exception(
+        _handleFirebaseAuthError(e.code),
+      ); // Lance l'exception avec le message formaté
     } catch (e, stackTrace) {
-      AppLogger.error('Generic Auth Error during signUp: $e', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Generic Auth Error during signUp: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw Exception(AppStrings.registerFailed);
     }
   }
@@ -157,11 +178,11 @@ class AuthService {
   }) async {
     AppLogger.info('Attempting Firebase signIn for email: $email');
     try {
-      final UserCredential userCredential =
-      await _auth.signInWithEmailAndPassword(
-        email: email.trim(),
-        password: password.trim(),
-      );
+      final UserCredential userCredential = await _auth
+          .signInWithEmailAndPassword(
+            email: email.trim(),
+            password: password.trim(),
+          );
 
       if (userCredential.user != null) {
         final String uid = userCredential.user!.uid;
@@ -173,19 +194,29 @@ class AuthService {
           // Met à jour la date de dernière connexion
           final updatedUser = user.copyWith(lastLogin: DateTime.now());
           await _updateUserInFirestore(updatedUser);
-          AppLogger.info('User profile updated in Firestore after sign in: ${user.email}');
+          AppLogger.info(
+            'User profile updated in Firestore after sign in: ${user.email}',
+          );
           return updatedUser;
         } else {
-          AppLogger.warning('User profile not found in Firestore after successful Firebase sign in for UID: $uid');
+          AppLogger.warning(
+            'User profile not found in Firestore after successful Firebase sign in for UID: $uid',
+          );
           throw Exception(AppStrings.profileNotFound);
         }
       }
       return null;
     } on FirebaseAuthException catch (e) {
-      AppLogger.error('Firebase Auth Error during signIn: ${e.code} - ${e.message}');
+      AppLogger.error(
+        'Firebase Auth Error during signIn: ${e.code} - ${e.message}',
+      );
       throw Exception(_handleFirebaseAuthError(e.code));
     } catch (e, stackTrace) {
-      AppLogger.error('Generic Auth Error during signIn: $e', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Generic Auth Error during signIn: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw Exception(AppStrings.loginFailed);
     }
   }
@@ -197,7 +228,11 @@ class AuthService {
       await _auth.signOut();
       AppLogger.info('Firebase signOut successful.');
     } catch (e, stackTrace) {
-      AppLogger.error('Error during Firebase signOut: $e', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error during Firebase signOut: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -209,10 +244,16 @@ class AuthService {
       await _auth.sendPasswordResetEmail(email: email.trim());
       AppLogger.info('Password reset email sent to: $email');
     } on FirebaseAuthException catch (e) {
-      AppLogger.error('Firebase Auth Error sending password reset email: ${e.code} - ${e.message}');
+      AppLogger.error(
+        'Firebase Auth Error sending password reset email: ${e.code} - ${e.message}',
+      );
       throw Exception(_handleFirebaseAuthError(e.code));
     } catch (e, stackTrace) {
-      AppLogger.error('Generic Error sending password reset email: $e', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Generic Error sending password reset email: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -221,20 +262,34 @@ class AuthService {
   Future<void> sendEmailVerification() async {
     final user = _auth.currentUser;
     if (user != null && !user.emailVerified) {
-      AppLogger.info('Attempting to send email verification for user: ${user.email}');
+      AppLogger.info(
+        'Attempting to send email verification for user: ${user.email}',
+      );
       try {
         await user.sendEmailVerification();
-        AppLogger.info('Email verification sent successfully for user: ${user.email}');
+        AppLogger.info(
+          'Email verification sent successfully for user: ${user.email}',
+        );
       } on FirebaseAuthException catch (e) {
-        AppLogger.error('Firebase Auth Error (Verification): ${e.code} - ${e.message}');
+        AppLogger.error(
+          'Firebase Auth Error (Verification): ${e.code} - ${e.message}',
+        );
         throw Exception(_handleFirebaseAuthError(e.code));
       } catch (e, stackTrace) {
-        AppLogger.error('Generic Error (Verification): $e', error: e, stackTrace: stackTrace);
+        AppLogger.error(
+          'Generic Error (Verification): $e',
+          error: e,
+          stackTrace: stackTrace,
+        );
         throw Exception(AppStrings.emailNotVerified);
       }
     } else if (user == null) {
-      AppLogger.warning('Cannot send email verification: No current user logged in.');
-      throw Exception('Aucun utilisateur connecté pour la vérification de l\'email.');
+      AppLogger.warning(
+        'Cannot send email verification: No current user logged in.',
+      );
+      throw Exception(
+        'Aucun utilisateur connecté pour la vérification de l\'email.',
+      );
     } else if (user.emailVerified) {
       AppLogger.info('Email for user ${user.email} is already verified.');
     }

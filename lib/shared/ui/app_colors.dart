@@ -74,4 +74,6 @@ class AppColors {
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
   );
+
+  static const Color virusGreen = Color(0xFF00FFC6);
 }

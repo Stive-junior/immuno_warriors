@@ -1,26 +1,55 @@
-class ResearchEntity {
-  final String id;
-  final String name;
-  final String description;
-  final int cost;
-  final List<String> prerequisites;
-  final Map<String, dynamic> effects;
-  final int level;
-   bool isUnlocked;
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:equatable/equatable.dart';
+import '../../core/constants/app_strings.dart';
 
-  ResearchEntity({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.cost,
-    required this.prerequisites,
-    required this.effects,
-    required this.level,
-    required this.isUnlocked,
-  });
+part 'research_entity.freezed.dart';
+part 'research_entity.g.dart';
 
-  copyWith({required bool isUnlocked}) {
-    this.isUnlocked = isUnlocked;
+@freezed
+class ResearchEntity with _$ResearchEntity, EquatableMixin {
+  const ResearchEntity._();
+
+  const factory ResearchEntity({
+    required String id,
+    required String name,
+    required String description,
+    @JsonKey(name: 'cost') required int researchCost,
+    required List<String> prerequisites,
+    required Map<String, dynamic> effects,
+    required int level,
+    @Default(false) bool isUnlocked,
+  }) = _ResearchEntity;
+
+  factory ResearchEntity.fromJson(Map<String, dynamic> json) =>
+      _$ResearchEntityFromJson(json);
+
+  /// Validates if the research can be unlocked based on prerequisites and cost.
+  bool canUnlock(List<ResearchEntity> allResearches, int availableResources) {
+    if (researchCost > availableResources) {
+      return false;
+    }
+    if (prerequisites.isEmpty) {
+      return true;
+    }
+    final prereqIds = prerequisites.toSet();
+    return allResearches.every(
+      (research) =>
+          prereqIds.contains(research.id) ? research.isUnlocked : true,
+    );
   }
 
+  /// Display name for UI, using AppStrings.
+  String get displayName => '$name ${AppStrings.level} $level';
+
+  @override
+  List<Object?> get props => [
+    id,
+    name,
+    description,
+    researchCost,
+    prerequisites,
+    effects,
+    level,
+    isUnlocked,
+  ];
 }

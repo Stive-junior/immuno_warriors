@@ -19,7 +19,10 @@ class CombatLocalDataSource {
       AppLogger.warning('No user ID available to save combat report.');
       throw Exception('User not authenticated.');
     }
-    await _localStorageService.saveCombatReport(userId, combatReport); // Save with userId
+    await _localStorageService.saveCombatReport(
+      userId,
+      combatReport,
+    ); // Save with userId
   }
 
   /// Retrieves all combat reports from local storage for the current user.
@@ -29,7 +32,9 @@ class CombatLocalDataSource {
       AppLogger.warning('No user ID available to retrieve combat history.');
       return [];
     }
-    return _localStorageService.getAllCombatReportsLocal(userId) ?? []; // Retrieve with userId
+    return _localStorageService.getAllCombatReportsLocal(
+      userId,
+    ); // Retrieve with userId
   }
 
   /// Retrieves a specific combat report by its ID for the current user.
@@ -39,7 +44,10 @@ class CombatLocalDataSource {
       AppLogger.warning('No user ID available to retrieve combat report.');
       return null;
     }
-    return _localStorageService.getCombatReport(userId, combatId); // Retrieve with userId and combatId
+    return _localStorageService.getCombatReport(
+      userId,
+      combatId,
+    ); // Retrieve with userId and combatId
   }
 
   /// Clears all combat reports from local storage for the current user.

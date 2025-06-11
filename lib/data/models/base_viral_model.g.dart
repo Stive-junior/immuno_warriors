@@ -8,7 +8,7 @@ part of 'base_viral_model.dart';
 
 class BaseViraleModelAdapter extends TypeAdapter<BaseViraleModel> {
   @override
-  final int typeId = 1;
+  final int typeId = 13;
 
   @override
   BaseViraleModel read(BinaryReader reader) {
@@ -22,7 +22,7 @@ class BaseViraleModelAdapter extends TypeAdapter<BaseViraleModel> {
       name: fields[2] as String,
       level: fields[3] as int,
       pathogens: (fields[4] as List).cast<PathogenModel>(),
-      defenses: (fields[5] as Map).cast<DefenseType, int>(),
+      defenses: (fields[5] as Map).cast<String, int>(),
     );
   }
 
