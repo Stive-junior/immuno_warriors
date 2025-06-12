@@ -14,9 +14,9 @@ router.use(authenticate);
 
 router.post('/', startCombat);
 router.post('/:combatId/end', endCombat);
-router.get('/:combatId/report', getCombatReport);
+router.get('/:combatId', getCombatReport);
 router.get('/history', getCombatHistory);
 router.get('/:combatId/chronicle', generateChronicle);
-router.get('/:combatId/tactical-advice', getTacticalAdvice);
+router.get('/:combatId/advice', getTacticalAdvice);
 
 module.exports = router;

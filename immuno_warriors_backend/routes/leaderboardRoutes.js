@@ -14,3 +14,4 @@ router.get('/:category', getLeaderboard);
 router.get('/:category/rank', getUserRank);
 
 module.exports = router;
+

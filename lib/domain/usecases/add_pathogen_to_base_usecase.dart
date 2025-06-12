@@ -1,5 +1,5 @@
 import 'package:immuno_warriors/domain/entities/base_virale_entity.dart';
-import 'package:immuno_warriors/domain/entities/combat/pathogen_entity.dart';
+import 'package:immuno_warriors/domain/entities/pathogen_entity.dart';
 import 'package:immuno_warriors/domain/repositories/base_virale_repository.dart';
 import 'package:immuno_warriors/core/utils/app_logger.dart';
 
@@ -9,7 +9,9 @@ class AddPathogenToBaseUseCase {
   AddPathogenToBaseUseCase(this._baseViraleRepository);
 
   Future<BaseViraleEntity> execute(
-      BaseViraleEntity baseVirale, PathogenEntity pathogen) async {
+    BaseViraleEntity baseVirale,
+    PathogenEntity pathogen,
+  ) async {
     try {
       final updatedPathogens = List<PathogenEntity>.from(baseVirale.pathogens)
         ..add(pathogen);

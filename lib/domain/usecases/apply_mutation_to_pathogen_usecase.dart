@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:immuno_warriors/domain/entities/combat/pathogen_entity.dart';
+import 'package:immuno_warriors/domain/entities/pathogen_entity.dart';
 import 'package:immuno_warriors/core/services/mutation_service.dart';
 
 class ApplyMutationToPathogenUseCase {

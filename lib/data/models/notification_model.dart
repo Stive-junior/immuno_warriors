@@ -55,6 +55,28 @@ class NotificationModel extends HiveObject {
     );
   }
 
+  // Inside NotificationModel class
+  NotificationModel copyWith({
+    String? id,
+    String? userId,
+    String? message,
+    DateTime? timestamp,
+    bool? isRead,
+    NotificationType? type,
+  }) {
+    return NotificationModel(
+      id: id ?? this.id,
+      message: message ?? this.message,
+      type: type ?? this.type,
+      isRead: isRead ?? this.isRead,
+      userId: userId ?? this.userId,
+      timestamp: timestamp ?? this.timestamp,
+    );
+  }
+
   /// Validates if the notification is displayable.
   bool get isValid => message.trim().isNotEmpty && id.isNotEmpty;
+  set isRead(bool value) {
+    isRead = value;
+  }
 }

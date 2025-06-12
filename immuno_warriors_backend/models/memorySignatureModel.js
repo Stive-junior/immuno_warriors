@@ -3,15 +3,15 @@ const Joi = require('joi');
 /**
  * Schéma pour une signature mémoire dans Firestore et les réponses API.
  * @typedef {Object} MemorySignature
- * @property {string} pathogenType - Type de pathogène.
- * @property {number} attackBonus - Bonus d'attaque.
- * @property {number} defenseBonus - Bonus de défense.
+ * @property {string} pathogenType - Type de pathogène (virus, bacteria, fungus).
+ * @property {number} attackBonus - Bonus d'attaque (entier ≥ 0).
+ * @property {number} defenseBonus - Bonus de défense (entier ≥ 0).
  * @property {string} expiryDate - Date d'expiration (ISO 8601).
  */
 const memorySignatureSchema = Joi.object({
-  pathogenType: Joi.string().required(),
-  attackBonus: Joi.number().min(0).required(),
-  defenseBonus: Joi.number().min(0).required(),
+  pathogenType: Joi.string().valid('virus', 'bacteria', 'fungus').required(),
+  attackBonus: Joi.number().integer().min(0).required(),
+  defenseBonus: Joi.number().integer().min(0).required(),
   expiryDate: Joi.string().isoDate().required()
 });
 

@@ -1,48 +1,58 @@
-const admin = require('firebase-admin');
+const { db } = require('../services/firebaseService');
 const { v4: uuidv4 } = require('uuid');
-const { combatReportSchema, validateCombatReport, fromFirestore, toFirestore } = require('../models/combatReportModel');
+const { validateCombatReport, fromFirestore, toFirestore } = require('../models/combatReportModel');
 const { AppError, NotFoundError } = require('../utils/errorUtils');
 const { logger } = require('../utils/logger');
 const { formatTimestamp } = require('../utils/dateUtils');
 
-/**
- * Repository pour gérer les opérations CRUD des combats dans Firestore.
- */
 class CombatRepository {
   constructor() {
-    this.collection = admin.firestore().collection('combatReports');
-    this.cacheCollection = admin.firestore().collection('combatCache');
+    this.collection = db.collection('combatReports');
+    this.cacheCollection = db.collection('combatCache');
   }
 
-  /**
-   * Sauvegarde un résultat de combat.
-   * @param {Object} combatResult - Résultat du combat.
-   * @returns {Promise<void>}
-   */
-  async saveCombatResult(combatResult) {
+  async saveCombatReport(combatResult) {
     const validation = validateCombatReport(combatResult);
     if (validation.error) {
       throw new AppError(400, 'Données de combat invalides', validation.error.details);
     }
-
+    const combatId = combatResult.combatId || uuidv4();
     try {
-      await this.collection.doc(combatResult.combatId).set(toFirestore(combatResult));
-      logger.info(`Rapport de combat ${combatResult.combatId} sauvegardé`);
+      const data = toFirestore({
+        ...combatResult,
+        combatId,
+        createdAt: formatTimestamp(),
+        updatedAt: formatTimestamp(),
+        deleted: false,
+      });
+      await this.collection.doc(combatId).set(data);
+      await this.cacheCombatReport(combatId, data);
+      logger.info(`Rapport de combat ${combatId} sauvegardé`);
+      return combatId;
     } catch (error) {
       logger.error('Erreur lors de la sauvegarde du combat', { error });
       throw new AppError(500, 'Erreur serveur lors de la sauvegarde du combat');
     }
   }
 
-  /**
-   * Récupère l'historique des combats avec pagination.
-   * @param {number} page - Numéro de page.
-   * @param {number} limit - Limite par page.
-   * @returns {Promise<Array>} Liste des rapports.
-   */
-  async getPaginatedCombatHistory(page = 1, limit = 10) {
+  async getCombatReport(combatId) {
+    try {
+      const doc = await this.collection.doc(combatId).get();
+      if (!doc.exists) return null;
+      const report = fromFirestore(doc.data());
+      if (report.deleted) return null;
+      return report;
+    } catch (error) {
+      logger.error('Erreur lors de la récupération du rapport de combat', { error });
+      throw new AppError(500, 'Erreur serveur lors de la récupération du rapport');
+    }
+  }
+
+  async getPaginatedCombatHistory(userId, page = 1, limit = 10) {
     try {
       const snapshot = await this.collection
+        .where('userId', '==', userId)
+        .where('deleted', '==', false)
         .orderBy('date', 'desc')
         .offset((page - 1) * limit)
         .limit(limit)
@@ -54,52 +64,56 @@ class CombatRepository {
     }
   }
 
-  /**
-   * Simule un combat entre pathogènes et anticorps.
-   * @param {Array} pathogens - Liste des pathogènes.
-   * @param {Array} antibodies - Liste des anticorps.
-   * @returns {Promise<Object>} Résultat du combat.
-   */
-  async simulateCombat(pathogens, antibodies) {
+  async simulateCombat(userId, baseId, pathogens, antibodies) {
     try {
       const combatId = uuidv4();
       let pathogenHealth = pathogens.reduce((sum, p) => sum + (p.health || 100), 0);
       let antibodyHealth = antibodies.reduce((sum, a) => sum + (a.health || 100), 0);
+      const log = [];
+      let damageDealt = 0;
+      let damageTaken = 0;
+      const unitsDeployed = [...pathogens.map(p => p.id), ...antibodies.map(a => a.id)];
+      const unitsLost = [];
 
-      // Simulation simple : chaque entité attaque à tour de rôle
-      const rounds = [];
       let round = 1;
       while (pathogenHealth > 0 && antibodyHealth > 0 && round <= 10) {
-        // Attaque des anticorps
-        const antibodyDamage = antibodies.reduce((sum, a) => sum + (a.attack || 10), 0);
+        const antibodyDamage = antibodies.reduce((sum, a) => sum + (a.damage || 10), 0);
         pathogenHealth = Math.max(0, pathogenHealth - antibodyDamage);
+        damageDealt += antibodyDamage;
 
-        // Attaque des pathogènes
         const pathogenDamage = pathogens.reduce((sum, p) => sum + (p.attack || 10), 0);
         antibodyHealth = Math.max(0, antibodyHealth - pathogenDamage);
+        damageTaken += pathogenDamage;
 
-        rounds.push({
-          round,
-          pathogenHealth,
-          antibodyHealth,
-          antibodyDamage,
-          pathogenDamage
-        });
+        log.push(`Tour ${round}: Anticorps infligent ${antibodyDamage} dégâts, pathogènes infligent ${pathogenDamage} dégâts.`);
+
+        if (pathogenHealth <= 0) {
+          pathogens.forEach(p => unitsLost.push(p.id));
+        }
+        if (antibodyHealth <= 0) {
+          antibodies.forEach(a => unitsLost.push(a.id));
+        }
         round++;
       }
 
-      const outcome = pathogenHealth <= 0 ? 'AntibodiesWin' : antibodyHealth <= 0 ? 'PathogensWin' : 'Draw';
+      const result = pathogenHealth <= 0 ? 'victory' : antibodyHealth <= 0 ? 'defeat' : 'draw';
       const combatResult = {
         combatId,
+        userId,
+        baseId,
         date: formatTimestamp(),
-        pathogens,
-        antibodies,
-        rounds,
-        outcome
+        result,
+        log,
+        damageDealt,
+        damageTaken,
+        unitsDeployed,
+        unitsLost,
+        antibodiesUsed: antibodies,
+        pathogenFought: pathogens.length > 0 ? pathogens : null,
       };
 
-      await this.saveCombatResult(combatResult);
-      logger.info(`Combat simulé : ${combatId}, résultat : ${outcome}`);
+      const savedCombatId = await this.saveCombatReport(combatResult);
+      logger.info(`Combat simulé : ${savedCombatId}, résultat : ${result}`);
       return combatResult;
     } catch (error) {
       logger.error('Erreur lors de la simulation du combat', { error });
@@ -107,28 +121,23 @@ class CombatRepository {
     }
   }
 
-  /**
-   * Génère une chronique narrative du combat.
-   * @param {string} combatId - ID du combat.
-   * @returns {Promise<string>} Chronique narrative.
-   */
   async generateCombatChronicle(combatId) {
     try {
-      const combat = await this.collection.doc(combatId).get();
-      if (!combat.exists) throw new NotFoundError('Combat non trouvé');
+      const combat = await this.getCombatReport(combatId);
+      if (!combat) throw new NotFoundError('Combat non trouvé');
 
-      const data = fromFirestore(combat.data());
-      let chronicle = `Combat ${combatId} - ${data.date}\n`;
-      chronicle += `Les pathogènes (${data.pathogens.length}) affrontent les anticorps (${data.antibodies.length}).\n`;
+      let chronicle = `Combat ${combatId} - ${combat.date}\n`;
+      chronicle += `Base: ${combat.baseId}\n`;
+      chronicle += `Pathogènes (${combat.pathogenFought?.length || 0}) vs Anticorps (${combat.antibodiesUsed?.length || 0})\n`;
 
-      data.rounds.forEach(round => {
-        chronicle += `Tour ${round.round}: Les anticorps infligent ${round.antibodyDamage} dégâts, ` +
-          `les pathogènes ripostent avec ${round.pathogenDamage} dégâts.\n`;
+      combat.log.forEach((entry, index) => {
+        chronicle += `Tour ${index + 1}: ${entry}\n`;
       });
 
-      chronicle += `Résultat : ${data.outcome === 'AntibodiesWin' ? 'Victoire des anticorps !' : 
-        data.outcome === 'PathogensWin' ? 'Victoire des pathogènes !' : 'Match nul.'}`;
-      
+      chronicle += `Résultat : ${combat.result === 'victory' ? 'Victoire des anticorps !' : 
+        combat.result === 'defeat' ? 'Victoire des pathogènes !' : 'Match nul.'}\n`;
+      chronicle += `Dégâts infligés: ${combat.damageDealt}, Dégâts reçus: ${combat.damageTaken}`;
+
       logger.info(`Chronique générée pour le combat ${combatId}`);
       return chronicle;
     } catch (error) {
@@ -137,22 +146,14 @@ class CombatRepository {
     }
   }
 
-  /**
-   * Fournit des conseils tactiques basés sur un combat.
-   * @param {string} combatId - ID du combat.
-   * @returns {Promise<Array>} Liste de conseils.
-   */
   async getCombatTacticalAdvice(combatId) {
     try {
-      const combat = await this.collection.doc(combatId).get();
-      if (!combat.exists) throw new NotFoundError('Combat non trouvé');
+      const combat = await this.getCombatReport(combatId);
+      if (!combat) throw new NotFoundError('Combat non trouvé');
 
-      const data = fromFirestore(combat.data());
       const advice = [];
-
-
-      const totalPathogenAttack = data.pathogens.reduce((sum, p) => sum + (p.attack || 10), 0);
-      const totalAntibodyAttack = data.antibodies.reduce((sum, a) => sum + (a.attack || 10), 0);
+      const totalPathogenAttack = combat.pathogenFought?.reduce((sum, p) => sum + (p.attack || 10), 0) || 0;
+      const totalAntibodyAttack = combat.antibodiesUsed?.reduce((sum, a) => sum + (a.damage || 10), 0) || 0;
 
       if (totalPathogenAttack > totalAntibodyAttack) {
         advice.push('Renforcez vos anticorps avec des unités à plus forte attaque pour contrer les pathogènes.');
@@ -160,8 +161,12 @@ class CombatRepository {
         advice.push('Vos anticorps ont une bonne attaque, concentrez-vous sur l\'amélioration de leur santé.');
       }
 
-      if (data.rounds.length >= 10) {
+      if (combat.log.length >= 10) {
         advice.push('Le combat a duré longtemps, envisagez des unités avec des capacités spéciales pour accélérer les victoires.');
+      }
+
+      if (combat.result === 'defeat') {
+        advice.push('Analysez les types de pathogènes pour déployer des anticorps avec des préférences de cible adaptées.');
       }
 
       logger.info(`Conseils tactiques générés pour le combat ${combatId}`);
@@ -172,12 +177,6 @@ class CombatRepository {
     }
   }
 
-  /**
-   * Démarre un combat en temps réel (simulé ici).
-   * @param {string} userId - ID de l'utilisateur.
-   * @param {Object} combatConfig - Configuration du combat.
-   * @returns {Promise<string>} ID du combat.
-   */
   async startRealTimeCombat(userId, combatConfig) {
     try {
       const combatId = uuidv4();
@@ -186,10 +185,13 @@ class CombatRepository {
         userId,
         date: formatTimestamp(),
         status: 'InProgress',
-        config: combatConfig
+        config: combatConfig,
+        createdAt: formatTimestamp(),
+        updatedAt: formatTimestamp(),
+        deleted: false,
       };
-
       await this.collection.doc(combatId).set(toFirestore(combatData));
+      await this.cacheCombatReport(combatId, combatData);
       logger.info(`Combat en temps réel démarré : ${combatId} pour l'utilisateur ${userId}`);
       return combatId;
     } catch (error) {
@@ -198,49 +200,54 @@ class CombatRepository {
     }
   }
 
-  /**
-   * Met en cache un rapport de combat.
-   * @param {string} combatId - ID du combat.
-   * @param {Object} combatData - Données du combat.
-   * @returns {Promise<void>}
-   */
+  async updateCombatStatus(combatId, status) {
+    try {
+      await this.collection.doc(combatId).update({
+        status,
+        updatedAt: formatTimestamp(),
+      });
+      logger.info(`Statut du combat ${combatId} mis à jour : ${status}`);
+    } catch (error) {
+      logger.error('Erreur lors de la mise à jour du statut du combat', { error });
+      throw new AppError(500, 'Erreur serveur lors de la mise à jour du statut du combat');
+    }
+  }
+
   async cacheCombatReport(combatId, combatData) {
     try {
-      await this.cacheCollection.doc(combatId).set({
-        ...toFirestore(combatData),
-        cachedAt: formatTimestamp()
-      });
-      logger.info(`Rapport de combat ${combatId} mis en cache`);
+      if (combatData) {
+        await this.cacheCollection.doc(combatId).set({
+          ...toFirestore(combatData),
+          cachedAt: formatTimestamp(),
+        });
+        logger.info(`Rapport de combat ${combatId} mis en cache`);
+      } else {
+        await this.cacheCollection.doc(combatId).delete();
+        logger.info(`Cache du rapport de combat ${combatId} supprimé`);
+      }
     } catch (error) {
       logger.error('Erreur lors de la mise en cache du rapport', { error });
       throw new AppError(500, 'Erreur serveur lors de la mise en cache du rapport');
     }
   }
 
-  /**
-   * Récupère un rapport de combat en cache.
-   * @param {string} combatId - ID du combat.
-   * @returns {Promise<Object|null>} Rapport ou null.
-   */
   async getCachedCombatReport(combatId) {
     try {
       const doc = await this.cacheCollection.doc(combatId).get();
       if (!doc.exists) return null;
-      return fromFirestore(doc.data());
+      const report = fromFirestore(doc.data());
+      if (report.deleted) return null;
+      return report;
     } catch (error) {
       logger.error('Erreur lors de la récupération du rapport en cache', { error });
       throw new AppError(500, 'Erreur serveur lors de la récupération du rapport en cache');
     }
   }
 
-  /**
-   * Supprime tous les rapports de combat en cache.
-   * @returns {Promise<void>}
-   */
   async clearCachedCombatReports() {
     try {
       const snapshot = await this.cacheCollection.get();
-      const batch = admin.firestore().batch();
+      const batch = db.batch();
       snapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
       logger.info('Tous les rapports de combat en cache ont été supprimés');

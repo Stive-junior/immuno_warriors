@@ -10,9 +10,9 @@ _$MemorySignatureImpl _$$MemorySignatureImplFromJson(
         Map<String, dynamic> json) =>
     _$MemorySignatureImpl(
       pathogenType: json['pathogenType'] as String,
-      attackBonus: (json['attackBonus'] as num).toDouble(),
-      defenseBonus: (json['defenseBonus'] as num).toDouble(),
-      expiryDate: DateTime.parse(json['expiryDate'] as String),
+      attackBonus: (json['attackBonus'] as num).toInt(),
+      defenseBonus: (json['defenseBonus'] as num).toInt(),
+      expiryDate: json['expiryDate'] as String,
     );
 
 Map<String, dynamic> _$$MemorySignatureImplToJson(
@@ -21,5 +21,5 @@ Map<String, dynamic> _$$MemorySignatureImplToJson(
       'pathogenType': instance.pathogenType,
       'attackBonus': instance.attackBonus,
       'defenseBonus': instance.defenseBonus,
-      'expiryDate': instance.expiryDate.toIso8601String(),
+      'expiryDate': instance.expiryDate,
     };

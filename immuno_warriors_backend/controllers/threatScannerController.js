@@ -1,11 +1,12 @@
 const Joi = require('joi');
 const validate = require('../middleware/validationMiddleware');
-const { AppError } = require('../utils/errorUtils');
 const ThreatScannerService = require('../services/threatScannerService');
 
 const addThreatSchema = Joi.object({
-  type: Joi.string().required(),
-  severity: Joi.number().min(1).max(10).required(),
+  name: Joi.string().required(),
+  type: Joi.string().valid('pathogen', 'base').required(),
+  threatLevel: Joi.number().integer().min(1).max(100).required(),
+  details: Joi.object().optional(),
 });
 
 class ThreatScannerController {
@@ -15,7 +16,7 @@ class ThreatScannerController {
       const threat = await ThreatScannerService.addThreat(threatData);
       res.status(201).json(threat);
     } catch (error) {
-      throw error;
+      res.status(error.status || 500).json({ error: error.message });
     }
   }
 
@@ -25,7 +26,7 @@ class ThreatScannerController {
       const threat = await ThreatScannerService.getThreat(threatId);
       res.status(200).json(threat);
     } catch (error) {
-      throw error;
+      res.status(error.status || 500).json({ error: error.message });
     }
   }
 
@@ -35,7 +36,7 @@ class ThreatScannerController {
       const threat = await ThreatScannerService.scanThreat(targetId);
       res.status(200).json(threat);
     } catch (error) {
-      throw error;
+      res.status(error.status || 500).json({ error: error.message });
     }
   }
 }

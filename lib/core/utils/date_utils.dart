@@ -1,10 +1,12 @@
-
 import 'package:intl/intl.dart';
 
 /// Provides utility functions for date and time manipulation.
 class DateUtils {
   /// Formats a DateTime object into a human-readable string.
-  static String formatDateTime(DateTime dateTime, {String pattern = 'yyyy-MM-dd HH:mm:ss'}) {
+  static String formatDateTime(
+    DateTime dateTime, {
+    String pattern = 'yyyy-MM-dd HH:mm:ss',
+  }) {
     try {
       return DateFormat(pattern).format(dateTime);
     } catch (e) {
@@ -19,18 +21,28 @@ class DateUtils {
 
     if (difference.inDays > 365) {
       final years = (difference.inDays / 365).floor();
-      return numericDates ? '$years an(s) ago' : (years == 1 ? 'Last year' : '$years years ago');
+      return numericDates
+          ? '$years an(s) ago'
+          : (years == 1 ? 'Last year' : '$years years ago');
     }
     if (difference.inDays > 30) {
       final months = (difference.inDays / 30).floor();
-      return numericDates ? '$months month(s) ago' : (months == 1 ? 'Last month' : '$months months ago');
+      return numericDates
+          ? '$months month(s) ago'
+          : (months == 1 ? 'Last month' : '$months months ago');
     }
     if (difference.inDays > 7) {
       final weeks = (difference.inDays / 7).floor();
-      return numericDates ? '$weeks week(s) ago' : (weeks == 1 ? 'Last week' : '$weeks weeks ago');
+      return numericDates
+          ? '$weeks week(s) ago'
+          : (weeks == 1 ? 'Last week' : '$weeks weeks ago');
     }
     if (difference.inDays >= 1) {
-      return numericDates ? '${difference.inDays} day(s) ago' : (difference.inDays == 1 ? 'Yesterday' : '${difference.inDays} days ago');
+      return numericDates
+          ? '${difference.inDays} day(s) ago'
+          : (difference.inDays == 1
+              ? 'Yesterday'
+              : '${difference.inDays} days ago');
     }
     if (difference.inHours >= 1) {
       return '${difference.inHours} hour(s) ago';

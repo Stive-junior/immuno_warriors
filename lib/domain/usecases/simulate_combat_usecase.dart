@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:immuno_warriors/domain/entities/combat/antibody_entity.dart';
-import 'package:immuno_warriors/domain/entities/combat/pathogen_entity.dart';
+import 'package:immuno_warriors/domain/entities/antibody_entity.dart';
+import 'package:immuno_warriors/domain/entities/pathogen_entity.dart';
 import 'package:immuno_warriors/domain/entities/combat_report_entity.dart';
 import 'package:immuno_warriors/domain/repositories/combat_repository.dart';
 import 'package:immuno_warriors/data/models/combat_report_model.dart';
@@ -16,11 +16,12 @@ class SimulateCombatUseCase {
     required String baseId,
   }) async {
     try {
-      final CombatReportModel combatReportModel = await _combatRepository.simulateCombat(
-        antibodies: antibodies,
-        pathogens: pathogens,
-        baseId: baseId,
-      );
+      final CombatReportModel combatReportModel = await _combatRepository
+          .simulateCombat(
+            antibodies: antibodies,
+            pathogens: pathogens,
+            baseId: baseId,
+          );
 
       return CombatReportEntity(
         combatId: combatReportModel.combatId,

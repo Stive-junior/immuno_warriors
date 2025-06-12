@@ -14,3 +14,4 @@ router.get('/:threatId', getThreat);
 router.get('/scan/:targetId', scanThreat);
 
 module.exports = router;
+

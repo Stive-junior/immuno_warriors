@@ -16,3 +16,4 @@ router.post('/unlock', unlockResearch);
 router.put('/node/:researchId', updateResearchProgress);
 
 module.exports = router;
+

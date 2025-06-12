@@ -1,5 +1,5 @@
 const { AppError, NotFoundError } = require('../utils/errorUtils');
-const  logger  = require('../utils/logger');
+const logger = require('../utils/logger');
 const UserRepository = require('../repositories/userRepository');
 
 class UserService {
@@ -7,7 +7,7 @@ class UserService {
     try {
       const user = await UserRepository.getCurrentUser(userId);
       if (!user) throw new NotFoundError('Utilisateur non trouvé');
-      logger.info(`Profil de l'utilisateur ${userId} récupéré`);
+      logger.info(`Profil de ${userId} récupéré`);
       return user;
     } catch (error) {
       logger.error('Erreur lors de la récupération du profil', { error });
@@ -19,7 +19,7 @@ class UserService {
     try {
       await UserRepository.updateUserProfile(userId, profile);
       await UserRepository.cacheCurrentUser(userId, { ...await UserRepository.getCurrentUser(userId), ...profile });
-      logger.info(`Profil de l'utilisateur ${userId} mis à jour`);
+      logger.info(`Profil de ${userId} mis à jour`);
     } catch (error) {
       logger.error('Erreur lors de la mise à jour du profil', { error });
       throw error instanceof AppError ? error : new AppError(500, 'Erreur serveur lors de la mise à jour du profil');
@@ -35,7 +35,7 @@ class UserService {
       };
       await UserRepository.updateUserResources(userId, updatedResources);
       await UserRepository.cacheCurrentUser(userId, { ...await UserRepository.getCurrentUser(userId), resources: updatedResources });
-      logger.info(`Ressources ajoutées pour l'utilisateur ${userId}`);
+      logger.info(`Ressources ajoutées pour ${userId}`);
     } catch (error) {
       logger.error('Erreur lors de l\'ajout de ressources', { error });
       throw error instanceof AppError ? error : new AppError(500, 'Erreur serveur lors de l\'ajout de ressources');
@@ -45,7 +45,7 @@ class UserService {
   async getUserResources(userId) {
     try {
       const resources = await UserRepository.getUserResources(userId);
-      logger.info(`Ressources de l'utilisateur ${userId} récupérées`);
+      logger.info(`Ressources de ${userId} récupérées`);
       return resources;
     } catch (error) {
       logger.error('Erreur lors de la récupération des ressources', { error });
@@ -58,7 +58,7 @@ class UserService {
       await UserRepository.addItemToInventory(userId, item);
       const user = await UserRepository.getCurrentUser(userId);
       await UserRepository.cacheCurrentUser(userId, user);
-      logger.info(`Élément ajouté à l'inventaire de l'utilisateur ${userId}`);
+      logger.info(`Élément ajouté à l'inventaire de ${userId}`);
     } catch (error) {
       logger.error('Erreur lors de l\'ajout à l\'inventaire', { error });
       throw error instanceof AppError ? error : new AppError(500, 'Erreur serveur lors de l\'ajout à l\'inventaire');
@@ -70,7 +70,7 @@ class UserService {
       await UserRepository.removeItemFromInventory(userId, item);
       const user = await UserRepository.getCurrentUser(userId);
       await UserRepository.cacheCurrentUser(userId, user);
-      logger.info(`Élément supprimé de l'inventaire de l'utilisateur ${userId}`);
+      logger.info(`Élément supprimé de l'inventaire de ${userId}`);
     } catch (error) {
       logger.error('Erreur lors de la suppression de l\'inventaire', { error });
       throw error instanceof AppError ? error : new AppError(500, 'Erreur serveur lors de la suppression de l\'inventaire');
@@ -80,7 +80,7 @@ class UserService {
   async getUserInventory(userId) {
     try {
       const inventory = await UserRepository.getUserInventory(userId);
-      logger.info(`Inventaire de l'utilisateur ${userId} récupéré`);
+      logger.info(`Inventaire de ${userId} récupéré`);
       return inventory;
     } catch (error) {
       logger.error('Erreur lors de la récupération de l\'inventaire', { error });
@@ -93,7 +93,7 @@ class UserService {
       await UserRepository.updateUserSettings(userId, settings);
       const user = await UserRepository.getCurrentUser(userId);
       await UserRepository.cacheCurrentUser(userId, user);
-      logger.info(`Paramètres de l'utilisateur ${userId} mis à jour`);
+      logger.info(`Paramètres de ${userId} mis à jour`);
     } catch (error) {
       logger.error('Erreur lors de la mise à jour des paramètres', { error });
       throw error instanceof AppError ? error : new AppError(500, 'Erreur serveur lors de la mise à jour des paramètres');
@@ -103,7 +103,7 @@ class UserService {
   async getUserSettings(userId) {
     try {
       const settings = await UserRepository.getUserSettings(userId);
-      logger.info(`Paramètres de l'utilisateur ${userId} récupérés`);
+      logger.info(`Paramètres de ${userId} récupérés`);
       return settings;
     } catch (error) {
       logger.error('Erreur lors de la récupération des paramètres', { error });
@@ -115,18 +115,18 @@ class UserService {
     try {
       await UserRepository.updateUserProgression(userId, progression);
       const user = await UserRepository.getCurrentUser(userId);
-      await UserRepository.cacheCurrentUser(userId, user);
-      logger.info(`Progression de l'utilisateur ${userId} mise à jour`);
+      await UserRepository.cacheCurrentUser(userId);
+      logger.info('Progression de ${userId} mise à jour');
     } catch (error) {
       logger.error('Erreur lors de la mise à jour de la progression', { error });
       throw error instanceof AppError ? error : new AppError(500, 'Erreur serveur lors de la mise à jour de la progression');
     }
-  }
+  async }
 
   async getUserProgression(userId) {
     try {
       const progression = await UserRepository.getUserProgression(userId);
-      logger.info(`Progression de l'utilisateur ${userId} récupérée`);
+      logger.info('Progression de ${userId} récupérée');
       return progression;
     } catch (error) {
       logger.error('Erreur lors de la récupération de la progression', { error });
@@ -138,22 +138,22 @@ class UserService {
     try {
       await UserRepository.updateUserAchievements(userId, achievements);
       const user = await UserRepository.getCurrentUser(userId);
-      await UserRepository.cacheCurrentUser(userId, user);
-      logger.info(`Succès de l'utilisateur ${userId} mis à jour`);
+      await UserRepository.cacheCurrentUser(userId);
+      logger.info('Achievements de ${userId} mis à jour');
     } catch (error) {
-      logger.error('Erreur lors de la mise à jour des succès', { error });
-      throw error instanceof AppError ? error : new AppError(500, 'Erreur serveur lors de la mise à jour des succès');
+      logger.error('Erreur lors de la mise à jour des achievements', { error });
+      throw error instanceof AppError ? error : new AppError(500, 'Erreur serveur lors de la mise à jour des achievements');
     }
   }
 
   async getUserAchievements(userId) {
     try {
       const achievements = await UserRepository.getUserAchievements(userId);
-      logger.info(`Succès de l'utilisateur ${userId} récupérés`);
+      logger.info('Achievements de ${userId} récupérés');
       return achievements;
     } catch (error) {
-      logger.error('Erreur lors de la récupération des succès', { error });
-      throw error instanceof AppError ? error : new AppError(500, 'Erreur serveur lors de la récupération des succès');
+      logger.error('Erreur lors de la récupération des achievements', { error });
+      throw error instanceof AppError ? error : new AppError(500, 'Erreur serveur lors de la récupération des achievements');
     }
   }
 
@@ -161,7 +161,7 @@ class UserService {
     try {
       await UserRepository.clearUser(userId);
       await UserRepository.clearCurrentUserCache(userId);
-      logger.info(`Utilisateur ${userId} supprimé`);
+      logger.info('Utilisateur ${userId} supprimé');
     } catch (error) {
       logger.error('Erreur lors de la suppression de l\'utilisateur', { error });
       throw error instanceof AppError ? error : new AppError(500, 'Erreur serveur lors de la suppression de l\'utilisateur');

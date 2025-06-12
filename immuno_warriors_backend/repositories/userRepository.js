@@ -1,9 +1,9 @@
-const admin = require('firebase-admin');
+const { db, auth } = require('../services/firebaseService');
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 const { validateUser, fromFirestore, toFirestore } = require('../models/userModel');
 const { AppError, NotFoundError, UnauthorizedError } = require('../utils/errorUtils');
-const logger  = require('../utils/logger');
+const logger = require('../utils/logger');
 const { formatTimestamp, isExpired } = require('../utils/dateUtils');
 
 /**
@@ -11,10 +11,76 @@ const { formatTimestamp, isExpired } = require('../utils/dateUtils');
  */
 class UserRepository {
   constructor() {
-    this.collection = admin.firestore().collection('users');
-    this.sessionCollection = admin.firestore().collection('sessions');
-    this.cacheCollection = admin.firestore().collection('userCache');
+    this.collection = db.collection('users');
+    this.sessionCollection = db.collection('sessions');
+    this.cacheCollection = db.collection('userCache');
     this.jwtSecret = process.env.JWT_SECRET || 'immuno_warriors_secret';
+  }
+
+  /**
+   * Crée un nouvel utilisateur avec Firebase Auth
+   * @param {Object} userData - Données de l'utilisateur incluant email et password
+   * @returns {Promise<Object>} Utilisateur créé avec son ID
+   */
+  async createUser(userData) {
+    const { email, password, ...userProfile } = userData;
+    const validation = validateUser(userProfile);
+    if (validation.error) {
+      throw new AppError(400, 'Données utilisateur invalides', validation.error.details);
+    }
+
+    try {
+      const userRecord = await auth.createUser({
+        email,
+        password,
+        emailVerified: false,
+        disabled: false,
+      });
+
+      const user = {
+        ...userProfile,
+        id: userRecord.uid,
+        email,
+        createdAt: formatTimestamp(),
+        resources: {},
+        inventory: [],
+        settings: {},
+        progression: {},
+        achievements: {}
+      };
+
+      await this.collection.doc(userRecord.uid).set(toFirestore(user));
+      logger.info(`Utilisateur créé avec succès: ${userRecord.uid}`);
+      return { id: userRecord.uid, ...fromFirestore(user) };
+    } catch (error) {
+      logger.error('Erreur lors de la création de l\'utilisateur', { error });
+      throw new AppError(500, 'Erreur serveur lors de la création de l\'utilisateur');
+    }
+  }
+
+  /**
+   * Authentifie un utilisateur avec email et mot de passe
+   * @param {string} email - Email de l'utilisateur
+   * @param {string} password - Mot de passe
+   * @returns {Promise<Object>} Utilisateur authentifié avec token
+   */
+  async authenticateUser(email, password) {
+    try {
+      const userRecord = await auth.getUserByEmail(email);
+      const userDoc = await this.collection.doc(userRecord.uid).get();
+
+      if (!userDoc.exists) {
+        throw new UnauthorizedError('Utilisateur non trouvé');
+      }
+
+      const user = fromFirestore(userDoc.data());
+      const token = await this.fetchSessionToken(user.id);
+      logger.info(`Utilisateur ${user.id} authentifié`);
+      return { ...user, token };
+    } catch (error) {
+      logger.error('Erreur lors de l\'authentification', { error });
+      throw error instanceof AppError ? error : new UnauthorizedError('Email ou mot de passe incorrect');
+    }
   }
 
   /**
@@ -100,7 +166,7 @@ class UserRepository {
   async addItemToInventory(userId, item) {
     try {
       await this.collection.doc(userId).update({
-        inventory: admin.firestore.FieldValue.arrayUnion(item)
+        inventory: db.FieldValue.arrayUnion(item)
       });
       logger.info(`Élément ajouté à l'inventaire de ${userId}`);
     } catch (error) {
@@ -118,7 +184,7 @@ class UserRepository {
   async removeItemFromInventory(userId, item) {
     try {
       await this.collection.doc(userId).update({
-        inventory: admin.firestore.FieldValue.arrayRemove(item)
+        inventory: db.FieldValue.arrayRemove(item)
       });
       logger.info(`Élément supprimé de l'inventaire de ${userId}`);
     } catch (error) {
@@ -144,7 +210,7 @@ class UserRepository {
   }
 
   /**
-   * Supprime un utilisateur de Firestore.
+   * Supprime un utilisateur de Firestore et Firebase Auth.
    * @param {string} userId - ID de l'utilisateur.
    * @returns {Promise<void>}
    */
@@ -154,6 +220,7 @@ class UserRepository {
       await this.sessionCollection.where('userId', '==', userId).get()
         .then(snapshot => Promise.all(snapshot.docs.map(doc => doc.ref.delete())));
       await this.cacheCollection.doc(userId).delete();
+      await auth.deleteUser(userId);
       logger.info(`Utilisateur ${userId} supprimé`);
     } catch (error) {
       logger.error('Erreur lors de la suppression de l\'utilisateur', { error });
@@ -266,28 +333,6 @@ class UserRepository {
   }
 
   /**
-   * Authentifie un utilisateur avec email et mot de passe (simulé).
-   * @param {string} email - Email de l'utilisateur.
-   * @param {string} password - Mot de passe (non implémenté réellement).
-   * @returns {Promise<Object>} Utilisateur authentifié.
-   */
-  async authenticateUser(email, password) {
-    try {
-      // Simulation d'authentification (à remplacer par Firebase Auth)
-      const snapshot = await this.collection.where('email', '==', email).limit(1).get();
-      if (snapshot.empty) throw new UnauthorizedError('Email ou mot de passe incorrect');
-      const user = fromFirestore(snapshot.docs[0].data());
-      // Vérification du mot de passe (simulée)
-      if (password !== 'test') throw new UnauthorizedError('Email ou mot de passe incorrect');
-      logger.info(`Utilisateur ${user.id} authentifié`);
-      return user;
-    } catch (error) {
-      logger.error('Erreur lors de l\'authentification', { error });
-      throw error instanceof AppError ? error : new AppError(500, 'Erreur serveur lors de l\'authentification');
-    }
-  }
-
-  /**
    * Vérifie la validité d'une session.
    * @param {string} sessionId - ID de la session.
    * @returns {Promise<boolean>} True si valide, false sinon.
@@ -313,7 +358,7 @@ class UserRepository {
     try {
       const sessionId = uuidv4();
       const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24); // Session valide 24h
+      expiresAt.setHours(expiresAt.getHours() + 24);
       const token = jwt.sign({ userId, sessionId }, this.jwtSecret, { expiresIn: '24h' });
       await this.sessionCollection.doc(sessionId).set({
         userId,
@@ -471,17 +516,14 @@ class UserRepository {
       const sessionId = decoded.sessionId;
       const userId = decoded.userId;
 
-      // Vérifier si la session existe
       const sessionDoc = await this.sessionCollection.doc(sessionId).get();
       if (!sessionDoc.exists) throw new UnauthorizedError('Session invalide');
 
-      // Générer un nouveau token
       const newSessionId = uuidv4();
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24);
       const newToken = jwt.sign({ userId, sessionId: newSessionId }, this.jwtSecret, { expiresIn: '24h' });
 
-      // Mettre à jour la session
       await this.sessionCollection.doc(newSessionId).set({
         userId,
         token: newToken,
@@ -489,7 +531,6 @@ class UserRepository {
         createdAt: formatTimestamp()
       });
 
-      // Supprimer l'ancienne session
       await this.sessionCollection.doc(sessionId).delete();
       logger.info(`Token de session rafraîchi pour l'utilisateur ${userId}`);
       return newToken;

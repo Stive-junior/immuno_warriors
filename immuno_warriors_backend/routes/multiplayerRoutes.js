@@ -5,6 +5,7 @@ const {
   createSession,
   joinSession,
   getSessionStatus,
+  getUserSessions,
 } = require('../controllers/multiplayerController');
 
 router.use(authenticate);
@@ -12,5 +13,6 @@ router.use(authenticate);
 router.post('/', createSession);
 router.post('/:sessionId/join', joinSession);
 router.get('/:sessionId/status', getSessionStatus);
+router.get('/', getUserSessions);
 
 module.exports = router;

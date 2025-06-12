@@ -2,9 +2,24 @@ const Joi = require('joi');
 const validate = require('../middleware/validationMiddleware');
 const UserService = require('../services/userService');
 
+/**
+ * Schéma pour l'utilisateur dans Firestore et les réponses API.
+ * @typedef {Object} User
+ * @property {string} id - Identifiant unique de l'utilisateur (UUID).
+ * @property {string} email - Adresse e-mail de l'utilisateur.
+ * @property {string} [username] - Nom d'utilisateur (optionnel).
+ * @property {string} [avatar] - URL de l'avatar (optionnel).
+ * @property {string} [createdAt] - Date de création (ISO 8601).
+ * @property {string} [lastLogin] - Date de dernière connexion (ISO 8601).
+ * @property {Object} [resources] - Ressources de l'utilisateur (ex. { energy: 100, credits: 50 }).
+ * @property {Object} [progression] - Progression (ex. { level: 1, xp: 500 }).
+ * @property {Object} [achievements] - Succès (ex. { firstCombat: true }).
+ * @property {Array} [inventory] - Inventaire (liste d'objets).
+ */
+
 const updateProfileSchema = Joi.object({
   username: Joi.string().min(3).max(30).optional(),
-  settings: Joi.object().optional(),
+  avatar: Joi.string().uri().optional(),
 });
 
 const addResourcesSchema = Joi.object({
@@ -13,12 +28,25 @@ const addResourcesSchema = Joi.object({
 });
 
 const addInventoryItemSchema = Joi.object({
-  itemId: Joi.string().required(),
+  id: Joi.string().uuid().required(),
   type: Joi.string().required(),
+  name: Joi.string().required(),
   quantity: Joi.number().integer().min(1).default(1),
 });
 
+const updateSettingsSchema = Joi.object({
+  notifications: Joi.boolean().optional(),
+  sound: Joi.boolean().optional(),
+  language: Joi.string().optional(),
+});
+
 class UserController {
+  /**
+   * Récupère le profil de l'utilisateur connecté.
+   * @param {Object} req - Requête HTTP.
+   * @param {Object} res - Réponse HTTP.
+   * @returns {Promise<void>} Réponse JSON avec le profil utilisateur.
+   */
   async getProfile(req, res) {
     const { userId } = req.user;
     try {
@@ -29,6 +57,12 @@ class UserController {
     }
   }
 
+  /**
+   * Met à jour le profil de l'utilisateur.
+   * @param {Object} req - Requête HTTP avec les données du profil.
+   * @param {Object} res - Réponse HTTP.
+   * @returns {Promise<void>} Réponse JSON confirmant la mise à jour.
+   */
   async updateProfile(req, res) {
     const { userId } = req.user;
     const profile = req.body;
@@ -40,6 +74,12 @@ class UserController {
     }
   }
 
+  /**
+   * Ajoute des ressources à l'utilisateur.
+   * @param {Object} req - Requête HTTP avec les ressources à ajouter.
+   * @param {Object} res - Réponse HTTP.
+   * @returns {Promise<void>} Réponse JSON confirmant l'ajout.
+   */
   async addResources(req, res) {
     const { userId } = req.user;
     const resources = req.body;
@@ -51,6 +91,12 @@ class UserController {
     }
   }
 
+  /**
+   * Récupère les ressources de l'utilisateur.
+   * @param {Object} req - Requête HTTP.
+   * @param {Object} res - Réponse HTTP.
+   * @returns {Promise<void>} Réponse JSON avec les ressources.
+   */
   async getResources(req, res) {
     const { userId } = req.user;
     try {
@@ -61,6 +107,12 @@ class UserController {
     }
   }
 
+  /**
+   * Ajoute un élément à l'inventaire de l'utilisateur.
+   * @param {Object} req - Requête HTTP avec les données de l'élément.
+   * @param {Object} res - Réponse HTTP.
+   * @returns {Promise<void>} Réponse JSON confirmant l'ajout.
+   */
   async addInventoryItem(req, res) {
     const { userId } = req.user;
     const item = req.body;
@@ -72,6 +124,12 @@ class UserController {
     }
   }
 
+  /**
+   * Supprime un élément de l'inventaire de l'utilisateur.
+   * @param {Object} req - Requête HTTP avec l'ID de l'élément.
+   * @param {Object} res - Réponse HTTP.
+   * @returns {Promise<void>} Réponse JSON confirmant la suppression.
+   */
   async removeInventoryItem(req, res) {
     const { userId } = req.user;
     const { itemId } = req.params;
@@ -83,6 +141,12 @@ class UserController {
     }
   }
 
+  /**
+   * Récupère l'inventaire de l'utilisateur.
+   * @param {Object} req - Requête HTTP.
+   * @param {Object} res - Réponse HTTP.
+   * @returns {Promise<void>} Réponse JSON avec l'inventaire.
+   */
   async getInventory(req, res) {
     const { userId } = req.user;
     try {
@@ -93,6 +157,12 @@ class UserController {
     }
   }
 
+  /**
+   * Met à jour les paramètres de l'utilisateur.
+   * @param {Object} req - Requête HTTP avec les paramètres.
+   * @param {Object} res - Réponse HTTP.
+   * @returns {Promise<void>} Réponse JSON confirmant la mise à jour.
+   */
   async updateSettings(req, res) {
     const { userId } = req.user;
     const settings = req.body;
@@ -104,6 +174,12 @@ class UserController {
     }
   }
 
+  /**
+   * Récupère les paramètres de l'utilisateur.
+   * @param {Object} req - Requête HTTP.
+   * @param {Object} res - Réponse HTTP.
+   * @returns {Promise<void>} Réponse JSON avec les paramètres.
+   */
   async getSettings(req, res) {
     const { userId } = req.user;
     try {
@@ -114,6 +190,12 @@ class UserController {
     }
   }
 
+  /**
+   * Supprime le compte de l'utilisateur.
+   * @param {Object} req - Requête HTTP.
+   * @param {Object} res - Réponse HTTP.
+   * @returns {Promise<void>} Réponse JSON confirmant la suppression.
+   */
   async deleteUser(req, res) {
     const { userId } = req.user;
     try {
@@ -134,7 +216,7 @@ module.exports = {
   addInventoryItem: [validate(addInventoryItemSchema), controller.addInventoryItem.bind(controller)],
   removeInventoryItem: controller.removeInventoryItem.bind(controller),
   getInventory: controller.getInventory.bind(controller),
-  updateSettings: controller.updateSettings.bind(controller),
+  updateSettings: [validate(updateSettingsSchema), controller.updateSettings.bind(controller)],
   getSettings: controller.getSettings.bind(controller),
   deleteUser: controller.deleteUser.bind(controller),
 };

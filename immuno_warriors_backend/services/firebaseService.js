@@ -16,14 +16,12 @@ class FirebaseService {
     try {
       let serviceAccount;
 
-
       if (config.firebaseServiceAccountPath) {
         const serviceAccountPath = path.resolve(__dirname, '..', config.firebaseServiceAccountPath);
         logger.info('Firebase: Tentative de chargement du fichier de compte de service', { path: serviceAccountPath });
 
         try {
           serviceAccount = require(serviceAccountPath);
-          
           const requiredFields = ['project_id', 'client_email', 'private_key'];
           const missingFields = requiredFields.filter(field => !serviceAccount[field]);
           if (missingFields.length > 0) {
@@ -38,8 +36,7 @@ class FirebaseService {
           );
         }
       } else {
-        // Fallback to direct credentials
-        logger.info('Firebase: Aucun fichier de compte de service spécifié, utilisation des credentials directes');
+        logger.info('Firebase: Utilisation des credentials directes');
         const requiredFields = ['projectId', 'clientEmail', 'privateKey'];
         const missingFields = requiredFields.filter(field => !config.firebase[field]);
         if (missingFields.length > 0) {
@@ -58,7 +55,6 @@ class FirebaseService {
         logger.info('Firebase: Credentials directes validées', { projectId: serviceAccount.project_id });
       }
 
-      // Initialize Firebase
       if (!admin.apps.length) {
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
@@ -70,14 +66,10 @@ class FirebaseService {
         });
       }
 
-      // Assign instances
       this.db = admin.firestore();
       this.auth = admin.auth();
-
-      // Firestore settings
       this.db.settings({ ignoreUndefinedProperties: true });
 
-      // Verify connection with retry
       this.retryConnect(3, 5000);
     } catch (error) {
       logger.error('Échec de l\'initialisation de Firebase', {
@@ -109,6 +101,24 @@ class FirebaseService {
 
   async verifyConnection() {
     try {
+      const credential = this.admin.app().options.credential;
+      if (credential && typeof credential.getAccessToken === 'function') {
+        try {
+          const token = await credential.getAccessToken();
+          logger.info('Firebase: Jeton d\'accès obtenu', {
+            expiresIn: token.expires_in || 'indéfini',
+            issuedAt: token.issued_at ? new Date(token.issued_at * 1000).toISOString() : 'non disponible',
+            tokenPreview: token.access_token ? `${token.access_token.slice(0, 10)}...` : 'indéfini',
+          });
+        } catch (tokenError) {
+          logger.warn('Échec de l\'obtention du jeton d\'accès, continuation sans jeton', {
+            error: tokenError.message,
+          });
+        }
+      } else {
+        logger.info('Firebase: Aucune vérification de jeton effectuée, credential.getAccessToken non disponible');
+      }
+
       const testDoc = this.db.collection('status').doc('connection_test');
       await testDoc.set({
         lastChecked: admin.firestore.FieldValue.serverTimestamp(),

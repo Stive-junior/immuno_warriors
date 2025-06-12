@@ -10,13 +10,13 @@ const {
   getStoredResponses,
 } = require('../controllers/geminiController');
 
-router.use(authenticate);
+//router.use(authenticate);
 
 router.post('/chat', chat);
-router.post('/combat-chronicle/:combatId', generateCombatChronicle);
-router.post('/tactical-advice/:combatId', getTacticalAdvice);
-router.post('/research-description/:researchId', generateResearchDescription);
-router.post('/base-description/:baseId', generateBaseDescription);
+router.get('/combat-chronicle/:combatId', generateCombatChronicle);
+router.get('/tactical-advice/:combatId', getTacticalAdvice);
+router.get('/research-description/:researchId', generateResearchDescription);
+router.get('/base-description/:baseId', generateBaseDescription);
 router.get('/stored-responses', getStoredResponses);
 
 module.exports = router;

@@ -8,6 +8,7 @@ const {
   verifyToken,
 } = require('../controllers/authController');
 
+router.get('/', (req, res) => res.json({ message: 'API Auth' }));
 router.post('/sign-up', signUp);
 router.post('/sign-in', signIn);
 router.post('/refresh-token', refreshToken);

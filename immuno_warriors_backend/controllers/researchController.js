@@ -1,10 +1,13 @@
 const Joi = require('joi');
 const validate = require('../middleware/validationMiddleware');
-const { AppError } = require('../utils/errorUtils');
 const ResearchService = require('../services/researchService');
 
 const unlockResearchSchema = Joi.object({
-  researchId: Joi.string().required(),
+  researchId: Joi.string().uuid().required(),
+});
+
+const updateResearchProgressSchema = Joi.object({
+  progress: Joi.number().min(0).max(100).required(),
 });
 
 class ResearchController {
@@ -13,7 +16,7 @@ class ResearchController {
       const researchTree = await ResearchService.getResearchTree();
       res.status(200).json(researchTree);
     } catch (error) {
-      throw error;
+      res.status(error.status || 500).json({ error: error.message });
     }
   }
 
@@ -23,7 +26,7 @@ class ResearchController {
       const progress = await ResearchService.getResearchProgress(userId);
       res.status(200).json(progress);
     } catch (error) {
-      throw error;
+      res.status(error.status || 500).json({ error: error.message });
     }
   }
 
@@ -34,19 +37,19 @@ class ResearchController {
       await ResearchService.unlockResearch(userId, researchId);
       res.status(200).json({ message: 'Recherche déverrouillée' });
     } catch (error) {
-      throw error;
+      res.status(error.status || 500).json({ error: error.message });
     }
   }
 
   async updateResearchProgress(req, res) {
     const { userId } = req.user;
     const { researchId } = req.params;
-    const progress = req.body;
+    const { progress } = req.body;
     try {
-      await ResearchService.updateResearchProgress(userId, researchId, progress);
+      await ResearchService.updateResearchProgress(userId, researchId, { progress });
       res.status(200).json({ message: 'Progression mise à jour' });
     } catch (error) {
-      throw error;
+      res.status(error.status || 500).json({ error: error.message });
     }
   }
 }
@@ -56,5 +59,5 @@ module.exports = {
   getResearchTree: controller.getResearchTree.bind(controller),
   getResearchProgress: controller.getResearchProgress.bind(controller),
   unlockResearch: [validate(unlockResearchSchema), controller.unlockResearch.bind(controller)],
-  updateResearchProgress: controller.updateResearchProgress.bind(controller),
+  updateResearchProgress: [validate(updateResearchProgressSchema), controller.updateResearchProgress.bind(controller)],
 };

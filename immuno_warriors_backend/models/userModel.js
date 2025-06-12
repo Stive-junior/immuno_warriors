@@ -46,8 +46,8 @@ const fromFirestore = (doc) => ({
   avatar: doc.avatar || null,
   createdAt: doc.createdAt || null,
   lastLogin: doc.lastLogin || null,
-  resources: doc.resources || {},
-  progression: doc.progression || {},
+  resources: doc.resources || { energy: 0 },
+  progression: doc.progression || { level: 1, xp: 0 },
   achievements: doc.achievements || {},
   inventory: doc.inventory || []
 });

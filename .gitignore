@@ -18,7 +18,7 @@ migrate_working_dir/
 *.iws
 .idea/
 immuno_warriors_backend/.env
-immuno_warriors_backend/immunowarriors-84410-firebase-adminsdk-fbsvc-1a63dd6017.json
+
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.

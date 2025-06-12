@@ -8,7 +8,7 @@ const Joi = require('joi');
  * @property {string} name - Nom de la base.
  * @property {number} level - Niveau de la base.
  * @property {Object[]} pathogens - Liste des pathogènes.
- * @property {Object} defenses - Défenses (ex. { shield: 50 }).
+ * @property {Object} defenses - Défenses (ex. { wall: 50, trap: 20 }).
  */
 const baseViraleSchema = Joi.object({
   id: Joi.string().uuid().required(),
@@ -16,7 +16,10 @@ const baseViraleSchema = Joi.object({
   name: Joi.string().required(),
   level: Joi.number().integer().min(1).required(),
   pathogens: Joi.array().items(Joi.object()).required(),
-  defenses: Joi.object().pattern(Joi.string(), Joi.number().integer().min(0)).required()
+  defenses: Joi.object().pattern(
+    Joi.string().valid('wall', 'trap', 'shield', 'turret'),
+    Joi.number().integer().min(0)
+  ).required()
 });
 
 /**
@@ -35,9 +38,9 @@ const fromFirestore = (doc) => ({
   id: doc.id,
   playerId: doc.playerId,
   name: doc.name,
-  level: doc.level,
+  level: doc.level || 1,
   pathogens: doc.pathogens || [],
-  defenses: doc.defenses || {}
+  defenses: doc.defenses || { wall: 0, trap: 0, shield: 0, turret: 0 }
 });
 
 /**

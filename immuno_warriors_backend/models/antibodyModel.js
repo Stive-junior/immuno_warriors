@@ -4,8 +4,8 @@ const Joi = require('joi');
  * Schéma pour un anticorps dans Firestore et les réponses API.
  * @typedef {Object} Antibody
  * @property {string} id - Identifiant unique.
- * @property {string} type - Type (VIRAL, BACTERIAL, FUNGAL).
- * @property {string} attackType - Type d'attaque (MELEE, RANGED, SUPPORT).
+ * @property {string} type - Type (igG, igM, igA, igD, igE).
+ * @property {string} attackType - Type d'attaque (physical, chemical, energy).
  * @property {number} damage - Dégâts de base.
  * @property {number} range - Portée.
  * @property {number} cost - Coût de déploiement.
@@ -17,8 +17,8 @@ const Joi = require('joi');
  */
 const antibodySchema = Joi.object({
   id: Joi.string().uuid().required(),
-  type: Joi.string().valid('VIRAL', 'BACTERIAL', 'FUNGAL').required(),
-  attackType: Joi.string().valid('MELEE', 'RANGED', 'SUPPORT').required(),
+  type: Joi.string().valid('igG', 'igM', 'igA', 'igD', 'igE').required(),
+  attackType: Joi.string().valid('physical', 'chemical', 'energy').required(),
   damage: Joi.number().integer().min(0).required(),
   range: Joi.number().integer().min(0).required(),
   cost: Joi.number().integer().min(0).required(),
@@ -43,15 +43,15 @@ const validateAntibody = (data) => antibodySchema.validate(data, { abortEarly: f
  */
 const fromFirestore = (doc) => ({
   id: doc.id,
-  type: doc.type,
-  attackType: doc.attackType,
-  damage: doc.damage,
-  range: doc.range,
-  cost: doc.cost,
-  efficiency: doc.efficiency,
+  type: doc.type || 'igG',
+  attackType: doc.attackType || 'physical',
+  damage: doc.damage || 0,
+  range: doc.range || 0,
+  cost: doc.cost || 0,
+  efficiency: doc.efficiency || 0,
   name: doc.name,
-  health: doc.health,
-  maxHealth: doc.maxHealth,
+  health: doc.health || 0,
+  maxHealth: doc.maxHealth || 0,
   specialAbility: doc.specialAbility || null
 });
 

@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:equatable/equatable.dart';
-import './combat/antibody_entity.dart';
-import './combat/pathogen_entity.dart';
+import 'antibody_entity.dart';
+import 'pathogen_entity.dart';
 
 part 'combat_report_entity.freezed.dart';
 part 'combat_report_entity.g.dart';

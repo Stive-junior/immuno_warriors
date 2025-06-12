@@ -2,7 +2,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:equatable/equatable.dart';
 import '../../core/constants/pathogen_types.dart';
-import './combat/pathogen_entity.dart';
+import 'pathogen_entity.dart';
 
 part 'base_virale_entity.freezed.dart';
 part 'base_virale_entity.g.dart';

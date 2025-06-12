@@ -14,3 +14,4 @@ router.post('/xp', addXP);
 router.post('/mission/:missionId', completeMission);
 
 module.exports = router;
+

@@ -11,17 +11,13 @@ class MemorySignature with _$MemorySignature, EquatableMixin {
 
   const factory MemorySignature({
     required String pathogenType,
-    required double attackBonus,
-    required double defenseBonus,
-    required DateTime expiryDate,
+    required int attackBonus,
+    required int defenseBonus,
+    required String expiryDate,
   }) = _MemorySignature;
 
   factory MemorySignature.fromJson(Map<String, dynamic> json) =>
       _$MemorySignatureFromJson(json);
-
-  /// Checks if the signature is valid, including a 1-hour grace period.
-  bool isValid() =>
-      expiryDate.isAfter(DateTime.now().subtract(const Duration(hours: 1)));
 
   @override
   List<Object?> get props => [

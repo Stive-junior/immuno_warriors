@@ -17,24 +17,30 @@ class MemorySignatureModelAdapter extends TypeAdapter<MemorySignatureModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return MemorySignatureModel(
-      pathogenType: fields[0] as String,
-      attackBonus: fields[1] as double,
-      defenseBonus: fields[2] as double,
-      expiryDate: fields[3] as DateTime,
+      id: fields[0] as String,
+      userId: fields[1] as String,
+      pathogenType: fields[2] as String,
+      attackBonus: fields[3] as int,
+      defenseBonus: fields[4] as int,
+      expiryDate: fields[5] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, MemorySignatureModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(6)
       ..writeByte(0)
-      ..write(obj.pathogenType)
+      ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.attackBonus)
+      ..write(obj.userId)
       ..writeByte(2)
-      ..write(obj.defenseBonus)
+      ..write(obj.pathogenType)
       ..writeByte(3)
+      ..write(obj.attackBonus)
+      ..writeByte(4)
+      ..write(obj.defenseBonus)
+      ..writeByte(5)
       ..write(obj.expiryDate);
   }
 

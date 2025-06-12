@@ -1,18 +1,31 @@
 const Joi = require('joi');
 
 /**
+ * Schéma pour une mission dans la progression.
+ * @typedef {Object} Mission
+ * @property {string} id - ID de la mission.
+ * @property {boolean} completed - Statut de complétion.
+ */
+const missionSchema = Joi.object({
+  id: Joi.string().uuid().required(),
+  completed: Joi.boolean().required()
+});
+
+/**
  * Schéma pour la progression dans Firestore et les réponses API.
  * @typedef {Object} Progression
  * @property {string} userId - ID de l'utilisateur.
- * @property {number} level - Niveau actuel.
- * @property {number} xp - Points d'expérience.
- * @property {string} [rank] - Rang (ex. bronze, silver).
+ * @property {number} level - Niveau actuel (entier ≥ 1).
+ * @property {number} xp - Points d'expérience (entier ≥ 0).
+ * @property {string} [rank] - Rang (bronze, silver, gold).
+ * @property {Array<Mission>} [missions] - Liste des missions.
  */
 const progressionSchema = Joi.object({
   userId: Joi.string().uuid().required(),
   level: Joi.number().integer().min(1).required(),
   xp: Joi.number().integer().min(0).required(),
-  rank: Joi.string().optional()
+  rank: Joi.string().valid('bronze', 'silver', 'gold').optional(),
+  missions: Joi.array().items(missionSchema).optional()
 });
 
 /**
@@ -31,7 +44,8 @@ const fromFirestore = (doc) => ({
   userId: doc.userId,
   level: doc.level,
   xp: doc.xp,
-  rank: doc.rank || null
+  rank: doc.rank || null,
+  missions: doc.missions || []
 });
 
 /**
@@ -43,11 +57,13 @@ const toFirestore = (progression) => ({
   userId: progression.userId,
   level: progression.level,
   xp: progression.xp,
-  rank: progression.rank
+  rank: progression.rank,
+  missions: progression.missions
 });
 
 module.exports = {
   progressionSchema,
+  missionSchema,
   validateProgression,
   fromFirestore,
   toFirestore

@@ -21,9 +21,9 @@ MemorySignature _$MemorySignatureFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$MemorySignature {
   String get pathogenType => throw _privateConstructorUsedError;
-  double get attackBonus => throw _privateConstructorUsedError;
-  double get defenseBonus => throw _privateConstructorUsedError;
-  DateTime get expiryDate => throw _privateConstructorUsedError;
+  int get attackBonus => throw _privateConstructorUsedError;
+  int get defenseBonus => throw _privateConstructorUsedError;
+  String get expiryDate => throw _privateConstructorUsedError;
 
   /// Serializes this MemorySignature to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -43,9 +43,9 @@ abstract class $MemorySignatureCopyWith<$Res> {
   @useResult
   $Res call(
       {String pathogenType,
-      double attackBonus,
-      double defenseBonus,
-      DateTime expiryDate});
+      int attackBonus,
+      int defenseBonus,
+      String expiryDate});
 }
 
 /// @nodoc
@@ -76,15 +76,15 @@ class _$MemorySignatureCopyWithImpl<$Res, $Val extends MemorySignature>
       attackBonus: null == attackBonus
           ? _value.attackBonus
           : attackBonus // ignore: cast_nullable_to_non_nullable
-              as double,
+              as int,
       defenseBonus: null == defenseBonus
           ? _value.defenseBonus
           : defenseBonus // ignore: cast_nullable_to_non_nullable
-              as double,
+              as int,
       expiryDate: null == expiryDate
           ? _value.expiryDate
           : expiryDate // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as String,
     ) as $Val);
   }
 }
@@ -99,9 +99,9 @@ abstract class _$$MemorySignatureImplCopyWith<$Res>
   @useResult
   $Res call(
       {String pathogenType,
-      double attackBonus,
-      double defenseBonus,
-      DateTime expiryDate});
+      int attackBonus,
+      int defenseBonus,
+      String expiryDate});
 }
 
 /// @nodoc
@@ -130,15 +130,15 @@ class __$$MemorySignatureImplCopyWithImpl<$Res>
       attackBonus: null == attackBonus
           ? _value.attackBonus
           : attackBonus // ignore: cast_nullable_to_non_nullable
-              as double,
+              as int,
       defenseBonus: null == defenseBonus
           ? _value.defenseBonus
           : defenseBonus // ignore: cast_nullable_to_non_nullable
-              as double,
+              as int,
       expiryDate: null == expiryDate
           ? _value.expiryDate
           : expiryDate // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as String,
     ));
   }
 }
@@ -159,11 +159,11 @@ class _$MemorySignatureImpl extends _MemorySignature {
   @override
   final String pathogenType;
   @override
-  final double attackBonus;
+  final int attackBonus;
   @override
-  final double defenseBonus;
+  final int defenseBonus;
   @override
-  final DateTime expiryDate;
+  final String expiryDate;
 
   /// Create a copy of MemorySignature
   /// with the given fields replaced by the non-null parameter values.
@@ -185,9 +185,9 @@ class _$MemorySignatureImpl extends _MemorySignature {
 abstract class _MemorySignature extends MemorySignature {
   const factory _MemorySignature(
       {required final String pathogenType,
-      required final double attackBonus,
-      required final double defenseBonus,
-      required final DateTime expiryDate}) = _$MemorySignatureImpl;
+      required final int attackBonus,
+      required final int defenseBonus,
+      required final String expiryDate}) = _$MemorySignatureImpl;
   const _MemorySignature._() : super._();
 
   factory _MemorySignature.fromJson(Map<String, dynamic> json) =
@@ -196,11 +196,11 @@ abstract class _MemorySignature extends MemorySignature {
   @override
   String get pathogenType;
   @override
-  double get attackBonus;
+  int get attackBonus;
   @override
-  double get defenseBonus;
+  int get defenseBonus;
   @override
-  DateTime get expiryDate;
+  String get expiryDate;
 
   /// Create a copy of MemorySignature
   /// with the given fields replaced by the non-null parameter values.

@@ -14,6 +14,7 @@ const {
 
 router.use(authenticate);
 
+
 router.post('/user-data', syncUserData);
 router.post('/inventory', syncInventory);
 router.post('/threats', syncThreats);

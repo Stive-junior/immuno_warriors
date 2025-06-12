@@ -1,14 +1,14 @@
 import 'package:hive/hive.dart';
 import '../../../domain/entities/combat_report_entity.dart';
-import '../../domain/entities/combat/antibody_entity.dart';
-import '../../domain/entities/combat/pathogen_entity.dart';
+import '../../domain/entities/antibody_entity.dart';
+import '../../domain/entities/pathogen_entity.dart';
 
 part 'combat_report_model.g.dart';
 
 @HiveType(typeId: 11)
 class CombatReportModel extends HiveObject {
   @HiveField(0)
-  final String combatId;
+  final String id;
   @HiveField(1)
   final DateTime date;
   @HiveField(2)
@@ -31,7 +31,7 @@ class CombatReportModel extends HiveObject {
   final PathogenEntity? pathogenFought;
 
   CombatReportModel({
-    required this.combatId,
+    required this.id,
     required this.date,
     required this.result,
     required this.log,
@@ -46,7 +46,7 @@ class CombatReportModel extends HiveObject {
 
   factory CombatReportModel.fromJson(Map<String, dynamic> json) {
     return CombatReportModel(
-      combatId: json['combatId'] as String,
+      id: json['combatId'] as String,
       date: DateTime.parse(json['date'] as String),
       result: CombatResult.values.firstWhere(
         (e) => e.toString().split('.').last == json['result'],
@@ -73,7 +73,7 @@ class CombatReportModel extends HiveObject {
   }
 
   Map<String, dynamic> toJson() => {
-    'combatId': combatId,
+    'combatId': id,
     'date': date.toIso8601String(),
     'result': result.toString().split('.').last,
     'log': log,
@@ -88,7 +88,7 @@ class CombatReportModel extends HiveObject {
 
   factory CombatReportModel.fromEntity(CombatReportEntity entity) {
     return CombatReportModel(
-      combatId: entity.combatId,
+      id: entity.combatId,
       date: entity.date,
       result: entity.result,
       log: entity.log,
@@ -104,7 +104,7 @@ class CombatReportModel extends HiveObject {
 
   CombatReportEntity toEntity() {
     return CombatReportEntity(
-      combatId: combatId,
+      combatId: id,
       date: date,
       result: result,
       log: log,
@@ -119,6 +119,5 @@ class CombatReportModel extends HiveObject {
   }
 
   /// Validates combat data for consistency.
-  bool get isValid =>
-      combatId.isNotEmpty && damageDealt >= 0 && damageTaken >= 0;
+  bool get isValid => id.isNotEmpty && damageDealt >= 0 && damageTaken >= 0;
 }

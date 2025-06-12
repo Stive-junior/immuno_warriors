@@ -106,6 +106,28 @@ class UserModel extends HiveObject {
     );
   }
 
+  UserModel copyWith({
+    String? id,
+    String? email,
+    String? username,
+    String? avatar,
+    Map<String, dynamic>? resources,
+    Map<String, dynamic>? progression,
+    Map<String, bool>? achievements,
+    List<dynamic>? inventory,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      username: username ?? this.username,
+      avatar: avatar ?? this.avatar,
+      resources: resources ?? this.resources,
+      progression: progression ?? this.progression,
+      achievements: achievements ?? this.achievements,
+      inventory: inventory ?? this.inventory,
+    );
+  }
+
   Object hasResources(String resourceType, int amount) =>
       (resources?[resourceType] as num?)?.toInt() ?? 0 >= amount;
 }

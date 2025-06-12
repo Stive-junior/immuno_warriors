@@ -17,7 +17,7 @@ class CombatReportModelAdapter extends TypeAdapter<CombatReportModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return CombatReportModel(
-      combatId: fields[0] as String,
+      id: fields[0] as String,
       date: fields[1] as DateTime,
       result: fields[2] as CombatResult,
       log: (fields[3] as List).cast<String>(),
@@ -36,7 +36,7 @@ class CombatReportModelAdapter extends TypeAdapter<CombatReportModel> {
     writer
       ..writeByte(11)
       ..writeByte(0)
-      ..write(obj.combatId)
+      ..write(obj.id)
       ..writeByte(1)
       ..write(obj.date)
       ..writeByte(2)

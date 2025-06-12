@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:immuno_warriors/data/models/combat/pathogen_model.dart';
+import 'package:immuno_warriors/data/models/pathogen_model.dart';
 import '../../../core/constants/pathogen_types.dart';
 import '../../../domain/entities/base_virale_entity.dart';
 

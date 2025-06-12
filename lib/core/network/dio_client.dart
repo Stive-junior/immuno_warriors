@@ -1,39 +1,28 @@
 /// HTTP client for Immuno Warriors using Dio.
-///
-/// This file handles API requests with Firebase Authentication, retries, and error handling.
+
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import '../utils/app_logger.dart';
-import 'api_endpoints.dart';
-
-/// Custom exception for API errors.
-class ApiException implements Exception {
-  final String message;
-  final int? statusCode;
-  final dynamic error;
-
-  ApiException(this.message, {this.statusCode, this.error});
-
-  @override
-  String toString() =>
-      'ApiException: $message (Status: $statusCode, Error: $error)';
-}
+import 'package:immuno_warriors/core/exceptions/app_exception.dart';
+import 'package:immuno_warriors/core/utils/app_logger.dart';
+import 'package:immuno_warriors/core/services/network_service.dart';
 
 class DioClient {
   final Dio _dio;
   final FirebaseAuth _firebaseAuth;
+  // ignore: unused_field
+  final NetworkService _networkService;
   final int _maxRetries = 3;
   final Duration _retryDelay = const Duration(seconds: 2);
 
   /// Creates a [DioClient] instance.
   ///
-  /// Optionally accepts a [baseUrl] to override the default from [ApiEndpoints].
-  DioClient({String? baseUrl})
+  /// Requires a [NetworkService] to manage base URL and connectivity.
+  DioClient(this._networkService)
     : _firebaseAuth = FirebaseAuth.instance,
       _dio = Dio(
         BaseOptions(
-          baseUrl: baseUrl ?? ApiEndpoints.baseUrl,
+          baseUrl: _networkService.currentBaseUrl,
           connectTimeout: const Duration(seconds: 30),
           receiveTimeout: const Duration(seconds: 30),
           sendTimeout: const Duration(seconds: 30),
@@ -44,6 +33,12 @@ class DioClient {
         ),
       ) {
     _setupInterceptors();
+  }
+
+  /// Updates the base URL dynamically.
+  void updateBaseUrl(String newUrl) {
+    _dio.options.baseUrl = newUrl;
+    AppLogger.info('URL de base mise à jour dans DioClient : $newUrl');
   }
 
   /// --- Setup ---
@@ -114,7 +109,6 @@ class DioClient {
 
   /// --- Request Methods ---
 
-  /// Performs a GET request to the specified [endpoint].
   Future<Response> get(
     String endpoint, {
     Map<String, dynamic>? queryParameters,
@@ -136,7 +130,6 @@ class DioClient {
     }
   }
 
-  /// Performs a POST request to the specified [endpoint].
   Future<Response> post(
     String endpoint, {
     dynamic data,
@@ -158,7 +151,6 @@ class DioClient {
     }
   }
 
-  /// Performs a PUT request to the specified [endpoint].
   Future<Response> put(
     String endpoint, {
     dynamic data,
@@ -182,7 +174,6 @@ class DioClient {
     }
   }
 
-  /// Performs a DELETE request to the specified [endpoint].
   Future<Response> delete(
     String endpoint, {
     dynamic data,
@@ -206,7 +197,6 @@ class DioClient {
 
   /// --- Helper Methods ---
 
-  /// Refreshes the Firebase token for the current user.
   Future<String?> _refreshToken() async {
     try {
       final user = _firebaseAuth.currentUser;
@@ -223,7 +213,6 @@ class DioClient {
     }
   }
 
-  /// Determines if a request should be retried based on the error.
   bool _shouldRetry(DioException e) {
     return e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.sendTimeout ||
@@ -231,7 +220,6 @@ class DioClient {
         (e.response?.statusCode != null && e.response!.statusCode! >= 500);
   }
 
-  /// Retries a failed request with exponential backoff.
   Future<void> _retryWithBackoff(
     DioException e,
     ErrorInterceptorHandler handler,
@@ -274,7 +262,6 @@ class DioClient {
     }
   }
 
-  /// Retries a request after token refresh.
   void _retryRequest(
     RequestOptions options,
     ErrorInterceptorHandler handler,
@@ -298,28 +285,27 @@ class DioClient {
     }
   }
 
-  /// Handles errors and throws an [ApiException] with detailed information.
   void _handleError(dynamic e, String endpoint, String method) {
-    String message = 'API Error: $method $endpoint failed.';
+    String message = 'Erreur API : $method $endpoint a échoué.';
     int? statusCode;
     dynamic errorData;
 
     if (e is DioException) {
       statusCode = e.response?.statusCode;
       errorData = e.response?.data;
-      message += ' Status: $statusCode';
+      message += ' Statut : $statusCode';
       if (errorData is Map && errorData.containsKey('message')) {
         message += ' - ${errorData['message']}';
       } else if (e.type == DioExceptionType.connectionTimeout) {
-        message += ' - Connection timeout.';
+        message += ' - Timeout de connexion.';
       } else if (e.type == DioExceptionType.receiveTimeout) {
-        message += ' - Receive timeout.';
+        message += ' - Timeout de réception.';
       } else if (e.type == DioExceptionType.sendTimeout) {
-        message += ' - Send timeout.';
+        message += ' - Timeout d\'envoi.';
       }
       AppLogger.error(message, error: e);
     } else {
-      message += ' - Unexpected error: $e';
+      message += ' - Erreur inattendue : $e';
       AppLogger.error(message, error: e);
     }
 

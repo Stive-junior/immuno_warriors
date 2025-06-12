@@ -1,4 +1,4 @@
-import 'package:immuno_warriors/domain/entities/combat/antibody_entity.dart';
+import 'package:immuno_warriors/domain/entities/antibody_entity.dart';
 import 'package:immuno_warriors/domain/repositories/antibody_repository.dart';
 import 'package:immuno_warriors/core/utils/app_logger.dart';
 

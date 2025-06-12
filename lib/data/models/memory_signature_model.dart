@@ -7,33 +7,52 @@ part 'memory_signature_model.g.dart';
 @HiveType(typeId: 19)
 class MemorySignatureModel extends HiveObject {
   @HiveField(0)
-  final String pathogenType;
+  final String id;
+
   @HiveField(1)
-  final double attackBonus;
+  final String userId;
+
   @HiveField(2)
-  final double defenseBonus;
+  final String pathogenType;
+
   @HiveField(3)
-  final DateTime expiryDate;
+  final int attackBonus;
+
+  @HiveField(4)
+  final int defenseBonus;
+
+  @HiveField(5)
+  final String expiryDate;
 
   MemorySignatureModel({
+    required this.id,
+    required this.userId,
     required this.pathogenType,
     required this.attackBonus,
     required this.defenseBonus,
     required this.expiryDate,
   });
 
-  factory MemorySignatureModel.fromJson(Map<String, dynamic> json) =>
-      MemorySignatureModel.fromEntity(MemorySignature.fromJson(json));
-
-  Map<String, dynamic> toJson() => toEntity().toJson();
-
-  factory MemorySignatureModel.fromEntity(MemorySignature entity) {
+  factory MemorySignatureModel.fromJson(Map<String, dynamic> json) {
     return MemorySignatureModel(
-      pathogenType: entity.pathogenType,
-      attackBonus: entity.attackBonus,
-      defenseBonus: entity.defenseBonus,
-      expiryDate: entity.expiryDate,
+      id: json['id'] as String,
+      userId: json['userId'] as String,
+      pathogenType: json['pathogenType'] as String,
+      attackBonus: json['attackBonus'] as int,
+      defenseBonus: json['defenseBonus'] as int,
+      expiryDate: json['expiryDate'] as String,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'pathogenType': pathogenType,
+      'attackBonus': attackBonus,
+      'defenseBonus': defenseBonus,
+      'expiryDate': expiryDate,
+    };
   }
 
   MemorySignature toEntity() {
@@ -44,10 +63,4 @@ class MemorySignatureModel extends HiveObject {
       expiryDate: expiryDate,
     );
   }
-
-  /// Validates if the signature is valid with a 1-hour grace period.
-  bool get isValid =>
-      expiryDate.isAfter(DateTime.now().subtract(Duration(hours: 1))) &&
-      attackBonus >= 0 &&
-      defenseBonus >= 0;
 }

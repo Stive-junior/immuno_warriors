@@ -3,10 +3,10 @@ const Joi = require('joi');
 /**
  * Schéma pour un élément d'inventaire dans Firestore et les réponses API.
  * @typedef {Object} InventoryItem
- * @property {string} id - Identifiant unique.
+ * @property {string} id - Identifiant unique (UUID).
  * @property {string} type - Type d'élément (ex. resource, equipment).
  * @property {string} name - Nom de l'élément.
- * @property {number} quantity - Quantité.
+ * @property {number} quantity - Quantité (entier ≥ 0).
  * @property {Object} [properties] - Propriétés supplémentaires.
  */
 const inventorySchema = Joi.object({
@@ -18,11 +18,29 @@ const inventorySchema = Joi.object({
 });
 
 /**
+ * Schéma pour les mises à jour d'un élément d'inventaire.
+ * @typedef {Object} InventoryUpdate
+ * @property {string} [name] - Nouveau nom de l'élément.
+ * @property {number} [quantity] - Nouvelle quantité.
+ */
+const updateSchema = Joi.object({
+  name: Joi.string().optional(),
+  quantity: Joi.number().integer().min(0).optional()
+}).min(1); // Au moins un champ requis
+
+/**
  * Valide les données d'inventaire.
  * @param {Object} data - Données à valider.
  * @returns {Object} Résultat de la validation Joi.
  */
 const validateInventoryItem = (data) => inventorySchema.validate(data, { abortEarly: false });
+
+/**
+ * Valide les données de mise à jour d'inventaire.
+ * @param {Object} data - Données à valider.
+ * @returns {Object} Résultat de la validation Joi.
+ */
+const validateInventoryUpdate = (data) => updateSchema.validate(data, { abortEarly: false });
 
 /**
  * Convertit un élément Firestore en format API.
@@ -47,12 +65,14 @@ const toFirestore = (item) => ({
   type: item.type,
   name: item.name,
   quantity: item.quantity,
-  properties: item.properties
+  properties: item.properties || {}
 });
 
 module.exports = {
   inventorySchema,
+  updateSchema,
   validateInventoryItem,
+  validateInventoryUpdate,
   fromFirestore,
   toFirestore
 };
