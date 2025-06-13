@@ -7,6 +7,8 @@ class AppAssets {
   static const String appIcon = 'assets/icons/app_icon.png';
   static const String background = 'assets/images/background.png';
   static const String splashVirus = 'assets/animations/logo_virus.png';
+  static const String warningAnimation = 'assets/animations/warning.json';
+  static const String errorAnimation = 'assets/animations/error.json';
 
   /// --- Animations ---
   static const String platformLogoAnimation = '';
@@ -92,4 +94,6 @@ class AppAssets {
     avatar3,
     avatar4,
   ];
+
+  static const String emailIconAnimation = 'assets/animation/email_icon.json';
 }

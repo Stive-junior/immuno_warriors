@@ -1,22 +1,46 @@
 const Joi = require('joi');
 const validate = require('../middleware/validationMiddleware');
-const { AppError } = require('../utils/errorUtils');
 const AuthService = require('../services/authService');
 
-/**
- * Schéma pour l'utilisateur dans Firestore et les réponses API.
- * @typedef {Object} User
- * @property {string} id - Identifiant unique de l'utilisateur (UUID).
- * @property {string} email - Adresse e-mail de l'utilisateur.
- * @property {string} [username] - Nom de d'utilisateur (optionnel).
- * @property {string} [avatar] - URL de l'avatar (optionnel).
- * @property {string} [createdAt] - Date de création (ISO 8601).
- * @property {string} [lastLogin] - Date de dernière connexion (ISO 8601).
- * @property {Object} [resources] - Ressources de l'utilisateur (ex. { energy: 100 }).
- * @property {Object} [progression] - Progression (ex. { level: 1, xp: 500 }).
- * @property {Object} [achievements] - Succès (ex. { firstCombat: true }).
- * @property {Array} [inventory] - Inventaire (liste d'objets).
- */
+const signUpSchema = Joi.object({
+  email: Joi.string().email().required(),
+  username: Joi.string().min(3).max(30).required(),
+  firebaseToken: Joi.string().required(),
+});
+
+const signInSchema = Joi.object({
+  email: Joi.string().email().required(),
+  firebaseToken: Joi.string().required(),
+});
+
+const refreshTokenSchema = Joi.object({
+  firebaseToken: Joi.string().required(),
+});
+
+class AuthController {
+  async signUp(req, res) {
+    const { email, username, firebaseToken } = req.body;
+    try {
+      const result = await AuthService.signUp({ email, username, firebaseToken });
+      res.status(201).json(result);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async signIn(req, res) {
+    const { email, firebaseToken } = req.body;
+    try {
+      const result = await AuthService.signIn({ email, firebaseToken });
+      res.status(200).json(result);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async refreshToken(req, res) {const Joi = require('joi');
+const validate = require('../middleware/validationMiddleware');
+const AuthService = require('../services/authService');
 
 const signUpSchema = Joi.object({
   email: Joi.string().email().required(),
@@ -29,16 +53,12 @@ const signInSchema = Joi.object({
   password: Joi.string().required(),
 });
 
-const refreshTokenSchema = Joi.object({
-  token: Joi.string().required(),
-});
-
 class AuthController {
   /**
    * Inscrit un nouvel utilisateur.
-   * @param {Object} req - Requête HTTP avec les données d'inscription.
+   * @param {Object} req - Requête HTTP.
    * @param {Object} res - Réponse HTTP.
-   * @returns {Promise<void>} Réponse JSON avec l'utilisateur et le token.
+   * @returns {Promise<void>} - Réponse JSON avec utilisateur et token.
    */
   async signUp(req, res) {
     const { email, password, username } = req.body;
@@ -52,9 +72,9 @@ class AuthController {
 
   /**
    * Connecte un utilisateur existant.
-   * @param {Object} req - Requête HTTP avec les données de connexion.
+   * @param {Object} req - Requête HTTP.
    * @param {Object} res - Réponse HTTP.
-   * @returns {Promise<void>} Réponse JSON avec l'utilisateur et le token.
+   * @returns {Promise<void>} - Réponse JSON avec utilisateur et token.
    */
   async signIn(req, res) {
     const { email, password } = req.body;
@@ -67,27 +87,10 @@ class AuthController {
   }
 
   /**
-   * Rafraîchit le token de l'utilisateur.
-   * @param {Object} req - Requête HTTP avec le token.
-   * @param {Object} res - Réponse HTTP.
-   * @returns {Promise<void>} Réponse JSON avec le nouveau token.
-   */
-  async refreshToken(req, res) {
-    const { token } = req.body;
-    if (!token) throw new AppError(400, 'Token manquant');
-    try {
-      const newToken = await AuthService.refreshToken(token);
-      res.status(200).json({ token: newToken });
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
    * Déconnecte l'utilisateur.
-   * @param {Object} req - Requête HTTP avec le token.
+   * @param {Object} req - Requête HTTP.
    * @param {Object} res - Réponse HTTP.
-   * @returns {Promise<void>} Réponse JSON confirmant la déconnexion.
+   * @returns {Promise<void>} - Réponse JSON confirmant la déconnexion.
    */
   async signOut(req, res) {
     const authHeader = req.headers.authorization;
@@ -102,10 +105,50 @@ class AuthController {
 
   /**
    * Vérifie la validité d'un token.
-   * @param {Object} req - Requête HTTP avec le token.
+   * @param {Object} req - Requête HTTP.
    * @param {Object} res - Réponse HTTP.
-   * @returns {Promise<void>} Réponse JSON avec le résultat.
+   * @returns {Promise<void>} - Réponse JSON avec résultat.
    */
+  async verifyToken(req, res) {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    try {
+      const result = await AuthService.verifyToken(token);
+      res.status(200).json(result);
+    } catch (error) {
+      throw error;
+    }
+  }
+}
+
+const controller = new AuthController();
+module.exports = {
+  signUp: [validate(signUpSchema), controller.signUp.bind(controller)],
+  signIn: [validate(signInSchema), controller.signIn.bind(controller)],
+  signOut: controller.signOut.bind(controller),
+  verifyToken: controller.verifyToken.bind(controller),
+};
+
+    const { firebaseToken } = req.body;
+    try {
+      const result = await AuthService.refreshToken(firebaseToken);
+      res.status(200).json(result);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async signOut(req, res) {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    try {
+      await AuthService.signOut(token);
+      res.status(200).json({ message: 'Déconnexion réussie' });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async verifyToken(req, res) {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];

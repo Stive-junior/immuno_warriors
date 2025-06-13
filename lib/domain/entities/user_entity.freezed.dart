@@ -28,9 +28,9 @@ mixin _$UserEntity {
   DateTime? get createdAt => throw _privateConstructorUsedError;
   DateTime? get lastLogin => throw _privateConstructorUsedError;
   Map<String, dynamic>? get resources => throw _privateConstructorUsedError;
-  Map<String, dynamic>? get progression => throw _privateConstructorUsedError;
+  ProgressionEntity? get progression => throw _privateConstructorUsedError;
   Map<String, bool>? get achievements => throw _privateConstructorUsedError;
-  List<dynamic>? get inventory => throw _privateConstructorUsedError;
+  List<InventoryItemModel>? get inventory => throw _privateConstructorUsedError;
 
   /// Serializes this UserEntity to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -56,9 +56,11 @@ abstract class $UserEntityCopyWith<$Res> {
       DateTime? createdAt,
       DateTime? lastLogin,
       Map<String, dynamic>? resources,
-      Map<String, dynamic>? progression,
+      ProgressionEntity? progression,
       Map<String, bool>? achievements,
-      List<dynamic>? inventory});
+      List<InventoryItemModel>? inventory});
+
+  $ProgressionEntityCopyWith<$Res>? get progression;
 }
 
 /// @nodoc
@@ -119,7 +121,7 @@ class _$UserEntityCopyWithImpl<$Res, $Val extends UserEntity>
       progression: freezed == progression
           ? _value.progression
           : progression // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as ProgressionEntity?,
       achievements: freezed == achievements
           ? _value.achievements
           : achievements // ignore: cast_nullable_to_non_nullable
@@ -127,8 +129,22 @@ class _$UserEntityCopyWithImpl<$Res, $Val extends UserEntity>
       inventory: freezed == inventory
           ? _value.inventory
           : inventory // ignore: cast_nullable_to_non_nullable
-              as List<dynamic>?,
+              as List<InventoryItemModel>?,
     ) as $Val);
+  }
+
+  /// Create a copy of UserEntity
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ProgressionEntityCopyWith<$Res>? get progression {
+    if (_value.progression == null) {
+      return null;
+    }
+
+    return $ProgressionEntityCopyWith<$Res>(_value.progression!, (value) {
+      return _then(_value.copyWith(progression: value) as $Val);
+    });
   }
 }
 
@@ -148,9 +164,12 @@ abstract class _$$UserEntityImplCopyWith<$Res>
       DateTime? createdAt,
       DateTime? lastLogin,
       Map<String, dynamic>? resources,
-      Map<String, dynamic>? progression,
+      ProgressionEntity? progression,
       Map<String, bool>? achievements,
-      List<dynamic>? inventory});
+      List<InventoryItemModel>? inventory});
+
+  @override
+  $ProgressionEntityCopyWith<$Res>? get progression;
 }
 
 /// @nodoc
@@ -207,9 +226,9 @@ class __$$UserEntityImplCopyWithImpl<$Res>
           : resources // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
       progression: freezed == progression
-          ? _value._progression
+          ? _value.progression
           : progression // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as ProgressionEntity?,
       achievements: freezed == achievements
           ? _value._achievements
           : achievements // ignore: cast_nullable_to_non_nullable
@@ -217,7 +236,7 @@ class __$$UserEntityImplCopyWithImpl<$Res>
       inventory: freezed == inventory
           ? _value._inventory
           : inventory // ignore: cast_nullable_to_non_nullable
-              as List<dynamic>?,
+              as List<InventoryItemModel>?,
     ));
   }
 }
@@ -233,11 +252,10 @@ class _$UserEntityImpl extends _UserEntity {
       this.createdAt,
       this.lastLogin,
       final Map<String, dynamic>? resources,
-      final Map<String, dynamic>? progression,
+      this.progression,
       final Map<String, bool>? achievements,
-      final List<dynamic>? inventory})
+      final List<InventoryItemModel>? inventory})
       : _resources = resources,
-        _progression = progression,
         _achievements = achievements,
         _inventory = inventory,
         super._();
@@ -268,16 +286,8 @@ class _$UserEntityImpl extends _UserEntity {
     return EqualUnmodifiableMapView(value);
   }
 
-  final Map<String, dynamic>? _progression;
   @override
-  Map<String, dynamic>? get progression {
-    final value = _progression;
-    if (value == null) return null;
-    if (_progression is EqualUnmodifiableMapView) return _progression;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(value);
-  }
-
+  final ProgressionEntity? progression;
   final Map<String, bool>? _achievements;
   @override
   Map<String, bool>? get achievements {
@@ -288,9 +298,9 @@ class _$UserEntityImpl extends _UserEntity {
     return EqualUnmodifiableMapView(value);
   }
 
-  final List<dynamic>? _inventory;
+  final List<InventoryItemModel>? _inventory;
   @override
-  List<dynamic>? get inventory {
+  List<InventoryItemModel>? get inventory {
     final value = _inventory;
     if (value == null) return null;
     if (_inventory is EqualUnmodifiableListView) return _inventory;
@@ -323,9 +333,9 @@ abstract class _UserEntity extends UserEntity {
       final DateTime? createdAt,
       final DateTime? lastLogin,
       final Map<String, dynamic>? resources,
-      final Map<String, dynamic>? progression,
+      final ProgressionEntity? progression,
       final Map<String, bool>? achievements,
-      final List<dynamic>? inventory}) = _$UserEntityImpl;
+      final List<InventoryItemModel>? inventory}) = _$UserEntityImpl;
   const _UserEntity._() : super._();
 
   factory _UserEntity.fromJson(Map<String, dynamic> json) =
@@ -347,11 +357,11 @@ abstract class _UserEntity extends UserEntity {
   @override
   Map<String, dynamic>? get resources;
   @override
-  Map<String, dynamic>? get progression;
+  ProgressionEntity? get progression;
   @override
   Map<String, bool>? get achievements;
   @override
-  List<dynamic>? get inventory;
+  List<InventoryItemModel>? get inventory;
 
   /// Create a copy of UserEntity
   /// with the given fields replaced by the non-null parameter values.

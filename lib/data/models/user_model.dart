@@ -1,6 +1,7 @@
-/// Model for storing user data locally in Immuno Warriors.
 import 'package:hive/hive.dart';
-import '../../../domain/entities/user_entity.dart';
+import 'package:immuno_warriors/data/models/inventory_item_model.dart';
+import 'package:immuno_warriors/data/models/progression_model.dart';
+import 'package:immuno_warriors/domain/entities/user_entity.dart';
 
 part 'user_model.g.dart';
 
@@ -21,11 +22,11 @@ class UserModel extends HiveObject {
   @HiveField(6)
   final Map<String, dynamic>? resources;
   @HiveField(7)
-  final Map<String, dynamic>? progression;
+  final ProgressionModel? progression;
   @HiveField(8)
   final Map<String, bool>? achievements;
   @HiveField(9)
-  final List<dynamic>? inventory;
+  final List<InventoryItemModel>? inventory;
 
   UserModel({
     required this.id,
@@ -55,11 +56,19 @@ class UserModel extends HiveObject {
               ? DateTime.parse(json['lastLogin'] as String)
               : null,
       resources: json['resources'] as Map<String, dynamic>?,
-      progression: json['progression'] as Map<String, dynamic>?,
+      progression:
+          json['progression'] != null
+              ? ProgressionModel.fromJson(json['progression'])
+              : null,
       achievements: (json['achievements'] as Map<String, dynamic>?)?.map(
         (k, v) => MapEntry(k, v as bool),
       ),
-      inventory: json['inventory'] as List<dynamic>?,
+      inventory:
+          (json['inventory'] as List<dynamic>?)
+              ?.map(
+                (e) => InventoryItemModel.fromJson(e as Map<String, dynamic>),
+              )
+              .toList(),
     );
   }
 
@@ -71,56 +80,30 @@ class UserModel extends HiveObject {
     'createdAt': createdAt?.toIso8601String(),
     'lastLogin': lastLogin?.toIso8601String(),
     'resources': resources,
-    'progression': progression,
+    'progression': progression?.toJson(),
     'achievements': achievements,
-    'inventory': inventory,
+    'inventory': inventory?.map((e) => e.toJson()).toList(),
   };
-
-  factory UserModel.fromEntity(UserEntity entity) {
-    return UserModel(
-      id: entity.id,
-      email: entity.email,
-      username: entity.username,
-      avatar: entity.avatar,
-      createdAt: entity.createdAt,
-      lastLogin: entity.lastLogin,
-      resources: entity.resources,
-      progression: entity.progression,
-      achievements: entity.achievements,
-      inventory: entity.inventory,
-    );
-  }
-
-  UserEntity toEntity() {
-    return UserEntity(
-      id: id,
-      email: email,
-      username: username,
-      avatar: avatar,
-      createdAt: createdAt,
-      lastLogin: lastLogin,
-      resources: resources,
-      progression: progression,
-      achievements: achievements,
-      inventory: inventory,
-    );
-  }
 
   UserModel copyWith({
     String? id,
     String? email,
     String? username,
     String? avatar,
+    DateTime? createdAt,
+    DateTime? lastLogin,
     Map<String, dynamic>? resources,
-    Map<String, dynamic>? progression,
+    ProgressionModel? progression,
     Map<String, bool>? achievements,
-    List<dynamic>? inventory,
+    List<InventoryItemModel>? inventory,
   }) {
     return UserModel(
       id: id ?? this.id,
       email: email ?? this.email,
       username: username ?? this.username,
       avatar: avatar ?? this.avatar,
+      createdAt: createdAt ?? this.createdAt,
+      lastLogin: lastLogin ?? this.lastLogin,
       resources: resources ?? this.resources,
       progression: progression ?? this.progression,
       achievements: achievements ?? this.achievements,
@@ -128,6 +111,10 @@ class UserModel extends HiveObject {
     );
   }
 
-  Object hasResources(String resourceType, int amount) =>
-      (resources?[resourceType] as num?)?.toInt() ?? 0 >= amount;
+  UserEntity toEntity() {
+    return UserEntity.fromModel(this);
+  }
+
+  bool hasResources(String resourceType, int amount) =>
+      ((resources?[resourceType] as num?)?.toInt() ?? 0) >= amount;
 }

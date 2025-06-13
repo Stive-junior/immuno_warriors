@@ -31,7 +31,7 @@ class AudioService {
   static Future<void> stopBackgroundMusic() async {
     try {
       await _backgroundPlayer.stop();
-      AppLogger.log('Background music stopped.');
+      AppLogger.debug('Background music stopped.');
     } catch (e) {
       AppLogger.error('Error stopping background music: $e');
     }
@@ -40,7 +40,7 @@ class AudioService {
   static Future<void> pauseBackgroundMusic() async {
     try {
       await _backgroundPlayer.pause();
-      AppLogger.log('Background music paused.');
+      AppLogger.debug('Background music paused.');
     } catch (e) {
       AppLogger.error('Error pausing background music: $e');
     }
@@ -49,7 +49,7 @@ class AudioService {
   static Future<void> resumeBackgroundMusic() async {
     try {
       await _backgroundPlayer.resume();
-      AppLogger.log('Background music resumed.');
+      AppLogger.debug('Background music resumed.');
     } catch (e) {
       AppLogger.error('Error resuming background music: $e');
     }
@@ -59,7 +59,7 @@ class AudioService {
     _backgroundVolume = volume.clamp(0.0, 1.0);
     try {
       await _backgroundPlayer.setVolume(_backgroundVolume);
-      AppLogger.log('Background volume set to: $_backgroundVolume');
+      AppLogger.debug('Background volume set to: $_backgroundVolume');
     } catch (e) {
       AppLogger.error('Error setting background volume: $e');
     }
@@ -72,7 +72,7 @@ class AudioService {
   static Future<void> playSoundEffect(String assetPath) async {
     try {
       await _effectsPlayer.play(AssetSource(assetPath));
-      AppLogger.log('Playing sound effect: $assetPath');
+      AppLogger.debug('Playing sound effect: $assetPath');
     } catch (e) {
       AppLogger.error('Error playing sound effect ($assetPath): $e');
     }
@@ -82,7 +82,7 @@ class AudioService {
     _effectsVolume = volume.clamp(0.0, 1.0);
     try {
       await _effectsPlayer.setVolume(_effectsVolume);
-      AppLogger.log('Effects volume set to: $_effectsVolume');
+      AppLogger.debug('Effects volume set to: $_effectsVolume');
     } catch (e) {
       AppLogger.error('Error setting effects volume: $e');
     }

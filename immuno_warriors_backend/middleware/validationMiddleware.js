@@ -1,14 +1,18 @@
-//const Joi = require('joi');
-const { AppError } = require('../utils/errorUtils');
-const { logger } = require('../utils/logger');
+const {logger}  = require('../utils/logger');
 
-const validate = (schema) => (req, res, next) => {
-  const { error } = schema.validate(req.body, { abortEarly: false });
-  if (error) {
-    logger.warn('Erreur de validation', { details: error.details });
-    throw new AppError(400, 'Données invalides', error.details);
-  }
-  next();
+const validate = (schema) => {
+  return (req, res, next) => {
+    const { error } = schema.validate(req.body, { abortEarly: false });
+    if (error) {
+      logger.warn('Erreur de validation des données', { details: error.details });
+      return res.status(400).json({
+        error: 'Erreur de validation',
+        details: error.details.map((d) => d.message),
+      });
+    }
+    next();
+  };
 };
+
 
 module.exports = validate;

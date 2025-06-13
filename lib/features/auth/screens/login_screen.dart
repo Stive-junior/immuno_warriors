@@ -3,14 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:email_validator/email_validator.dart';
 
 // Core Imports
 import 'package:immuno_warriors/core/constants/app_assets.dart';
 import 'package:immuno_warriors/core/constants/app_strings.dart';
-import 'package:immuno_warriors/core/constants/app_sizes.dart';
 import 'package:immuno_warriors/core/constants/app_animations.dart';
 import 'package:immuno_warriors/core/routes/route_names.dart';
-import 'package:immuno_warriors/features/auth/providers/auth_provider.dart';
 import 'package:immuno_warriors/core/utils/app_logger.dart';
 
 // Shared UI Components
@@ -23,17 +22,19 @@ import 'package:immuno_warriors/shared/widgets/cards/neon_card.dart';
 import 'package:immuno_warriors/shared/widgets/forms/input_field.dart';
 import 'package:immuno_warriors/shared/widgets/animations/scan_effect.dart';
 import 'package:immuno_warriors/shared/widgets/animations/pulse_widget.dart';
-import 'package:immuno_warriors/shared/widgets/animations/animated_border.dart';
-import 'package:immuno_warriors/shared/widgets/buttons/action_button.dart';
+import 'package:immuno_warriors/shared/widgets/buttons/holographic_button.dart';
+import 'package:immuno_warriors/shared/widgets/buttons/animated_icon_button.dart';
+import 'package:immuno_warriors/shared/widgets/feedback/snackbar_manager.dart';
+import 'package:immuno_warriors/shared/widgets/common/theme_selection_dialog.dart';
 
-import '../../../shared/widgets/buttons/holographic_button.dart';
-import '../../../shared/widgets/common/theme_selection_dialog.dart';
+// Feature-specific Imports
+import 'package:immuno_warriors/features/auth/providers/auth_provider.dart';
 
-/// LoginScreen : Écran de connexion pour les utilisateurs existants.
+/// `LoginScreen` : Écran de connexion pour les utilisateurs existants.
 ///
-/// Ce widget permet aux utilisateurs de se connecter avec leur email et mot de passe,
-/// ou via des options de connexion sociale. Il intègre des animations futuristes
-/// et une interface utilisateur immersive, cohérente avec le thème Immuno Warriors.
+/// Permet la connexion via email/mot de passe, avec option de réinitialisation de mot de passe
+/// et placeholders pour la connexion sociale (Google, Facebook). Intègre des animations
+/// futuristes et une interface utilisateur immersive.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -52,17 +53,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   late AnimationController _pulseController;
   late AnimationController _themeIconController;
   late AnimationController _helpIconController;
-  late AnimationController _geminiIconController;
-  late AnimationController _signInLottieController;
-  late AnimationController _googleLottieController;
-  late AnimationController _facebookLottieController;
   late AnimationController _backArrowController;
 
   @override
   void initState() {
     super.initState();
     _initAnimationControllers();
-    // _preloadLottieAssets(); // Suppression de l'appel au préchargement
   }
 
   void _initAnimationControllers() {
@@ -76,43 +72,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         vsync: this,
       )..repeat(reverse: true);
       _themeIconController = AnimationController(
-        duration: AppAnimations.durationLong,
+        duration: AppAnimations.iconAnimationDuration,
         vsync: this,
       )..repeat(reverse: true);
       _helpIconController = AnimationController(
-        duration: AppAnimations.durationLong,
-        vsync: this,
-      )..repeat();
-      _geminiIconController = AnimationController(
-        duration: AppAnimations.durationLong,
-        vsync: this,
-      )..repeat(reverse: true);
-      _signInLottieController = AnimationController(
-        duration: AppAnimations.durationLong,
-        vsync: this,
-      )..repeat();
-      _googleLottieController = AnimationController(
-        duration: AppAnimations.durationLong,
-        vsync: this,
-      )..repeat(reverse: true);
-      _facebookLottieController = AnimationController(
-        duration: AppAnimations.durationLong,
+        duration: AppAnimations.iconAnimationDuration,
         vsync: this,
       )..repeat();
       _backArrowController = AnimationController(
-        duration: AppAnimations.durationLong,
+        duration: AppAnimations.iconAnimationDuration,
         vsync: this,
       )..repeat();
     } catch (e, stackTrace) {
       AppLogger.error(
-        'Failed to initialize animation controllers',
+        'Échec de l\'initialisation des contrôleurs d\'animation',
         error: e,
         stackTrace: stackTrace,
       );
     }
   }
-
-  // Suppression complète de la fonction _preloadLottieAssets()
 
   @override
   void dispose() {
@@ -120,17 +98,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     _pulseController.dispose();
     _themeIconController.dispose();
     _helpIconController.dispose();
-    _geminiIconController.dispose();
-    _signInLottieController.dispose();
-    _googleLottieController.dispose();
-    _facebookLottieController.dispose();
     _backArrowController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  /// Gère le processus de connexion de l'utilisateur.
   Future<void> _handleSignIn() async {
     if (_formKey.currentState!.validate()) {
       final authNotifier = ref.read(authProvider.notifier);
@@ -143,81 +116,93 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       final authState = ref.read(authProvider);
 
       if (authState.isSignedIn) {
-        AppLogger.info(
-          'User $email signed in successfully. Navigating to dashboard.',
+        AppLogger.info('Utilisateur $email connecté avec succès.');
+        SnackbarManager.showSnackbar(
+          context,
+          AppStrings.loginSuccess,
+          backgroundColor: AppColors.successColor,
+          textColor: AppColors.textColorPrimary,
         );
-        context.goNamed(RouteNames.dashboard, extra: authState.user?.id);
+        context.goNamed(RouteNames.dashboard, extra: authState.userId);
       } else {
-        AppLogger.error('Sign in failed: ${authState.errorMessage}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: FuturisticText(
-              authState.errorMessage ?? AppStrings.loginFailed,
-              color: AppColors.textColorPrimary,
-            ),
-            backgroundColor: AppColors.errorColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
-            ),
-            margin: const EdgeInsets.all(AppSizes.paddingMedium),
-          ),
+        AppLogger.error('Échec de la connexion: ${authState.errorMessage}');
+        SnackbarManager.showSnackbar(
+          context,
+          authState.errorMessage ?? AppStrings.loginFailed,
+          backgroundColor: AppColors.errorColor,
+          textColor: AppColors.textColorPrimary,
         );
       }
     }
   }
 
-  /// Gère la connexion avec Google (à implémenter).
+  Future<void> _handleForgotPassword() async {
+    final email = _emailController.text.trim();
+    if (!EmailValidator.validate(email)) {
+      SnackbarManager.showSnackbar(
+        context,
+        AppStrings.invalidEmail,
+        backgroundColor: AppColors.errorColor,
+        textColor: AppColors.textColorPrimary,
+      );
+      return;
+    }
+
+    try {
+      await ref
+          .read(authProvider.notifier)
+          .sendPasswordResetEmail(email: email);
+      SnackbarManager.showSnackbar(
+        context,
+        AppStrings.passwordResetEmailSent,
+        backgroundColor: AppColors.successColor,
+        textColor: AppColors.textColorPrimary,
+      );
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Erreur lors de l\'envoi de l\'email de réinitialisation',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      SnackbarManager.showSnackbar(
+        context,
+        AppStrings.passwordResetFailed,
+        backgroundColor: AppColors.errorColor,
+        textColor: AppColors.textColorPrimary,
+      );
+    }
+  }
+
   void _signInWithGoogle() {
-    AppLogger.info('Sign in with Google pressed.');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: FuturisticText(
-          'Fonctionnalité Google à implémenter',
-          color: AppColors.textColorPrimary,
-        ),
-        backgroundColor: AppColors.interfaceColorDark,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
-        ),
-        margin: const EdgeInsets.all(AppSizes.paddingMedium),
-      ),
+    AppLogger.info('Connexion avec Google pressée.');
+    SnackbarManager.showSnackbar(
+      context,
+      AppStrings.socialLoginNotImplemented,
+      backgroundColor: AppColors.warningColor,
+      textColor: AppColors.textColorPrimary,
     );
   }
 
-  /// Gère la connexion avec Facebook (à implémenter).
   void _signInWithFacebook() {
-    AppLogger.info('Sign in with Facebook pressed.');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: FuturisticText(
-          'Fonctionnalité Facebook à implémenter',
-          color: AppColors.textColorPrimary,
-        ),
-        backgroundColor: AppColors.interfaceColorDark,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
-        ),
-        margin: const EdgeInsets.all(AppSizes.paddingMedium),
-      ),
+    AppLogger.info('Connexion avec Facebook pressée.');
+    SnackbarManager.showSnackbar(
+      context,
+      AppStrings.socialLoginNotImplemented,
+      backgroundColor: AppColors.warningColor,
+      textColor: AppColors.textColorPrimary,
     );
   }
 
-  /// Affiche une boîte de dialogue pour la sélection du thème en utilisant le nouveau widget.
   void _showThemeDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) {
-        return ThemeSelectionDialog(
-          themeIconController: _themeIconController,
-          onThemeSelected: (themeMode) {
-            // TODO: Implémenter la logique de changement de thème ici
-            AppLogger.info('Theme changed to: $themeMode');
-          },
-        );
-      },
+      builder:
+          (context) => ThemeSelectionDialog(
+            themeIconController: _themeIconController,
+            onThemeSelected: (themeMode) {
+              AppLogger.info('Thème changé pour : $themeMode');
+            },
+          ),
     );
   }
 
@@ -230,21 +215,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final authLoading = ref.watch(authLoadingProvider);
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: AppColors.backgroundColor,
+      resizeToAvoidBottomInset: true,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 1. Animated Background
           Positioned.fill(
             child: Lottie.asset(
               AppAssets.backgroundAnimation,
               fit: BoxFit.cover,
               repeat: true,
-              controller: _scanController,
               errorBuilder: (context, error, stackTrace) {
                 AppLogger.error(
-                  'Error loading background Lottie: ${AppAssets.backgroundAnimation}',
+                  'Erreur de chargement de l\'animation Lottie',
                   error: error,
                   stackTrace: stackTrace,
                 );
@@ -252,94 +234,86 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               },
             ),
           ),
-
-          // 2. Scan Effect Overlay
-          Positioned.fill(
-            child: AdvancedScanEffect(
-              controller: _scanController,
-              scanColor: AppColors.primaryColor.withOpacity(0.3),
-              lineWidth: AppSizes.defaultBorderWidth,
-              blendMode: BlendMode.plus,
-            ),
+          AdvancedScanEffect(
+            controller: _scanController,
+            scanColor: AppColors.virusGreen.withValues(red: 0.3),
+            lineWidth: 1.0,
+            blendMode: BlendMode.plus,
           ),
-
-          // 3. Main Content
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: screenWidth * (isLandscape ? 0.04 : 0.06),
-                vertical: screenHeight * (isLandscape ? 0.03 : 0.05),
+                horizontal: screenWidth * (isLandscape ? 0.05 : 0.08),
+                vertical: screenHeight * (isLandscape ? 0.08 : 0.12),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top Navigation Bar
                   FadeInDown(
-                    duration: AppAnimations.durationNormal,
+                    duration: AppAnimations.fadeInDuration,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Animated App Title
-                        PulseWidget(
-                          controller: _pulseController,
-                          minScale: 0.98,
-                          maxScale: 1.02,
-                          child: AnimatedBorder(
-                            animationController: _pulseController,
-                            width: screenWidth * (isLandscape ? 0.2 : 0.3),
-                            height: AppSizes.buttonHeight,
-                            borderWidth: AppSizes.defaultBorderWidth,
-                            borderColor: AppColors.primaryColor.withOpacity(
-                              0.8,
-                            ),
-                            borderRadius: BorderRadius.circular(
-                              AppSizes.buttonRadius,
-                            ),
-                            child: Center(
-                              child: FuturisticText(
-                                AppStrings.appName,
-                                size: AppSizes.fontSizeLarge,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primaryColor,
-                                shadows: [
-                                  Shadow(
-                                    color: AppColors.primaryColor.withOpacity(
-                                      0.3,
-                                    ),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 0),
-                                  ),
-                                ],
+                        AnimatedIconButton(
+                          animationAsset: AppAssets.backArrowAnimation,
+                          tooltip: AppStrings.back,
+                          onPressed:
+                              () => context.goNamed(
+                                RouteNames.profileAuthOptions,
                               ),
-                            ),
-                          ),
+                          backgroundColor: Colors.blue.withValues(red: 0.2),
+                          errorBuilder: (context, error, stackTrace) {
+                            AppLogger.error(
+                              'Erreur de chargement de Lottie: ${AppAssets.backArrowAnimation}',
+                              error: error,
+                              stackTrace: stackTrace,
+                            );
+                            return Icon(
+                              Icons.arrow_back,
+                              color: AppColors.textColorPrimary,
+                            );
+                          },
                         ),
-                        // Action Buttons
                         Row(
                           children: [
-                            ActionButton(
-                              lottieAsset: AppAssets.helpIconAnimation,
+                            AnimatedIconButton(
+                              animationAsset: AppAssets.helpIconAnimation,
                               tooltip: AppStrings.help,
                               onPressed: () => context.goNamed(RouteNames.help),
-                              controller: _helpIconController,
-                              fallbackIcon: Icons.help_outline,
+                              backgroundColor: Colors.blue.withValues(
+                                blue: 0.2,
+                              ),
+                              errorBuilder: (context, error, stackTrace) {
+                                AppLogger.error(
+                                  'Erreur de chargement de Lottie: ${AppAssets.helpIconAnimation}',
+                                  error: error,
+                                  stackTrace: stackTrace,
+                                );
+                                return Icon(
+                                  Icons.help,
+                                  color: AppColors.textColorPrimary,
+                                );
+                              },
                             ),
-                            SizedBox(width: AppSizes.spaceSmall),
-                            ActionButton(
-                              lottieAsset: AppAssets.themeIconAnimation,
+                            const SizedBox(width: 12),
+                            AnimatedIconButton(
+                              animationAsset: AppAssets.themeIconAnimation,
                               tooltip: AppStrings.theme,
                               onPressed: () => _showThemeDialog(context),
-                              controller: _themeIconController,
-                              fallbackIcon: Icons.palette_outlined,
-                            ),
-                            SizedBox(width: AppSizes.spaceSmall),
-                            ActionButton(
-                              lottieAsset: AppAssets.geminiIconAnimation,
-                              tooltip: AppStrings.gemini,
-                              onPressed:
-                                  () => context.goNamed(RouteNames.gemini),
-                              controller: _geminiIconController,
-                              fallbackIcon: Icons.psychology_outlined,
+                              backgroundColor: Colors.blue.withValues(
+                                blue: 0.2,
+                              ),
+                              errorBuilder: (context, error, stackTrace) {
+                                AppLogger.error(
+                                  'Erreur de chargement de Lottie: ${AppAssets.themeIconAnimation}',
+                                  error: error,
+                                  stackTrace: stackTrace,
+                                );
+                                return Icon(
+                                  Icons.palette,
+                                  color: AppColors.textColorPrimary,
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -347,442 +321,292 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     ),
                   ),
                   SizedBox(height: screenHeight * 0.05),
-
                   Expanded(
-                    child: Center(
-                      child: SingleChildScrollView(
-                        padding: EdgeInsets.only(
-                          bottom: MediaQuery.of(context).viewInsets.bottom,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Titre de l'écran de connexion
-                            FadeInDown(
-                              duration: AppAnimations.durationSlow,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          FadeInUp(
+                            duration: AppAnimations.fadeInDuration,
+                            child: PulseWidget(
+                              controller: _pulseController,
+                              minScale: 0.95,
+                              maxScale: 1.05,
                               child: FuturisticText(
                                 AppStrings.loginTitle,
-                                size:
-                                    isLandscape
-                                        ? AppSizes.fontSizeHeading
-                                        : AppSizes.fontSizeExtraLarge,
+                                size: isLandscape ? 36 : 28,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.primaryColor,
                                 textAlign: TextAlign.center,
-                                shadows: [
-                                  Shadow(
-                                    color: AppColors.primaryColor.withOpacity(
-                                      0.5,
-                                    ),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
                               ),
                             ),
-                            SizedBox(height: AppSizes.spaceExtraLarge),
-
-                            FadeInUp(
-                              duration: AppAnimations.durationLong,
-                              child: NeonCard(
-                                glowColor: AppColors.primaryColor,
-                                intensity: 0.2,
-                                borderRadius: AppSizes.defaultCardRadius,
-                                borderWidth: AppSizes.defaultBorderWidth,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(
-                                    AppSizes.paddingLarge,
-                                  ),
-                                  child: Form(
-                                    key: _formKey,
-                                    child: Column(
-                                      children: [
-                                        InputField(
-                                          controller: _emailController,
-                                          labelText: AppStrings.emailHint,
-                                          keyboardType:
-                                              TextInputType.emailAddress,
-                                          prefixIcon: Lottie.asset(
-                                            AppAssets.lockAnimation,
-                                            width: AppSizes.iconSizeMedium,
-                                            height: AppSizes.iconSizeMedium,
-                                            errorBuilder: (
-                                              context,
-                                              error,
-                                              stackTrace,
-                                            ) {
-                                              AppLogger.error(
-                                                'Error loading Lottie: ${AppAssets.lockAnimation}',
-                                                error: error,
-                                                stackTrace: stackTrace,
-                                              );
-                                              return Icon(
-                                                Icons.email,
-                                                color:
-                                                    AppColors
-                                                        .textColorSecondary,
-                                              );
-                                            },
-                                          ),
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return AppStrings.invalidEmail;
-                                            }
-                                            if (!RegExp(
-                                              r'^[^@]+@[^@]+\.[^@]+',
-                                            ).hasMatch(value)) {
-                                              return AppStrings.invalidEmail;
-                                            }
-                                            return null;
+                          ),
+                          SizedBox(height: screenHeight * 0.04),
+                          FadeInUp(
+                            delay: AppAnimations.fadeInDuration,
+                            duration: AppAnimations.fadeInDuration,
+                            child: NeonCard(
+                              glowColor: AppColors.virusGreen,
+                              intensity: 0.3,
+                              borderRadius: 16,
+                              borderWidth: 2,
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Form(
+                                  key: _formKey,
+                                  child: Column(
+                                    children: [
+                                      InputField(
+                                        controller: _emailController,
+                                        labelText: AppStrings.emailHint,
+                                        keyboardType:
+                                            TextInputType.emailAddress,
+                                        prefixIcon: Lottie.asset(
+                                          AppAssets.emailIconAnimation,
+                                          width: 24,
+                                          height: 24,
+                                          errorBuilder: (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) {
+                                            AppLogger.error(
+                                              'Erreur de chargement de Lottie: ${AppAssets.emailIconAnimation}',
+                                              error: error,
+                                              stackTrace: stackTrace,
+                                            );
+                                            return Icon(
+                                              Icons.email,
+                                              color:
+                                                  AppColors.textColorSecondary,
+                                            );
                                           },
                                         ),
-                                        const SizedBox(
-                                          height: AppSizes.spaceMedium,
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return AppStrings.invalidEmail;
+                                          }
+                                          if (!EmailValidator.validate(value)) {
+                                            return AppStrings.invalidEmail;
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      const SizedBox(height: 16),
+                                      InputField(
+                                        controller: _passwordController,
+                                        labelText: AppStrings.passwordHint,
+                                        obscureText: _obscurePassword,
+                                        prefixIcon: Lottie.asset(
+                                          AppAssets.lockAnimation,
+                                          width: 24,
+                                          height: 24,
+                                          errorBuilder: (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) {
+                                            AppLogger.error(
+                                              'Erreur de chargement de Lottie: ${AppAssets.lockAnimation}',
+                                              error: error,
+                                              stackTrace: stackTrace,
+                                            );
+                                            return Icon(
+                                              Icons.lock,
+                                              color:
+                                                  AppColors.textColorSecondary,
+                                            );
+                                          },
                                         ),
-                                        InputField(
-                                          controller: _passwordController,
-                                          labelText: AppStrings.passwordHint,
-                                          obscureText: _obscurePassword,
-                                          prefixIcon: Lottie.asset(
-                                            AppAssets.lockAnimation,
-                                            width: AppSizes.iconSizeMedium,
-                                            height: AppSizes.iconSizeMedium,
+                                        suffixIcon: IconButton(
+                                          icon: Lottie.asset(
+                                            _obscurePassword
+                                                ? AppAssets.eyeClosedAnimation
+                                                : AppAssets.eyeOpenAnimation,
+                                            width: 24,
+                                            height: 24,
                                             errorBuilder: (
                                               context,
                                               error,
                                               stackTrace,
                                             ) {
                                               AppLogger.error(
-                                                'Error loading Lottie: ${AppAssets.lockAnimation}',
+                                                'Erreur de chargement de Lottie: ${_obscurePassword ? AppAssets.eyeClosedAnimation : AppAssets.eyeOpenAnimation}',
                                                 error: error,
                                                 stackTrace: stackTrace,
                                               );
                                               return Icon(
-                                                Icons.lock,
+                                                _obscurePassword
+                                                    ? Icons.visibility_off
+                                                    : Icons.visibility,
                                                 color:
                                                     AppColors
                                                         .textColorSecondary,
                                               );
                                             },
                                           ),
-                                          suffixIcon: IconButton(
-                                            icon: Lottie.asset(
-                                              _obscurePassword
-                                                  ? AppAssets.eyeClosedAnimation
-                                                  : AppAssets.eyeOpenAnimation,
-                                              width: AppSizes.iconSizeMedium,
-                                              height: AppSizes.iconSizeMedium,
-                                              errorBuilder: (
-                                                context,
-                                                error,
-                                                stackTrace,
-                                              ) {
-                                                AppLogger.error(
-                                                  'Error loading Lottie: ${_obscurePassword ? AppAssets.eyeClosedAnimation : AppAssets.eyeOpenAnimation}',
-                                                  error: error,
-                                                  stackTrace: stackTrace,
-                                                );
-                                                return Icon(
-                                                  _obscurePassword
-                                                      ? Icons
-                                                          .visibility_off_outlined
-                                                      : Icons
-                                                          .visibility_outlined,
+                                          onPressed: () {
+                                            setState(() {
+                                              _obscurePassword =
+                                                  !_obscurePassword;
+                                            });
+                                          },
+                                        ),
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return AppStrings.invalidPassword;
+                                          }
+                                          if (value.length < 6) {
+                                            return AppStrings.weakPassword;
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: TextButton(
+                                          onPressed: _handleForgotPassword,
+                                          child: FuturisticText(
+                                            AppStrings.forgotPassword,
+                                            color: AppColors.primaryColor,
+                                            size: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      VirusButton(
+                                        onPressed:
+                                            authLoading ? null : _handleSignIn,
+                                        width: double.infinity,
+                                        child:
+                                            authLoading
+                                                ? const CircularProgressIndicator(
                                                   color:
                                                       AppColors
-                                                          .textColorSecondary,
-                                                );
-                                              },
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                _obscurePassword =
-                                                    !_obscurePassword;
-                                              });
-                                            },
-                                          ),
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return AppStrings.invalidPassword;
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        const SizedBox(
-                                          height: AppSizes.spaceExtraLarge,
-                                        ),
-                                        VirusButton(
-                                          onPressed:
-                                              authLoading
-                                                  ? null
-                                                  : _handleSignIn,
-                                          borderRadius: AppSizes.buttonRadius,
-                                          borderColor: AppColors.primaryColor,
-                                          elevation: AppSizes.defaultElevation,
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: AppSizes.paddingMedium,
-                                            ),
-                                            child:
-                                                authLoading
-                                                    ? CircularProgressIndicator(
-                                                      color:
-                                                          AppColors
-                                                              .textColorPrimary,
-                                                    )
-                                                    : Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        Lottie.asset(
-                                                          AppAssets
-                                                              .signInAnimation,
-                                                          width:
-                                                              AppSizes
-                                                                  .iconSizeMedium,
-                                                          height:
-                                                              AppSizes
-                                                                  .iconSizeMedium,
-                                                          controller:
-                                                              _signInLottieController,
-                                                          repeat: true,
-                                                          errorBuilder: (
-                                                            context,
-                                                            error,
-                                                            stackTrace,
-                                                          ) {
-                                                            AppLogger.error(
-                                                              'Error loading Lottie: ${AppAssets.signInAnimation}',
-                                                              error: error,
-                                                              stackTrace:
-                                                                  stackTrace,
-                                                            );
-                                                            return Icon(
-                                                              Icons.login,
-                                                              color:
-                                                                  AppColors
-                                                                      .textColorPrimary,
-                                                            );
-                                                          },
-                                                        ),
-                                                        const SizedBox(
-                                                          width:
-                                                              AppSizes
-                                                                  .spaceSmall,
-                                                        ),
-                                                        FuturisticText(
-                                                          AppStrings
-                                                              .loginButton,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color:
-                                                              AppColors
-                                                                  .textColorPrimary,
-                                                          size:
-                                                              AppSizes
-                                                                  .fontSizeMedium,
-                                                        ),
-                                                      ],
-                                                    ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: AppSizes.spaceExtraLarge),
-
-                            // Option de connexion sociale
-                            FadeInUp(
-                              delay: AppAnimations.durationExtraSlow,
-                              duration: AppAnimations.durationLong,
-                              child: Column(
-                                children: [
-                                  FuturisticText(
-                                    AppStrings.orConnectWith,
-                                    color: AppColors.textColorSecondary,
-                                    size: AppSizes.fontSizeMedium,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: AppSizes.spaceLarge),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      // Bouton Google
-                                      VirusButton(
-                                        onPressed: _signInWithGoogle,
-                                        borderRadius: AppSizes.buttonRadius,
-                                        borderColor:
-                                            AppColors.secondaryAccentColor,
-                                        elevation:
-                                            AppSizes.defaultElevation / 2,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(
-                                            AppSizes.paddingMedium,
-                                          ),
-                                          child: Lottie.asset(
-                                            AppAssets.googleLogoAnimation,
-                                            width: AppSizes.iconSizeLarge,
-                                            height: AppSizes.iconSizeLarge,
-                                            controller: _googleLottieController,
-                                            repeat: true,
-                                            errorBuilder: (
-                                              context,
-                                              error,
-                                              stackTrace,
-                                            ) {
-                                              AppLogger.error(
-                                                'Error loading Lottie: ${AppAssets.googleLogoAnimation}',
-                                                error: error,
-                                                stackTrace: stackTrace,
-                                              );
-                                              return Icon(
-                                                Icons.g_mobiledata,
-                                                color: AppColors.primaryColor,
-                                                size: AppSizes.iconSizeLarge,
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        width: AppSizes.spaceLarge,
-                                      ),
-                                      // Bouton Facebook
-                                      VirusButton(
-                                        onPressed: _signInWithFacebook,
-                                        borderRadius: AppSizes.buttonRadius,
-                                        borderColor:
-                                            AppColors.secondaryAccentColor,
-                                        elevation:
-                                            AppSizes.defaultElevation / 2,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(
-                                            AppSizes.paddingMedium,
-                                          ),
-                                          child: Lottie.asset(
-                                            AppAssets.facebookLogoAnimation,
-                                            width: AppSizes.iconSizeLarge,
-                                            height: AppSizes.iconSizeLarge,
-                                            controller:
-                                                _facebookLottieController,
-                                            repeat: true,
-                                            errorBuilder: (
-                                              context,
-                                              error,
-                                              stackTrace,
-                                            ) {
-                                              AppLogger.error(
-                                                'Error loading Lottie: ${AppAssets.facebookLogoAnimation}',
-                                                error: error,
-                                                stackTrace: stackTrace,
-                                              );
-                                              return Icon(
-                                                Icons.facebook,
-                                                color: AppColors.primaryColor,
-                                                size: AppSizes.iconSizeLarge,
-                                              );
-                                            },
-                                          ),
-                                        ),
+                                                          .textColorPrimary,
+                                                )
+                                                : FuturisticText(
+                                                  AppStrings.loginButton,
+                                                  size: 16,
+                                                  color:
+                                                      AppColors
+                                                          .textColorPrimary,
+                                                ),
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: AppSizes.spaceExtraLarge),
-
-                            // Lien vers la page d'inscription
-                            FadeInUp(
-                              delay: AppAnimations.durationExtraLong,
-                              duration: AppAnimations.durationLong,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  FuturisticText(
-                                    AppStrings.addNewAccount,
-                                    color: AppColors.textColorSecondary,
-                                    size: AppSizes.fontSizeSmall,
-                                  ),
-                                  TextButton(
-                                    onPressed:
-                                        () => context.goNamed(
-                                          RouteNames.register,
-                                        ),
-                                    child: FuturisticText(
-                                      AppStrings.registerButton,
-                                      color: AppColors.primaryColor,
-                                      fontWeight: FontWeight.bold,
-                                      size: AppSizes.fontSizeSmall,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Bouton Retour (en bas de l'écran)
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: FadeInUp(
-                      delay: AppAnimations.durationExtraLong,
-                      duration: AppAnimations.durationLong,
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          top: AppSizes.paddingLarge,
-                        ),
-                        child: VirusButton(
-                          onPressed: () => context.pop(),
-                          borderRadius: AppSizes.buttonRadius,
-                          borderColor: AppColors.secondaryAccentColor,
-                          elevation: AppSizes.defaultElevation / 2,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSizes.buttonPaddingHorizontal,
-                              vertical: AppSizes.buttonPaddingVertical,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Lottie.asset(
-                                  AppAssets.backArrowAnimation,
-                                  width: AppSizes.iconSizeMedium,
-                                  height: AppSizes.iconSizeMedium,
-                                  controller: _backArrowController,
-                                  repeat: true,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    AppLogger.error(
-                                      'Error loading Lottie: ${AppAssets.backArrowAnimation}',
-                                      error: error,
-                                      stackTrace: stackTrace,
-                                    );
-                                    return Icon(
-                                      Icons.arrow_back,
-                                      color: AppColors.textColorPrimary,
-                                    );
-                                  },
                                 ),
-                                const SizedBox(width: AppSizes.spaceSmall),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: screenHeight * 0.04),
+                          FadeInUp(
+                            delay: Duration(
+                              milliseconds:
+                                  AppAnimations.fadeInDuration.inMilliseconds +
+                                  200,
+                            ),
+                            duration: AppAnimations.fadeInDuration,
+                            child: Column(
+                              children: [
                                 FuturisticText(
-                                  AppStrings.back,
+                                  AppStrings.orConnectWith,
                                   color: AppColors.textColorSecondary,
-                                  size: AppSizes.fontSizeMedium,
+                                  size: 16,
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    VirusButton(
+                                      onPressed: _signInWithGoogle,
+                                      width: 60,
+                                      child: Lottie.asset(
+                                        AppAssets.googleLogoAnimation,
+                                        width: 24,
+                                        height: 24,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          AppLogger.error(
+                                            'Erreur de chargement de Lottie: ${AppAssets.googleLogoAnimation}',
+                                            error: error,
+                                            stackTrace: stackTrace,
+                                          );
+                                          return Icon(
+                                            Icons.g_mobiledata,
+                                            color: AppColors.textColorPrimary,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    VirusButton(
+                                      onPressed: _signInWithFacebook,
+                                      width: 60,
+                                      child: Lottie.asset(
+                                        AppAssets.facebookLogoAnimation,
+                                        width: 24,
+                                        height: 24,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          AppLogger.error(
+                                            'Erreur de chargement de Lottie: ${AppAssets.facebookLogoAnimation}',
+                                            error: error,
+                                            stackTrace: stackTrace,
+                                          );
+                                          return Icon(
+                                            Icons.facebook,
+                                            color: AppColors.textColorPrimary,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
-                        ),
+                          SizedBox(height: screenHeight * 0.04),
+                          FadeInUp(
+                            delay: Duration(
+                              milliseconds:
+                                  AppAnimations.fadeInDuration.inMilliseconds +
+                                  400,
+                            ),
+                            duration: AppAnimations.fadeInDuration,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                FuturisticText(
+                                  AppStrings.addNewAccount,
+                                  color: AppColors.textColorSecondary,
+                                  size: 14,
+                                ),
+                                TextButton(
+                                  onPressed:
+                                      () =>
+                                          context.goNamed(RouteNames.register),
+                                  child: FuturisticText(
+                                    AppStrings.registerButton,
+                                    color: AppColors.primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                    size: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

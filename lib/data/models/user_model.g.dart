@@ -24,9 +24,9 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       createdAt: fields[4] as DateTime?,
       lastLogin: fields[5] as DateTime?,
       resources: (fields[6] as Map?)?.cast<String, dynamic>(),
-      progression: (fields[7] as Map?)?.cast<String, dynamic>(),
+      progression: fields[7] as ProgressionModel?,
       achievements: (fields[8] as Map?)?.cast<String, bool>(),
-      inventory: (fields[9] as List?)?.cast<dynamic>(),
+      inventory: (fields[9] as List?)?.cast<InventoryItemModel>(),
     );
   }
 

@@ -177,4 +177,52 @@ class AppStrings {
   static const String system = 'System';
   static const String level = 'Level';
   static const String geminiTitle = 'Gemini';
+
+  static const String initializing = "Initialisation en cours...";
+  static const String networkChecked = "Connexion réseau vérifiée.";
+  static const String networkSuccess = "Connexion réseau établie avec succès.";
+  static const String sessionChecked = "Session utilisateur vérifiée.";
+  static const String sessionSuccess = "Session active.";
+  static const String sessionExpired = "Session expirée.";
+  static const String sessionError =
+      "Erreur lors de la vérification de la session.";
+  static const String profileLoaded = "Profil utilisateur chargé.";
+  static const String profileSuccess = "Profil chargé avec succès.";
+  static const String profileError = "Erreur lors du chargement du profil.";
+  static const String resourcesLoaded = "Ressources utilisateur chargées.";
+  static const String resourcesSuccess = "Ressources chargées avec succès.";
+  static const String resourcesError =
+      "Erreur lors du chargement des ressources.";
+
+  static const String login = "Se connecter";
+  static const String register = "S'inscrire";
+  static const String loginPrompt = "Pas de compte ? S'inscrire";
+  static const String registerPrompt = "Déjà un compte ? Se connecter";
+  static const String email = "Email";
+  static const String password = "Mot de passe";
+  static const String username = "Nom d'utilisateur";
+  static const String emailRequired = "L'email est requis.";
+  static const String emailInvalid = "L'email est invalide.";
+  static const String passwordRequired = "Le mot de passe est requis.";
+  static const String passwordTooShort =
+      "Le mot de passe doit contenir au moins 6 caractères.";
+  static const String usernameRequired = "Le nom d'utilisateur est requis.";
+  static const String usernameTooShort =
+      "Le nom d'utilisateur doit contenir au moins 3 caractères.";
+
+  static const String loginSuccess = "Connexion réussie !";
+  static const String signOutSuccess = "Déconnexion réussie.";
+  static const String updateProfile = "Mettre à jour le profil";
+  static const String profileUpdated = "Profil mis à jour avec succès.";
+
+  static const String signOut = "Se déconnecter";
+  static const String save = "Enregistrer";
+
+  static const String socialLoginNotImplemented =
+      "Connexion sociale non implémentée.";
+  static const String selectAvatar = "Veuillez sélectionner un avatar.";
+  static const String invalidUsername =
+      "Veuillez saisir un nom d'utilisateur valide.";
+
+  // Autres chaînes existantes
 }

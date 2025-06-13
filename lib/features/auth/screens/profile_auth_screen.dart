@@ -1,32 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:immuno_warriors/shared/widgets/common/theme_selection_dialog.dart';
 import 'package:lottie/lottie.dart';
 import 'package:animate_do/animate_do.dart';
+
+// Core Imports
 import 'package:immuno_warriors/core/constants/app_assets.dart';
 import 'package:immuno_warriors/core/constants/app_strings.dart';
 import 'package:immuno_warriors/core/routes/route_names.dart';
-import 'package:immuno_warriors/features/auth/providers/auth_provider.dart';
+import 'package:immuno_warriors/core/utils/app_logger.dart';
+
+// Shared UI Components
 import 'package:immuno_warriors/shared/ui/app_colors.dart';
 import 'package:immuno_warriors/shared/ui/futuristic_text.dart';
-import 'package:immuno_warriors/shared/widgets/forms/input_field.dart';
-import 'package:immuno_warriors/shared/widgets/buttons/neuomorphic_button.dart';
 import 'package:immuno_warriors/shared/ui/screen_utils.dart';
-import 'package:immuno_warriors/shared/widgets/loaders/circular_indicator.dart';
-import 'package:immuno_warriors/shared/widgets/animations/scan_effect.dart';
+
+// Shared Widgets
 import 'package:immuno_warriors/shared/widgets/animations/pulse_widget.dart';
+import 'package:immuno_warriors/shared/widgets/animations/scan_effect.dart';
 import 'package:immuno_warriors/shared/widgets/animations/animated_border.dart';
 import 'package:immuno_warriors/shared/widgets/buttons/animated_icon_button.dart';
-import 'package:immuno_warriors/core/utils/app_logger.dart'; // Import AppLogger
+import 'package:immuno_warriors/shared/widgets/buttons/neuomorphic_button.dart';
+import 'package:immuno_warriors/shared/widgets/forms/input_field.dart';
+import 'package:immuno_warriors/shared/widgets/loaders/circular_indicator.dart';
 
-import '../../../domain/entities/user_entity.dart';
+// Feature-specific Imports
+import 'package:immuno_warriors/features/auth/providers/auth_provider.dart';
+import 'package:immuno_warriors/domain/entities/user_entity.dart';
 
 /// ProfileAuthScreen : Écran d'authentification pour un profil utilisateur existant.
 ///
 /// Permet à l'utilisateur de saisir son mot de passe pour accéder à son profil
 /// si sa session a expiré ou s'il se connecte depuis un autre appareil.
 class ProfileAuthScreen extends ConsumerStatefulWidget {
-  final String? userId;
+  final String userId;
 
   const ProfileAuthScreen({super.key, required this.userId});
 
@@ -57,7 +65,6 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat(reverse: true);
-    // _loadUserProfile()
   }
 
   @override
@@ -77,27 +84,22 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
       try {
         final isAuthenticated = await ref
             .read(authProvider.notifier)
-            .authenticateUser(widget.userId!, _passwordController.text);
-
-        if (isAuthenticated) {
-          if (!mounted) return; // Vérification du context
+            .authenticateUser(widget.userId, _passwordController.text);
+        if (isAuthenticated && mounted) {
           AppLogger.info(
-            'User ${_user!.email} authenticated successfully. Navigating to dashboard.',
+            'Utilisateur ${_user!.email} authentifié avec succès.',
           );
-          context.goNamed(
-            RouteNames.dashboard,
-            extra: _user!.id,
-          ); // Passe l'ID réel de l'utilisateur
+          context.goNamed(RouteNames.dashboard, extra: _user!.id);
         } else {
           setState(() => _errorMessage = AppStrings.invalidPassword);
           AppLogger.warning(
-            'Authentication failed for user ${widget.userId}. Invalid credentials.',
+            'Échec de l\'authentification pour ${widget.userId}.',
           );
         }
       } catch (e, stackTrace) {
         setState(() => _errorMessage = e.toString());
         AppLogger.error(
-          'Error during authentication for user ${widget.userId}',
+          'Erreur lors de l\'authentification pour ${widget.userId}',
           error: e,
           stackTrace: stackTrace,
         );
@@ -107,33 +109,24 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
     }
   }
 
-  /// Gère la demande de réinitialisation de mot de passe.
-  ///
-  /// Envoie un email de réinitialisation à l'adresse de l'utilisateur.
   Future<void> _forgotPassword() async {
-    if (widget.userId == null || widget.userId!.isEmpty) {
+    if (_user?.email == null) {
       setState(() => _errorMessage = AppStrings.enterEmailForPasswordReset);
       return;
     }
-
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-
     try {
-      // Appelle le service d'authentification pour envoyer l'email de réinitialisation
-      await ref
-          .read(authServiceProvider)
-          .sendPasswordResetEmail(email: widget.userId!);
-      setState(() {
-        _errorMessage = AppStrings.passwordResetEmailSent;
-      });
-      AppLogger.info('Password reset email sent to ${widget.userId}.');
+      await ref.read(authServiceProvider);
+      //  .sendPasswordResetEmail(email: _user!.email!);
+      setState(() => _errorMessage = AppStrings.passwordResetEmailSent);
+      AppLogger.info('Email de réinitialisation envoyé à ${_user!.email}.');
     } catch (e, stackTrace) {
       setState(() => _errorMessage = AppStrings.passwordResetFailed);
       AppLogger.error(
-        'Error sending password reset email to ${widget.userId}',
+        'Erreur lors de l\'envoi de l\'email de réinitialisation à ${_user!.email}',
         error: e,
         stackTrace: stackTrace,
       );
@@ -142,7 +135,6 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
     }
   }
 
-  /// Construit l'état de chargement de l'écran.
   Widget _buildLoadingState() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -154,7 +146,6 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
     );
   }
 
-  /// Construit l'état d'erreur de l'écran.
   Widget _buildErrorState(String message) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -168,7 +159,7 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
         ),
         const SizedBox(height: 20),
         NeuomorphicButton(
-          onPressed: () => context.pop(), // Revenir à l'écran précédent
+          onPressed: () => context.pop(),
           borderRadius: BorderRadius.circular(12),
           depth: 8,
           intensity: 0.6,
@@ -186,7 +177,6 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
     );
   }
 
-  /// Construit le contenu principal d'authentification une fois les données utilisateur chargées.
   Widget _buildAuthContent(BuildContext context, UserEntity user) {
     final screenWidth = ScreenUtils.getScreenWidth(context);
     final screenHeight = ScreenUtils.getScreenHeight(context);
@@ -197,7 +187,6 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // En-tête avec animation de pulsation
         FadeInUp(
           duration: const Duration(milliseconds: 500),
           child: PulseWidget(
@@ -221,12 +210,9 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
           ),
         ),
         SizedBox(height: screenHeight * 0.05),
-
-        // Section Avatar Utilisateur et Formulaire
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Section Avatar
             FadeInLeft(
               duration: const Duration(milliseconds: 500),
               child: Column(
@@ -244,7 +230,7 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(60),
                         child: Lottie.asset(
-                          user.avatarUrl ?? AppAssets.userAvatarAnimation,
+                          user.avatar ?? AppAssets.userAvatarAnimation,
                           width: 120,
                           height: 120,
                           fit: BoxFit.cover,
@@ -252,7 +238,7 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
                           repeat: true,
                           errorBuilder: (context, error, stackTrace) {
                             AppLogger.error(
-                              'Error loading user avatar Lottie: ${user.avatarUrl}',
+                              'Erreur de chargement de l\'avatar: ${user.avatar}',
                               error: error,
                               stackTrace: stackTrace,
                             );
@@ -279,13 +265,10 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
               ),
             ),
             SizedBox(width: screenWidth * 0.05),
-
-            // Section Formulaire
             Expanded(
               child: FadeInRight(
                 duration: const Duration(milliseconds: 500),
                 child: Form(
-                  // Enveloppe avec le widget Form
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -300,14 +283,14 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
                           height: 24,
                           errorBuilder: (context, error, stackTrace) {
                             AppLogger.error(
-                              'Error loading Lottie: ${AppAssets.lockAnimation}',
+                              'Erreur de chargement de Lottie: ${AppAssets.lockAnimation}',
                               error: error,
                               stackTrace: stackTrace,
                             );
                             return Icon(
                               Icons.lock,
                               color: AppColors.textColorPrimary,
-                            ); // Fallback
+                            );
                           },
                         ),
                         suffixIcon: IconButton(
@@ -319,7 +302,7 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
                             height: 24,
                             errorBuilder: (context, error, stackTrace) {
                               AppLogger.error(
-                                'Error loading Lottie: ${_obscurePassword ? AppAssets.eyeClosedAnimation : AppAssets.eyeOpenAnimation}',
+                                'Erreur de chargement de Lottie: ${_obscurePassword ? AppAssets.eyeClosedAnimation : AppAssets.eyeOpenAnimation}',
                                 error: error,
                                 stackTrace: stackTrace,
                               );
@@ -328,44 +311,34 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
                                     ? Icons.visibility_off
                                     : Icons.visibility,
                                 color: AppColors.textColorPrimary,
-                              ); // Fallback
+                              );
                             },
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
+                          onPressed:
+                              () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return AppStrings.enterPassword;
-                          }
-                          return null;
-                        },
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? AppStrings.enterPassword
+                                    : null,
                       ),
-                      SizedBox(
-                        height: screenHeight * 0.02,
-                      ), // Espacement réduit
-                      // Bouton "Mot de passe oublié ?"
+                      SizedBox(height: screenHeight * 0.02),
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: _forgotPassword,
                           child: FuturisticText(
                             AppStrings.forgotPassword,
-                            color:
-                                AppColors
-                                    .primaryColor, // Utilise la couleur primaire pour les liens
+                            color: AppColors.primaryColor,
                             size: 14,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                      SizedBox(
-                        height: screenHeight * 0.02,
-                      ), // Espacement réduit
-                      // Bouton Authentifier
+                      SizedBox(height: screenHeight * 0.02),
                       NeuomorphicButton(
                         onPressed: _isLoading ? null : _authenticateProfile,
                         borderRadius: BorderRadius.circular(12),
@@ -389,14 +362,14 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
                                   height: 24,
                                   errorBuilder: (context, error, stackTrace) {
                                     AppLogger.error(
-                                      'Error loading Lottie: ${AppAssets.fingerprintAnimation}',
+                                      'Erreur de chargement de Lottie: ${AppAssets.fingerprintAnimation}',
                                       error: error,
                                       stackTrace: stackTrace,
                                     );
                                     return Icon(
                                       Icons.fingerprint,
                                       color: AppColors.textColorPrimary,
-                                    ); // Fallback
+                                    );
                                   },
                                 ),
                               const SizedBox(width: 12),
@@ -412,7 +385,6 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
                           ),
                         ),
                       ),
-
                       if (_errorMessage != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 16.0),
@@ -440,14 +412,12 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
     final isLandscape =
         ScreenUtils.getScreenOrientation(context) == Orientation.landscape;
 
-    // Surveille le FutureProvider pour obtenir les données de l'utilisateur
     final asyncCurrentUser = ref.watch(currentUserDataProvider);
 
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 1. Fond animé
           Positioned.fill(
             child: Lottie.asset(
               AppAssets.backgroundAnimation,
@@ -455,18 +425,14 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
               repeat: true,
               errorBuilder: (context, error, stackTrace) {
                 AppLogger.error(
-                  'Error loading background Lottie: ${AppAssets.backgroundAnimation}',
+                  'Erreur de chargement de l\'animation Lottie: ${AppAssets.backgroundAnimation}',
                   error: error,
                   stackTrace: stackTrace,
                 );
-                return Container(
-                  color: AppColors.backgroundColor,
-                ); // Fallback simple
+                return Container(color: AppColors.backgroundColor);
               },
             ),
           ),
-
-          // 2. Effet de scan superposé
           Positioned.fill(
             child: AdvancedScanEffect(
               controller: _scanController,
@@ -475,8 +441,6 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
               blendMode: BlendMode.plus,
             ),
           ),
-
-          // 3. Contenu principal
           Padding(
             padding: EdgeInsets.symmetric(
               horizontal: screenWidth * (isLandscape ? 0.04 : 0.06),
@@ -485,7 +449,6 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Barre de navigation supérieure avec bouton retour
                 FadeInDown(
                   duration: const Duration(milliseconds: 700),
                   child: Row(
@@ -498,14 +461,14 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
                         backgroundColor: Colors.transparent,
                         errorBuilder: (context, error, stackTrace) {
                           AppLogger.error(
-                            'Error loading Lottie: ${AppAssets.backArrowAnimation}',
+                            'Erreur de chargement de Lottie: ${AppAssets.backArrowAnimation}',
                             error: error,
                             stackTrace: stackTrace,
                           );
                           return Icon(
                             Icons.arrow_back,
                             color: AppColors.textColorPrimary,
-                          ); // Fallback
+                          );
                         },
                       ),
                       Row(
@@ -517,14 +480,14 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
                             backgroundColor: Colors.blue.withOpacity(0.2),
                             errorBuilder: (context, error, stackTrace) {
                               AppLogger.error(
-                                'Error loading Lottie: ${AppAssets.helpIconAnimation}',
+                                'Erreur de chargement de Lottie: ${AppAssets.helpIconAnimation}',
                                 error: error,
                                 stackTrace: stackTrace,
                               );
                               return Icon(
                                 Icons.help,
                                 color: AppColors.textColorPrimary,
-                              ); // Fallback
+                              );
                             },
                           ),
                           const SizedBox(width: 12),
@@ -535,14 +498,14 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
                             backgroundColor: Colors.blue.withOpacity(0.2),
                             errorBuilder: (context, error, stackTrace) {
                               AppLogger.error(
-                                'Error loading Lottie: ${AppAssets.themeIconAnimation}',
+                                'Erreur de chargement de Lottie: ${AppAssets.themeIconAnimation}',
                                 error: error,
                                 stackTrace: stackTrace,
                               );
                               return Icon(
                                 Icons.palette,
                                 color: AppColors.textColorPrimary,
-                              ); // Fallback
+                              );
                             },
                           ),
                         ],
@@ -551,7 +514,6 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.05),
-
                 Expanded(
                   child: Center(
                     child: SingleChildScrollView(
@@ -566,7 +528,7 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
                         loading: () => _buildLoadingState(),
                         error: (error, stack) {
                           AppLogger.error(
-                            'Error loading user profile in ProfileAuthScreen',
+                            'Erreur de chargement du profil utilisateur',
                             error: error,
                             stackTrace: stack,
                           );
@@ -589,50 +551,16 @@ class _ProfileAuthScreenState extends ConsumerState<ProfileAuthScreen>
   void _showThemeDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.secondaryColor,
-          title: FuturisticText(
-            AppStrings.theme,
-            color: AppColors.primaryColor,
+      builder:
+          (context) => ThemeSelectionDialog(
+            themeIconController: AnimationController(
+              duration: const Duration(milliseconds: 1000),
+              vsync: this,
+            ),
+            onThemeSelected: (themeMode) {
+              AppLogger.info('Thème sélectionné: $themeMode');
+            },
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: FuturisticText(
-                  AppStrings.lightTheme,
-                  color: AppColors.textColorPrimary,
-                ),
-                onTap: () {
-                  AppLogger.info('Light theme selected.');
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: FuturisticText(
-                  AppStrings.darkTheme,
-                  color: AppColors.textColorPrimary,
-                ),
-                onTap: () {
-                  AppLogger.info('Dark theme selected.');
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: FuturisticText(
-                  AppStrings.systemTheme,
-                  color: AppColors.textColorPrimary,
-                ),
-                onTap: () {
-                  AppLogger.info('System theme selected.');
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

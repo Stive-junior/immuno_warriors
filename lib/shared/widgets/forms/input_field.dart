@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:immuno_warriors/shared/ui/app_colors.dart';
 import 'package:immuno_warriors/core/constants/app_sizes.dart'; // Import des tailles
-import 'package:immuno_warriors/shared/ui/futuristic_text.dart'; // Pour le labelText stylisé
 
 class InputField extends StatefulWidget {
   final String labelText;
@@ -83,7 +82,8 @@ class InputFieldState extends State<InputField> {
       onChanged: widget.onChanged,
       onEditingComplete: widget.onEditingComplete,
       cursorColor: AppColors.primaryColor, // Couleur du curseur futuriste
-      style: TextStyle( // Style du texte de l'entrée
+      style: TextStyle(
+        // Style du texte de l'entrée
         color: AppColors.textColorPrimary,
         fontSize: AppSizes.fontSizeMedium,
         fontFamily: 'Rajdhani',
@@ -91,60 +91,82 @@ class InputFieldState extends State<InputField> {
       ),
       decoration: InputDecoration(
         labelText: widget.labelText,
-        labelStyle: TextStyle( // Style du label
-          color: _internalFocusNode.hasFocus ? AppColors.primaryColor : AppColors.textColorSecondary,
+        labelStyle: TextStyle(
+          // Style du label
+          color:
+              _internalFocusNode.hasFocus
+                  ? AppColors.primaryColor
+                  : AppColors.textColorSecondary,
           fontSize: AppSizes.fontSizeMedium,
           fontFamily: 'Rajdhani',
           fontWeight: FontWeight.w500,
         ),
         hintText: widget.hintText,
-        hintStyle: TextStyle( // Style du hint
+        hintStyle: TextStyle(
+          // Style du hint
           color: AppColors.textColorSecondary.withOpacity(0.6),
           fontSize: AppSizes.fontSizeMedium,
           fontFamily: 'Rajdhani',
         ),
-        prefixIcon: widget.prefixIcon != null
-            ? Padding(
-          padding: const EdgeInsets.only(left: AppSizes.paddingSmall),
-          child: widget.prefixIcon,
-        )
-            : null,
-        suffixIcon: widget.obscureText
-            ? IconButton(
-          icon: Icon(
-            _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined, // Icônes stylisées
-            color: AppColors.textColorSecondary,
-            size: AppSizes.iconSizeMedium,
-          ),
-          onPressed: () {
-            setState(() {
-              _obscureText = !_obscureText;
-            });
-          },
-        )
-            : widget.suffixIcon != null
-            ? Padding(
-          padding: const EdgeInsets.only(right: AppSizes.paddingSmall),
-          child: widget.suffixIcon,
-        )
-            : null,
+        prefixIcon:
+            widget.prefixIcon != null
+                ? Padding(
+                  padding: const EdgeInsets.only(left: AppSizes.paddingSmall),
+                  child: widget.prefixIcon,
+                )
+                : null,
+        suffixIcon:
+            widget.obscureText
+                ? IconButton(
+                  icon: Icon(
+                    _obscureText
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined, // Icônes stylisées
+                    color: AppColors.textColorSecondary,
+                    size: AppSizes.iconSizeMedium,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscureText = !_obscureText;
+                    });
+                  },
+                )
+                : widget.suffixIcon != null
+                ? Padding(
+                  padding: const EdgeInsets.only(right: AppSizes.paddingSmall),
+                  child: widget.suffixIcon,
+                )
+                : null,
         filled: true,
-        fillColor: AppColors.secondaryColor.withOpacity(0.4), // Fond du champ de saisie
+        fillColor: AppColors.secondaryColor.withOpacity(
+          0.4,
+        ), // Fond du champ de saisie
         contentPadding: const EdgeInsets.symmetric(
           vertical: AppSizes.paddingMedium,
           horizontal: AppSizes.paddingMedium,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.formFieldRadius), // Rayon de bordure
-          borderSide: BorderSide(color: AppColors.borderColor.withOpacity(0.6), width: 1.5),
+          borderRadius: BorderRadius.circular(
+            AppSizes.formFieldRadius,
+          ), // Rayon de bordure
+          borderSide: BorderSide(
+            color: AppColors.borderColor.withOpacity(0.6),
+            width: 1.5,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.formFieldRadius),
-          borderSide: BorderSide(color: AppColors.borderColor.withOpacity(0.6), width: 1.5),
+          borderSide: BorderSide(
+            color: AppColors.borderColor.withOpacity(0.6),
+            width: 1.5,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.formFieldRadius),
-          borderSide: BorderSide(color: AppColors.primaryColor, width: 2.0), // Bordure focus plus épaisse et colorée
+          borderSide: BorderSide(
+            color: AppColors.primaryColor,
+            width: 2.0,
+          ), // Bordure focus plus épaisse et colorée
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.formFieldRadius),
@@ -152,7 +174,10 @@ class InputFieldState extends State<InputField> {
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.formFieldRadius),
-          borderSide: BorderSide(color: AppColors.errorColor, width: 2.5), // Bordure focus error plus épaisse
+          borderSide: BorderSide(
+            color: AppColors.errorColor,
+            width: 2.5,
+          ), // Bordure focus error plus épaisse
         ),
       ),
     );

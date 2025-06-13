@@ -3,28 +3,38 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:email_validator/email_validator.dart';
+
+// Core Imports
 import 'package:immuno_warriors/core/constants/app_assets.dart';
 import 'package:immuno_warriors/core/constants/app_strings.dart';
+import 'package:immuno_warriors/core/constants/app_animations.dart';
 import 'package:immuno_warriors/core/routes/route_names.dart';
-import 'package:immuno_warriors/features/auth/providers/auth_provider.dart';
-import 'package:immuno_warriors/shared/ui/app_colors.dart';
-import 'package:immuno_warriors/shared/ui/futuristic_text.dart';
-import 'package:immuno_warriors/shared/widgets/cards/glassmorphism_card.dart';
-import 'package:immuno_warriors/shared/widgets/forms/input_field.dart';
-import 'package:immuno_warriors/shared/widgets/buttons/neuomorphic_button.dart';
-import 'package:immuno_warriors/shared/ui/screen_utils.dart';
-import 'package:immuno_warriors/shared/widgets/animations/scan_effect.dart';
-import 'package:immuno_warriors/shared/widgets/animations/pulse_widget.dart';
-import 'package:immuno_warriors/shared/widgets/animations/animated_border.dart';
-import 'package:immuno_warriors/shared/widgets/buttons/animated_icon_button.dart';
 import 'package:immuno_warriors/core/utils/app_logger.dart';
 
-/// RegisterScreen : Écran d'inscription pour créer un nouveau compte utilisateur.
+// Shared UI Components
+import 'package:immuno_warriors/shared/ui/app_colors.dart';
+import 'package:immuno_warriors/shared/ui/futuristic_text.dart';
+import 'package:immuno_warriors/shared/ui/screen_utils.dart';
+
+// Shared Widgets
+import 'package:immuno_warriors/shared/widgets/cards/glassmorphism_card.dart';
+import 'package:immuno_warriors/shared/widgets/forms/input_field.dart';
+import 'package:immuno_warriors/shared/widgets/animations/scan_effect.dart';
+import 'package:immuno_warriors/shared/widgets/animations/pulse_widget.dart';
+import 'package:immuno_warriors/shared/widgets/buttons/holographic_button.dart';
+import 'package:immuno_warriors/shared/widgets/buttons/animated_icon_button.dart';
+import 'package:immuno_warriors/shared/widgets/feedback/snackbar_manager.dart';
+import 'package:immuno_warriors/shared/widgets/common/theme_selection_dialog.dart';
+
+// Feature-specific Imports
+import 'package:immuno_warriors/features/auth/providers/auth_provider.dart';
+
+/// `RegisterScreen` : Écran d'inscription pour créer un nouveau compte utilisateur.
 ///
-/// Ce widget gère un flux d'inscription en deux étapes :
-/// 1. Sélection de l'avatar.
-/// 2. Saisie des informations de compte (nom d'utilisateur, email, mot de passe).
-/// Il inclut également des options de connexion sociale et des animations futuristes.
+/// Gère un flux en deux étapes : sélection d'avatar, puis formulaire d'inscription
+/// (nom d'utilisateur, email, mot de passe). Inclut des options de connexion sociale
+/// et des animations futuristes.
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -41,32 +51,55 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-
-  // État pour contrôler l'affichage des sections
   bool _showAvatarSelection = true;
-  String? _selectedAvatarUrl; // URL de l'avatar sélectionné
+  String? _selectedAvatarUrl;
 
   late AnimationController _scanController;
   late AnimationController _pulseController;
-  late AnimationController
-  _formSlideController; // Contrôleur pour l'animation du formulaire
+  late AnimationController _formSlideController;
+  late AnimationController _themeIconController;
+  late AnimationController _helpIconController;
+  late AnimationController _backArrowController;
 
   @override
   void initState() {
     super.initState();
-    _scanController = AnimationController(
-      duration: const Duration(seconds: 5),
-      vsync: this,
-    )..repeat(reverse: true);
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..repeat(reverse: true);
+    _initAnimationControllers();
+  }
 
-    _formSlideController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
+  void _initAnimationControllers() {
+    try {
+      _scanController = AnimationController(
+        duration: AppAnimations.scanEffectDuration,
+        vsync: this,
+      )..repeat(reverse: true);
+      _pulseController = AnimationController(
+        duration: AppAnimations.pulseAnimationDuration,
+        vsync: this,
+      )..repeat(reverse: true);
+      _formSlideController = AnimationController(
+        duration: AppAnimations.fadeInDuration,
+        vsync: this,
+      );
+      _themeIconController = AnimationController(
+        duration: AppAnimations.iconAnimationDuration,
+        vsync: this,
+      )..repeat(reverse: true);
+      _helpIconController = AnimationController(
+        duration: AppAnimations.iconAnimationDuration,
+        vsync: this,
+      )..repeat();
+      _backArrowController = AnimationController(
+        duration: AppAnimations.iconAnimationDuration,
+        vsync: this,
+      )..repeat();
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Échec de l\'initialisation des contrôleurs d\'animation',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   @override
@@ -74,6 +107,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     _scanController.dispose();
     _pulseController.dispose();
     _formSlideController.dispose();
+    _themeIconController.dispose();
+    _helpIconController.dispose();
+    _backArrowController.dispose();
     _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -81,18 +117,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     super.dispose();
   }
 
-  /// Gère la sélection d'un avatar et la transition vers le formulaire d'inscription.
   void _selectAvatar(String avatarUrl) {
     setState(() {
       _selectedAvatarUrl = avatarUrl;
-      _showAvatarSelection = false; // Passe à l'affichage du formulaire
+      _showAvatarSelection = false;
     });
-    _formSlideController.forward(); // Démarre l'animation du formulaire
+    _formSlideController.forward();
   }
 
-  /// Gère le processus d'inscription de l'utilisateur.
-  ///
-  /// Valide le formulaire et tente de créer un nouveau compte via le service d'authentification.
   Future<void> _handleSignUp() async {
     if (_formKey.currentState!.validate() && _selectedAvatarUrl != null) {
       final authNotifier = ref.read(authProvider.notifier);
@@ -103,129 +135,83 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       await authNotifier.signUp(
         email: email,
         password: password,
-        username: username, // Passe le nom d'utilisateur
-        avatarUrl: _selectedAvatarUrl, // Passe l'URL de l'avatar
+        username: username,
+        avatarUrl: _selectedAvatarUrl,
       );
 
       if (!mounted) return;
       final authState = ref.read(authProvider);
 
       if (authState.isSignedIn) {
-        AppLogger.info(
-          'User $email signed up successfully. Navigating to dashboard.',
-        );
-        // Afficher un message de succès avant la navigation
+        AppLogger.info('Utilisateur $email inscrit avec succès.');
         _showSuccessDialog(context, username);
-        // Naviguer vers le dashboard après un court délai pour l'animation du dialogue
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
-            context.goNamed(RouteNames.dashboard, extra: authState.user?.id);
+            context.goNamed(RouteNames.dashboard, extra: authState.userId);
           }
         });
       } else {
-        AppLogger.error('Sign up failed: ${authState.errorMessage}');
-        // Afficher un message d'erreur et revenir à la page d'accueil
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authState.errorMessage ?? AppStrings.registerFailed),
-            backgroundColor: AppColors.errorColor,
-          ),
+        AppLogger.error('Échec de l\'inscription: ${authState.errorMessage}');
+        SnackbarManager.showSnackbar(
+          context,
+          authState.errorMessage ?? AppStrings.registerFailed,
+          backgroundColor: AppColors.errorColor,
+          textColor: AppColors.textColorPrimary,
         );
-        // Revenir à la page d'accueil en cas d'échec
-        context.goNamed(RouteNames.home);
       }
+    } else if (_selectedAvatarUrl == null) {
+      SnackbarManager.showSnackbar(
+        context,
+        AppStrings.selectAvatar,
+        backgroundColor: AppColors.errorColor,
+        textColor: AppColors.textColorPrimary,
+      );
     }
   }
 
-  /// Gère la connexion avec Google (à implémenter).
   void _signInWithGoogle() {
-    AppLogger.info('Sign in with Google pressed.');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: FuturisticText(
-          'Fonctionnalité Google à implémenter',
-          color: AppColors.textColorPrimary,
-        ),
-        backgroundColor: AppColors.warningColor,
-      ),
+    AppLogger.info('Connexion avec Google pressée.');
+    SnackbarManager.showSnackbar(
+      context,
+      AppStrings.socialLoginNotImplemented,
+      backgroundColor: AppColors.warningColor,
+      textColor: AppColors.textColorPrimary,
     );
   }
 
-  /// Gère la connexion avec Facebook (à implémenter).
   void _signInWithFacebook() {
-    AppLogger.info('Sign in with Facebook pressed.');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: FuturisticText(
-          'Fonctionnalité Facebook à implémenter',
-          color: AppColors.textColorPrimary,
-        ),
-        backgroundColor: AppColors.warningColor,
-      ),
+    AppLogger.info('Connexion avec Facebook pressée.');
+    SnackbarManager.showSnackbar(
+      context,
+      AppStrings.socialLoginNotImplemented,
+      backgroundColor: AppColors.warningColor,
+      textColor: AppColors.textColorPrimary,
     );
   }
 
-  /// Affiche une boîte de dialogue pour la sélection du thème.
   void _showThemeDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.secondaryColor,
-          title: FuturisticText(
-            AppStrings.theme,
-            color: AppColors.primaryColor,
+      builder:
+          (context) => ThemeSelectionDialog(
+            themeIconController: _themeIconController,
+            onThemeSelected: (themeMode) {
+              AppLogger.info('Thème changé pour : $themeMode');
+            },
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: FuturisticText(
-                  AppStrings.lightTheme,
-                  color: AppColors.textColorPrimary,
-                ),
-                onTap: () {
-                  AppLogger.info('Light theme selected.');
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: FuturisticText(
-                  AppStrings.darkTheme,
-                  color: AppColors.textColorPrimary,
-                ),
-                onTap: () {
-                  AppLogger.info('Dark theme selected.');
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: FuturisticText(
-                  AppStrings.systemTheme,
-                  color: AppColors.textColorPrimary,
-                ),
-                onTap: () {
-                  AppLogger.info('System theme selected.');
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
-  /// Affiche un dialogue de succès après la création du profil.
   void _showSuccessDialog(BuildContext context, String username) {
     showDialog(
       context: context,
-      barrierDismissible: false, // Empêche la fermeture en tapant à l'extérieur
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: AppColors.secondaryColor.withOpacity(0.9),
+          backgroundColor: AppColors.backgroundColor.withValues(blue: 0.9),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.virusGreen, width: 2),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -237,7 +223,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 repeat: false,
                 errorBuilder: (context, error, stackTrace) {
                   AppLogger.error(
-                    'Error loading Lottie: ${AppAssets.successAnimation}',
+                    'Erreur de chargement de Lottie: ${AppAssets.successAnimation}',
                     error: error,
                     stackTrace: stackTrace,
                   );
@@ -248,7 +234,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                   );
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               FuturisticText(
                 AppStrings.profileCreated,
                 size: 20,
@@ -256,7 +242,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 color: AppColors.successColor,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               FuturisticText(
                 '${AppStrings.welcomeToImmunoWarriors} $username!',
                 size: 16,
@@ -270,69 +256,60 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     );
   }
 
-  /// Construit la section de sélection de l'avatar.
   Widget _buildAvatarSelectionSection(
     double screenWidth,
     double screenHeight,
     bool isLandscape,
   ) {
     return FadeInUp(
-      duration: const Duration(milliseconds: 700),
+      duration: AppAnimations.fadeInDuration,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          FuturisticText(
-            AppStrings.chooseYourAvatar,
-            size: isLandscape ? 36 : 28,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primaryColor,
-            textAlign: TextAlign.center,
+          PulseWidget(
+            controller: _pulseController,
+            minScale: 0.95,
+            maxScale: 1.05,
+            child: FuturisticText(
+              AppStrings.chooseYourAvatar,
+              size: isLandscape ? 36 : 28,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryColor,
+              textAlign: TextAlign.center,
+            ),
           ),
           SizedBox(height: screenHeight * 0.04),
           SizedBox(
-            height:
-                isLandscape
-                    ? screenHeight * 0.4
-                    : screenWidth *
-                        0.4, // Taille adaptée pour le défilement horizontal
-            child: ListView.builder(
+            height: isLandscape ? screenHeight * 0.5 : screenHeight * 0.4,
+            child: GridView.builder(
               scrollDirection: Axis.horizontal,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 1,
+              ),
               itemCount: AppAssets.availableAvatars.length,
               itemBuilder: (context, index) {
                 final avatarPath = AppAssets.availableAvatars[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                  child: NeuomorphicButton(
-                    onPressed: () => _selectAvatar(avatarPath),
-                    borderRadius: BorderRadius.circular(20),
-                    depth: 8,
-                    intensity: 0.6,
-                    blur: 15,
-                    color: AppColors.secondaryColor,
-                    child: Container(
-                      width:
-                          isLandscape ? screenHeight * 0.3 : screenWidth * 0.3,
-                      height:
-                          isLandscape ? screenHeight * 0.3 : screenWidth * 0.3,
-                      padding: const EdgeInsets.all(10),
-                      child: Lottie.asset(
-                        avatarPath,
-                        fit: BoxFit.contain,
-                        repeat: true,
-                        errorBuilder: (context, error, stackTrace) {
-                          AppLogger.error(
-                            'Error loading Lottie avatar: $avatarPath',
-                            error: error,
-                            stackTrace: stackTrace,
-                          );
-                          return Icon(
-                            Icons.person,
-                            color: AppColors.textColorPrimary,
-                            size: 60,
-                          ); // Fallback
-                        },
-                      ),
-                    ),
+                return VirusButton(
+                  onPressed: () => _selectAvatar(avatarPath),
+                  width: isLandscape ? screenHeight * 0.2 : screenWidth * 0.3,
+                  child: Lottie.asset(
+                    avatarPath,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      AppLogger.error(
+                        'Erreur de chargement de Lottie avatar: $avatarPath',
+                        error: error,
+                        stackTrace: stackTrace,
+                      );
+                      return Icon(
+                        Icons.person,
+                        color: AppColors.textColorPrimary,
+                        size: 60,
+                      );
+                    },
                   ),
                 );
               },
@@ -343,7 +320,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     );
   }
 
-  /// Construit la section du formulaire d'inscription.
   Widget _buildRegistrationFormSection(
     double screenWidth,
     double screenHeight,
@@ -351,51 +327,50 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     bool authLoading,
   ) {
     return SlideTransition(
-      // Animation de glissement
       position: Tween<Offset>(
-        begin: const Offset(0, 1), // Commence en bas
-        end: Offset.zero, // Glisse vers sa position finale
+        begin: const Offset(1, 0),
+        end: Offset.zero,
       ).animate(_formSlideController),
       child: FadeTransition(
-        // Animation de fondu
         opacity: _formSlideController,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Titre de l'écran d'inscription
-            FuturisticText(
-              AppStrings.registerTitle,
-              size: isLandscape ? 36 : 28,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryColor,
-              textAlign: TextAlign.center,
+            PulseWidget(
+              controller: _pulseController,
+              minScale: 0.95,
+              maxScale: 1.05,
+              child: FuturisticText(
+                AppStrings.registerTitle,
+                size: isLandscape ? 36 : 28,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryColor,
+                textAlign: TextAlign.center,
+              ),
             ),
             SizedBox(height: screenHeight * 0.04),
-
             GlassmorphismCard(
               blur: 15,
               opacity: 0.2,
               borderRadius: BorderRadius.circular(16),
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(24),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     children: [
-                      // Champ Nom d'utilisateur
                       InputField(
                         controller: _usernameController,
-                        labelText: AppStrings.enterUsername, // Nouvelle chaîne
+                        labelText: AppStrings.enterUsername,
                         keyboardType: TextInputType.text,
                         prefixIcon: Lottie.asset(
-                          AppAssets
-                              .userAvatarAnimation, // Utiliser une icône d'utilisateur
+                          AppAssets.userAvatarAnimation,
                           width: 24,
                           height: 24,
                           errorBuilder: (context, error, stackTrace) {
                             AppLogger.error(
-                              'Error loading Lottie: ${AppAssets.userAvatarAnimation}',
+                              'Erreur de chargement de Lottie: ${AppAssets.userAvatarAnimation}',
                               error: error,
                               stackTrace: stackTrace,
                             );
@@ -407,25 +382,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Veuillez entrer un nom d\'utilisateur.';
+                            return AppStrings.invalidUsername;
                           }
                           return null;
                         },
                       ),
-                      const SizedBox(height: 20),
-                      // Champ Email
+                      const SizedBox(height: 16),
                       InputField(
                         controller: _emailController,
                         labelText: AppStrings.emailHint,
                         keyboardType: TextInputType.emailAddress,
                         prefixIcon: Lottie.asset(
-                          AppAssets
-                              .lockAnimation, // Placeholder, à remplacer par une icône email si disponible
+                          AppAssets.emailIconAnimation,
                           width: 24,
                           height: 24,
                           errorBuilder: (context, error, stackTrace) {
                             AppLogger.error(
-                              'Error loading Lottie: ${AppAssets.lockAnimation}',
+                              'Erreur de chargement de Lottie: ${AppAssets.emailIconAnimation}',
                               error: error,
                               stackTrace: stackTrace,
                             );
@@ -439,14 +412,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           if (value == null || value.isEmpty) {
                             return AppStrings.invalidEmail;
                           }
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                          if (!EmailValidator.validate(value)) {
                             return AppStrings.invalidEmail;
                           }
                           return null;
                         },
                       ),
-                      const SizedBox(height: 20),
-                      // Champ Mot de passe
+                      const SizedBox(height: 16),
                       InputField(
                         controller: _passwordController,
                         labelText: AppStrings.passwordHint,
@@ -457,7 +429,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           height: 24,
                           errorBuilder: (context, error, stackTrace) {
                             AppLogger.error(
-                              'Error loading Lottie: ${AppAssets.lockAnimation}',
+                              'Erreur de chargement de Lottie: ${AppAssets.lockAnimation}',
                               error: error,
                               stackTrace: stackTrace,
                             );
@@ -476,7 +448,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                             height: 24,
                             errorBuilder: (context, error, stackTrace) {
                               AppLogger.error(
-                                'Error loading Lottie: ${_obscurePassword ? AppAssets.eyeClosedAnimation : AppAssets.eyeOpenAnimation}',
+                                'Erreur de chargement de Lottie: ${_obscurePassword ? AppAssets.eyeClosedAnimation : AppAssets.eyeOpenAnimation}',
                                 error: error,
                                 stackTrace: stackTrace,
                               );
@@ -504,8 +476,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           return null;
                         },
                       ),
-                      const SizedBox(height: 20),
-                      // Champ Confirmer mot de passe
+                      const SizedBox(height: 16),
                       InputField(
                         controller: _confirmPasswordController,
                         labelText: AppStrings.confirmPasswordHint,
@@ -516,7 +487,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           height: 24,
                           errorBuilder: (context, error, stackTrace) {
                             AppLogger.error(
-                              'Error loading Lottie: ${AppAssets.lockAnimation}',
+                              'Erreur de chargement de Lottie: ${AppAssets.lockAnimation}',
                               error: error,
                               stackTrace: stackTrace,
                             );
@@ -535,7 +506,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                             height: 24,
                             errorBuilder: (context, error, stackTrace) {
                               AppLogger.error(
-                                'Error loading Lottie: ${_obscureConfirmPassword ? AppAssets.eyeClosedAnimation : AppAssets.eyeOpenAnimation}',
+                                'Erreur de chargement de Lottie: ${_obscureConfirmPassword ? AppAssets.eyeClosedAnimation : AppAssets.eyeOpenAnimation}',
                                 error: error,
                                 stackTrace: stackTrace,
                               );
@@ -564,55 +535,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           return null;
                         },
                       ),
-                      const SizedBox(height: 30),
-                      // Bouton Créer le compte
-                      NeuomorphicButton(
+                      const SizedBox(height: 24),
+                      VirusButton(
                         onPressed: authLoading ? null : _handleSignUp,
-                        borderRadius: BorderRadius.circular(12),
-                        depth: 8,
-                        intensity: 0.6,
-                        blur: 15,
-                        color: AppColors.primaryColor,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child:
-                              authLoading
-                                  ? CircularProgressIndicator(
-                                    color: AppColors.textColorPrimary,
-                                  )
-                                  : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Lottie.asset(
-                                        AppAssets.signUpAnimation,
-                                        width: 24,
-                                        height: 24,
-                                        errorBuilder: (
-                                          context,
-                                          error,
-                                          stackTrace,
-                                        ) {
-                                          AppLogger.error(
-                                            'Error loading Lottie: ${AppAssets.signUpAnimation}',
-                                            error: error,
-                                            stackTrace: stackTrace,
-                                          );
-                                          return Icon(
-                                            Icons.person_add,
-                                            color: AppColors.textColorPrimary,
-                                          );
-                                        },
-                                      ),
-                                      const SizedBox(width: 12),
-                                      FuturisticText(
-                                        AppStrings.registerAccount,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textColorPrimary,
-                                        size: 18,
-                                      ),
-                                    ],
-                                  ),
-                        ),
+                        width: double.infinity,
+                        child:
+                            authLoading
+                                ? const CircularProgressIndicator(
+                                  color: AppColors.textColorPrimary,
+                                )
+                                : FuturisticText(
+                                  AppStrings.registerButton,
+                                  size: 18,
+                                  color: AppColors.textColorPrimary,
+                                ),
                       ),
                     ],
                   ),
@@ -620,101 +556,94 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               ),
             ),
             SizedBox(height: screenHeight * 0.04),
-
-            // Option de connexion sociale
-            Column(
-              children: [
-                FuturisticText(
-                  AppStrings.orConnectWith,
-                  color: AppColors.textColorSecondary,
-                  size: 16,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Bouton Google
-                    NeuomorphicButton(
-                      onPressed: _signInWithGoogle,
-                      borderRadius: BorderRadius.circular(12),
-                      depth: 6,
-                      intensity: 0.5,
-                      blur: 10,
-                      color: AppColors.secondaryColor,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
+            FadeInUp(
+              delay: Duration(
+                milliseconds: AppAnimations.fadeInDuration.inMilliseconds + 200,
+              ),
+              duration: AppAnimations.fadeInDuration,
+              child: Column(
+                children: [
+                  FuturisticText(
+                    AppStrings.orConnectWith,
+                    color: AppColors.textColorSecondary,
+                    size: 16,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      VirusButton(
+                        onPressed: _signInWithGoogle,
+                        width: 60,
                         child: Lottie.asset(
                           AppAssets.googleLogoAnimation,
-                          width: 30,
-                          height: 30,
+                          width: 24,
+                          height: 24,
                           errorBuilder: (context, error, stackTrace) {
                             AppLogger.error(
-                              'Error loading Lottie: ${AppAssets.googleLogoAnimation}',
+                              'Erreur de chargement de Lottie: ${AppAssets.googleLogoAnimation}',
                               error: error,
                               stackTrace: stackTrace,
                             );
-                            return Image.asset(
-                              'https://placehold.co/30x30/ffffff/000000?text=G',
-                            ); // Fallback image
+                            return Icon(
+                              Icons.g_mobiledata,
+                              color: AppColors.textColorPrimary,
+                            );
                           },
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 20),
-                    // Bouton Facebook
-                    NeuomorphicButton(
-                      onPressed: _signInWithFacebook,
-                      borderRadius: BorderRadius.circular(12),
-                      depth: 6,
-                      intensity: 0.5,
-                      blur: 10,
-                      color: AppColors.secondaryColor,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
+                      const SizedBox(width: 16),
+                      VirusButton(
+                        onPressed: _signInWithFacebook,
+                        width: 60,
                         child: Lottie.asset(
                           AppAssets.facebookLogoAnimation,
-                          width: 30,
-                          height: 30,
+                          width: 24,
+                          height: 24,
                           errorBuilder: (context, error, stackTrace) {
                             AppLogger.error(
-                              'Error loading Lottie: ${AppAssets.facebookLogoAnimation}',
+                              'Erreur de chargement de Lottie: ${AppAssets.facebookLogoAnimation}',
                               error: error,
                               stackTrace: stackTrace,
                             );
-                            return Image.asset(
-                              'https://placehold.co/30x30/3b5998/ffffff?text=f',
-                            ); // Fallback image
+                            return Icon(
+                              Icons.facebook,
+                              color: AppColors.textColorPrimary,
+                            );
                           },
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
             SizedBox(height: screenHeight * 0.04),
-
-            // Lien vers la page de connexion
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                FuturisticText(
-                  AppStrings.alreadyHaveAccount,
-                  color: AppColors.textColorSecondary,
-                  size: 14,
-                ),
-                TextButton(
-                  onPressed:
-                      () => context.goNamed(RouteNames.loginFromRegister),
-                  child: FuturisticText(
-                    AppStrings.signInHere,
-                    color: AppColors.primaryColor,
-                    fontWeight: FontWeight.bold,
+            FadeInUp(
+              delay: Duration(
+                milliseconds: AppAnimations.fadeInDuration.inMilliseconds + 400,
+              ),
+              duration: AppAnimations.fadeInDuration,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FuturisticText(
+                    AppStrings.alreadyHaveAccount,
+                    color: AppColors.textColorSecondary,
                     size: 14,
                   ),
-                ),
-              ],
+                  TextButton(
+                    onPressed: () => context.goNamed(RouteNames.login),
+                    child: FuturisticText(
+                      AppStrings.signInHere,
+                      color: AppColors.primaryColor,
+                      fontWeight: FontWeight.bold,
+                      size: 14,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -731,10 +660,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     final authLoading = ref.watch(authLoadingProvider);
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 1. Animated Background
           Positioned.fill(
             child: Lottie.asset(
               AppAssets.backgroundAnimation,
@@ -742,7 +671,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               repeat: true,
               errorBuilder: (context, error, stackTrace) {
                 AppLogger.error(
-                  'Error loading background Lottie: ${AppAssets.backgroundAnimation}',
+                  'Erreur de chargement de l\'animation Lottie',
                   error: error,
                   stackTrace: stackTrace,
                 );
@@ -750,119 +679,105 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               },
             ),
           ),
-
-          // 2. Scan Effect Overlay
-          Positioned.fill(
-            child: AdvancedScanEffect(
-              controller: _scanController,
-              scanColor: AppColors.primaryColor.withOpacity(0.3),
-              lineWidth: 3.0,
-              blendMode: BlendMode.plus,
-            ),
+          AdvancedScanEffect(
+            controller: _scanController,
+            scanColor: AppColors.virusGreen.withValues(blue: 0.3),
+            lineWidth: 2,
+            blendMode: BlendMode.plus,
           ),
-
-          // 3. Main Content
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * (isLandscape ? 0.04 : 0.06),
-              vertical: screenHeight * (isLandscape ? 0.06 : 0.1),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Navigation Bar
-                FadeInDown(
-                  duration: const Duration(milliseconds: 700),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Animated App Title
-                      PulseWidget(
-                        controller: _pulseController,
-                        child: AnimatedBorder(
-                          animationController: _pulseController,
-                          width: screenWidth * 0.3,
-                          height: 40,
-                          borderWidth: 2,
-                          borderColor: AppColors.primaryColor.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(8),
-                          child: Center(
-                            child: FuturisticText(
-                              AppStrings.appName,
-                              size: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primaryColor,
-                            ),
-                          ),
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: screenWidth * (isLandscape ? 0.05 : 0.08),
+                vertical: screenHeight * (isLandscape ? 0.10 : 0.16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FadeInDown(
+                    duration: AppAnimations.fadeInDuration,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        AnimatedIconButton(
+                          animationAsset: AppAssets.backArrowAnimation,
+                          tooltip: AppStrings.back,
+                          onPressed: () {
+                            if (!_showAvatarSelection) {
+                              _formSlideController.reverse().then((_) {
+                                setState(() {
+                                  _showAvatarSelection = true;
+                                  _selectedAvatarUrl = null;
+                                });
+                              });
+                            } else {
+                              context.goNamed(RouteNames.profileAuthOptions);
+                            }
+                          },
+                          backgroundColor: Colors.blue.withValues(blue: 0.2),
+                          errorBuilder: (context, error, stackTrace) {
+                            AppLogger.error(
+                              'Erreur de chargement de Lottie: ${AppAssets.backArrowAnimation}',
+                              error: error,
+                              stackTrace: stackTrace,
+                            );
+                            return Icon(
+                              Icons.arrow_back,
+                              color: AppColors.textColorPrimary,
+                            );
+                          },
                         ),
-                      ),
-                      Row(
-                        children: [
-                          AnimatedIconButton(
-                            animationAsset: AppAssets.helpIconAnimation,
-                            tooltip: AppStrings.help,
-                            onPressed: () => context.goNamed(RouteNames.help),
-                            backgroundColor: Colors.blue.withOpacity(0.2),
-                            errorBuilder: (context, error, stackTrace) {
-                              AppLogger.error(
-                                'Error loading Lottie: ${AppAssets.helpIconAnimation}',
-                                error: error,
-                                stackTrace: stackTrace,
-                              );
-                              return Icon(
-                                Icons.help,
-                                color: AppColors.textColorPrimary,
-                              );
-                            },
-                          ),
-                          const SizedBox(width: 12),
-                          AnimatedIconButton(
-                            animationAsset: AppAssets.themeIconAnimation,
-                            tooltip: AppStrings.theme,
-                            onPressed: () => _showThemeDialog(context),
-                            backgroundColor: Colors.blue.withOpacity(0.2),
-                            errorBuilder: (context, error, stackTrace) {
-                              AppLogger.error(
-                                'Error loading Lottie: ${AppAssets.themeIconAnimation}',
-                                error: error,
-                                stackTrace: stackTrace,
-                              );
-                              return Icon(
-                                Icons.palette,
-                                color: AppColors.textColorPrimary,
-                              );
-                            },
-                          ),
-                          const SizedBox(width: 12),
-                          AnimatedIconButton(
-                            animationAsset: AppAssets.geminiIconAnimation,
-                            tooltip: AppStrings.gemini,
-                            onPressed: () => context.goNamed(RouteNames.gemini),
-                            backgroundColor: Colors.blue.withOpacity(0.2),
-                            errorBuilder: (context, error, stackTrace) {
-                              AppLogger.error(
-                                'Error loading Lottie: ${AppAssets.geminiIconAnimation}',
-                                error: error,
-                                stackTrace: stackTrace,
-                              );
-                              return Icon(
-                                Icons.psychology,
-                                color: AppColors.textColorPrimary,
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
+                        Row(
+                          children: [
+                            AnimatedIconButton(
+                              animationAsset: AppAssets.helpIconAnimation,
+                              tooltip: AppStrings.help,
+                              onPressed: () => context.goNamed(RouteNames.help),
+                              backgroundColor: Colors.blue.withValues(
+                                blue: 0.2,
+                              ),
+                              errorBuilder: (context, error, stackTrace) {
+                                AppLogger.error(
+                                  'Erreur de chargement de Lottie: ${AppAssets.helpIconAnimation}',
+                                  error: error,
+                                  stackTrace: stackTrace,
+                                );
+                                return Icon(
+                                  Icons.help,
+                                  color: AppColors.textColorPrimary,
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 12),
+                            AnimatedIconButton(
+                              animationAsset: AppAssets.themeIconAnimation,
+                              tooltip: AppStrings.theme,
+                              onPressed: () => _showThemeDialog(context),
+                              backgroundColor: Colors.blue.withValues(
+                                blue: 0.2,
+                              ),
+                              errorBuilder: (context, error, stackTrace) {
+                                AppLogger.error(
+                                  'Erreur de chargement de Lottie: ${AppAssets.themeIconAnimation}',
+                                  error: error,
+                                  stackTrace: stackTrace,
+                                );
+                                return Icon(
+                                  Icons.palette,
+                                  color: AppColors.textColorPrimary,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(height: screenHeight * 0.05),
-
-                Expanded(
-                  child: Center(
+                  SizedBox(height: screenHeight * 0.05),
+                  Expanded(
                     child: SingleChildScrollView(
                       child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 500),
+                        duration: AppAnimations.fadeInDuration,
                         transitionBuilder: (
                           Widget child,
                           Animation<double> animation,
@@ -874,89 +789,28 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         },
                         child:
                             _showAvatarSelection
-                                ? _buildAvatarSelectionSection(
-                                  screenWidth,
-                                  screenHeight,
-                                  isLandscape,
+                                ? KeyedSubtree(
+                                  key: const ValueKey('avatar_selection'),
+                                  child: _buildAvatarSelectionSection(
+                                    screenWidth,
+                                    screenHeight,
+                                    isLandscape,
+                                  ),
                                 )
-                                : _buildRegistrationFormSection(
-                                  screenWidth,
-                                  screenHeight,
-                                  isLandscape,
-                                  authLoading,
+                                : KeyedSubtree(
+                                  key: const ValueKey('registration_form'),
+                                  child: _buildRegistrationFormSection(
+                                    screenWidth,
+                                    screenHeight,
+                                    isLandscape,
+                                    authLoading,
+                                  ),
                                 ),
                       ),
                     ),
                   ),
-                ),
-
-                // Bouton Retour (en bas de l'écran)
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: FadeInUp(
-                    delay: const Duration(milliseconds: 1000),
-                    duration: const Duration(milliseconds: 600),
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 32.0),
-                      child: NeuomorphicButton(
-                        onPressed: () {
-                          if (!_showAvatarSelection) {
-                            // Si on est sur le formulaire, revenir à la sélection d'avatar
-                            _formSlideController.reverse().then((_) {
-                              setState(() {
-                                _showAvatarSelection = true;
-                                _selectedAvatarUrl =
-                                    null; // Réinitialise l'avatar sélectionné
-                              });
-                            });
-                          } else {
-                            // Sinon, revenir à la page précédente (AuthOptions ou Home)
-                            context.pop();
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(10),
-                        depth: 6,
-                        intensity: 0.4,
-                        blur: 8,
-                        color: AppColors.secondaryColor,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 14,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Lottie.asset(
-                                AppAssets.backArrowAnimation,
-                                width: 30,
-                                height: 30,
-                                errorBuilder: (context, error, stackTrace) {
-                                  AppLogger.error(
-                                    'Error loading Lottie: ${AppAssets.backArrowAnimation}',
-                                    error: error,
-                                    stackTrace: stackTrace,
-                                  );
-                                  return Icon(
-                                    Icons.arrow_back,
-                                    color: AppColors.textColorPrimary,
-                                  );
-                                },
-                              ),
-                              const SizedBox(width: 8),
-                              FuturisticText(
-                                AppStrings.back,
-                                color: AppColors.textColorSecondary,
-                                size: 16,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

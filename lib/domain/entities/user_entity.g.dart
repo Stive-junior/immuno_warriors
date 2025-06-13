@@ -19,11 +19,16 @@ _$UserEntityImpl _$$UserEntityImplFromJson(Map<String, dynamic> json) =>
           ? null
           : DateTime.parse(json['lastLogin'] as String),
       resources: json['resources'] as Map<String, dynamic>?,
-      progression: json['progression'] as Map<String, dynamic>?,
+      progression: json['progression'] == null
+          ? null
+          : ProgressionEntity.fromJson(
+              json['progression'] as Map<String, dynamic>),
       achievements: (json['achievements'] as Map<String, dynamic>?)?.map(
         (k, e) => MapEntry(k, e as bool),
       ),
-      inventory: json['inventory'] as List<dynamic>?,
+      inventory: (json['inventory'] as List<dynamic>?)
+          ?.map((e) => InventoryItemModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
 
 Map<String, dynamic> _$$UserEntityImplToJson(_$UserEntityImpl instance) =>

@@ -1,5 +1,5 @@
 const { db } = require('../services/firebaseService');
-const { v4: validateInventoryItem, fromFirestore, toFirestore } = require('../models/inventoryModel.js');
+const {  validateInventoryItem, fromFirestore, toFirestore } = require('../models/inventoryModel.js');
 const { AppError, NotFoundError } = require('../utils/errorUtils');
 const { logger } = require('../utils/logger');
 const { formatTimestamp } = require('../utils/dateUtils');

@@ -1,4 +1,4 @@
-/// Manages routing for Immuno Warriors using GoRouter with custom transitions
+// Manages routing for Immuno Warriors using GoRouter with custom transitions
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,7 +19,6 @@ import '../../features/research/presentation/screens/research_screen.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/threat_scanner/screens/threat_scanner_screen.dart';
 import '../../features/war_archive/presentation/screens/archive_screen.dart';
-import '../../features/research/presentation/screens/research_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/help/screens/help_screen.dart';
 import '../../features/leaderboard/screens/leaderboard_screen.dart';
