@@ -1,7 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart' as log;
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:logger/logger.dart' show LogEvent;
+
+// Initialisation des données de locale pour 'fr_FR'
+void initializeLogger() async {
+  await initializeDateFormatting('fr_FR', null);
+}
 
 class AppLogger {
   static final _logger = log.Logger(
@@ -32,7 +38,7 @@ class AppLogger {
     StackTrace? stackTrace,
   }) {
     _logger.d(
-      _formatMessage(message),
+      _formatMessage(message, stackTrace),
       time: time ?? DateTime.now(),
       error: error,
       stackTrace: stackTrace,
@@ -47,7 +53,7 @@ class AppLogger {
     StackTrace? stackTrace,
   }) {
     _logger.i(
-      _formatMessage(message),
+      _formatMessage(message, stackTrace),
       time: time ?? DateTime.now(),
       error: error,
       stackTrace: stackTrace,
@@ -62,7 +68,7 @@ class AppLogger {
     StackTrace? stackTrace,
   }) {
     _logger.w(
-      _formatMessage(message),
+      _formatMessage(message, stackTrace),
       time: time ?? DateTime.now(),
       error: error,
       stackTrace: stackTrace,
@@ -77,7 +83,7 @@ class AppLogger {
     StackTrace? stackTrace,
   }) {
     _logger.e(
-      _formatMessage(message),
+      _formatMessage(message, stackTrace),
       time: time ?? DateTime.now(),
       error: error,
       stackTrace: stackTrace,
@@ -92,30 +98,71 @@ class AppLogger {
     StackTrace? stackTrace,
   }) {
     _logger.f(
-      _formatMessage(message),
+      _formatMessage(message, stackTrace),
       time: time ?? DateTime.now(),
       error: error,
       stackTrace: stackTrace,
     );
   }
 
-  /// Formate le message avec timestamp et contexte.
-  static String _formatMessage(dynamic message) {
-    final dateFormat = DateFormat('dd/MM/yyyy HH:mm:ss', 'fr_FR');
+  /// Formate le message avec timestamp, contexte et nom du fichier.
+  static String _formatMessage(dynamic message, StackTrace? stackTrace) {
+    final timestamp = DateTime.now();
+    String formattedTime;
+    try {
+      final dateFormat = DateFormat('dd/MM/yyyy HH:mm:ss', 'fr_FR');
+      formattedTime = dateFormat.format(timestamp);
+    } catch (e) {
+      formattedTime = timestamp.toIso8601String(); // Fallback
+      _logger.w('Échec du formatage du timestamp : $e');
+    }
+
     final formattedMessage = StringBuffer();
-    formattedMessage.write('[${dateFormat.format(DateTime.now())}] ');
+    formattedMessage.write('[$formattedTime] ');
+
+    // Ajout du nom du fichier
+    if (stackTrace != null) {
+      final fileInfo = _extractFileInfo(stackTrace);
+      if (fileInfo != null) {
+        formattedMessage.write('[${fileInfo['file']}:${fileInfo['line']}] ');
+      }
+    }
+
     if (_context.isNotEmpty) {
       formattedMessage.write('Contexte: ${_context.toString()} ');
     }
     formattedMessage.write(message.toString());
     return formattedMessage.toString();
   }
+
+  /// Extrait le nom du fichier et la ligne depuis la StackTrace.
+  static Map<String, dynamic>? _extractFileInfo(StackTrace stackTrace) {
+    try {
+      final stackLines = stackTrace.toString().split('\n');
+      // Cherche la première ligne pertinente (après AppLogger)
+      for (var line in stackLines) {
+        if (line.isNotEmpty && !line.contains('app_logger.dart')) {
+          final match = RegExp(r'\(([^:]+):(\d+):\d+\)').firstMatch(line);
+          if (match != null) {
+            final filePath = match.group(1)!;
+            final fileName = filePath.split('/').last;
+            final lineNumber = match.group(2)!;
+            return {'file': fileName, 'line': lineNumber};
+          }
+          break;
+        }
+      }
+    } catch (e) {
+      _logger.w('Échec de l\'extraction du fichier depuis StackTrace : $e');
+    }
+    return null;
+  }
 }
 
 /// Filtre pour la production (ignore les logs de débogage).
 class ProductionFilter extends log.LogFilter {
   @override
-  bool shouldLog(log.LogEvent event) {
+  bool shouldLog(LogEvent event) {
     return event.level.index >= log.Level.info.index;
   }
 }

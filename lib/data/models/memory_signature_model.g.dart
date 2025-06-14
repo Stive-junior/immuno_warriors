@@ -8,7 +8,7 @@ part of 'memory_signature_model.dart';
 
 class MemorySignatureModelAdapter extends TypeAdapter<MemorySignatureModel> {
   @override
-  final int typeId = 19;
+  final int typeId = 7;
 
   @override
   MemorySignatureModel read(BinaryReader reader) {

@@ -5,7 +5,7 @@ import '../../domain/entities/pathogen_entity.dart';
 
 part 'pathogen_model.g.dart';
 
-@HiveType(typeId: 17)
+@HiveType(typeId: 10)
 class PathogenModel extends HiveObject {
   @HiveField(0)
   final String id;

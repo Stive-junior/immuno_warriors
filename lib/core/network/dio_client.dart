@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:immuno_warriors/core/exceptions/app_exception.dart';
 import 'package:immuno_warriors/core/exceptions/network_exceptions.dart';
 import 'package:immuno_warriors/core/network/api_endpoints.dart';
@@ -11,44 +12,61 @@ class DioClient {
   final Dio _dio;
   final FirebaseAuth _firebaseAuth;
   final NetworkService _networkService;
+  // ignore: unused_field
+  final Ref _ref;
   final int _maxRetries = 3;
   final Duration _retryDelay = const Duration(seconds: 2);
 
-  /// Crée une instance de [DioClient].
-  ///
-  /// Requiert un [NetworkService] pour gérer l'URL de base et vérifier la connectivité réseau.
-  /// Configure les options de base Dio avec des délais et des en-têtes par défaut.
-  DioClient(this._networkService)
-    : _firebaseAuth = FirebaseAuth.instance,
-      _dio = Dio(
-        BaseOptions(
-          baseUrl: ApiEndpoints.baseUrl,
-          connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 30),
-          sendTimeout: const Duration(seconds: 30),
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          validateStatus: (status) => status != null && status < 500,
-        ),
-      ) {
+  DioClient({
+    required Ref ref,
+    required NetworkService networkService,
+    required FirebaseAuth firebaseAuth,
+  }) : _ref = ref,
+       _networkService = networkService,
+       _firebaseAuth = firebaseAuth,
+       _dio = Dio(
+         BaseOptions(
+           baseUrl: networkService.baseUrl,
+           connectTimeout: const Duration(seconds: 30),
+           receiveTimeout: const Duration(seconds: 30),
+           sendTimeout: const Duration(seconds: 30),
+           headers: {
+             'Content-Type': 'application/json',
+             'Accept': 'application/json',
+             'ngrok-skip-browser-warning': 'true',
+           },
+           validateStatus: (status) => status != null && status < 500,
+         ),
+       ) {
     _setupInterceptors();
+    _listenToBaseUrlChanges();
   }
 
-  /// Met à jour l'URL de base dynamiquement.
-  ///
-  /// [newUrl] : Nouvelle URL de base pour les requêtes API.
+  void _listenToBaseUrlChanges() {
+    _networkService.baseUrlStream.listen(
+      (newUrl) {
+        final cleanedUrl = newUrl.endsWith('/api') ? newUrl : '$newUrl/api';
+        updateBaseUrl(cleanedUrl);
+      },
+      onError: (e) {
+        AppLogger.error('Erreur écoute URL dans DioClient: $e');
+      },
+    );
+  }
+
   void updateBaseUrl(String newUrl) {
-    _dio.options.baseUrl = newUrl;
-    AppLogger.info('URL de base mise à jour dans DioClient : $newUrl');
+    if (ApiEndpoints.isValidUrl(newUrl)) {
+      if (_dio.options.baseUrl != newUrl) {
+        _dio.options.baseUrl = newUrl;
+        AppLogger.info('URL de base mise à jour: $newUrl');
+      }
+    } else {
+      AppLogger.error('URL invalide: $newUrl');
+      throw NetworkException('URL invalide: $newUrl');
+    }
   }
 
-  /// --- Configuration des intercepteurs ---
-
-  /// Configure les intercepteurs Dio pour la journalisation, l'authentification, les retries et la gestion des erreurs.
   void _setupInterceptors() {
-    // Intercepteur de journalisation en mode débogage
     if (kDebugMode) {
       _dio.interceptors.add(
         LogInterceptor(
@@ -58,72 +76,63 @@ class DioClient {
           responseHeader: true,
           responseBody: true,
           error: true,
-          logPrint: (object) => AppLogger.info(object.toString()),
+          logPrint: (object) => AppLogger.debug(object.toString()),
         ),
       );
     }
 
-    // Intercepteur pour l'authentification et les retries
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Vérifier la connectivité réseau
           if (!await _networkService.isOnline) {
-            AppLogger.error('Aucune connexion réseau détectée.');
+            AppLogger.error('Pas de connexion réseau pour ${options.uri}.');
             throw NoInternetException();
           }
 
-          // Ajouter le token Firebase
           final user = _firebaseAuth.currentUser;
           if (user != null) {
             try {
-              final idToken = await user.getIdToken(
-                true,
-              ); // Rafraîchissement si expiré
+              final idToken = await user.getIdToken(true);
               options.headers['Authorization'] = 'Bearer $idToken';
-              AppLogger.info(
-                'Token Firebase ajouté à la requête : ${options.uri}',
-              );
+              AppLogger.debug('Token Firebase ajouté: ${options.uri}');
             } catch (e) {
-              AppLogger.error(
-                'Échec de l\'obtention du token Firebase.',
-                error: e,
-              );
+              AppLogger.error('Échec récupération token Firebase.', error: e);
             }
           } else {
             AppLogger.warning(
-              'Aucun utilisateur Firebase connecté. Requête sans token.',
+              'Aucun utilisateur Firebase pour ${options.uri}.',
             );
           }
           return handler.next(options);
         },
         onError: (DioException e, handler) async {
-          // Gérer les erreurs 401 (token expiré ou invalide)
           if (e.response?.statusCode == 401) {
             AppLogger.error(
-              'Erreur 401 : Tentative de rafraîchissement du token.',
+              '401: Tentative de rafraîchissement token pour ${e.requestOptions.path}.',
             );
             final newToken = await _refreshToken();
             if (newToken != null) {
               e.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-              return _retryRequest(e.requestOptions, handler);
-            } else {
-              AppLogger.error(
-                'Échec du rafraîchissement du token. Déconnexion requise.',
+              final retryOptions = Options(
+                method: e.requestOptions.method,
+                headers: e.requestOptions.headers,
+                responseType: e.requestOptions.responseType,
+                contentType: e.requestOptions.contentType,
               );
+              return _retryRequest(e.requestOptions, retryOptions, handler);
+            } else {
+              AppLogger.error('Échec rafraîchissement token.');
               throw ApiException(
-                'Session expirée. Veuillez vous reconnecter.',
+                'Session expirée. Reconnectez-vous.',
                 statusCode: 401,
               );
             }
           }
 
-          // Gérer les erreurs réseau pour les retries
           if (_shouldRetry(e)) {
             return _retryWithBackoff(e, handler);
           }
 
-          // Propager l'erreur
           _handleError(e, e.requestOptions.path, e.requestOptions.method);
           return handler.next(e);
         },
@@ -131,14 +140,6 @@ class DioClient {
     );
   }
 
-  /// --- Méthodes de requêtes HTTP ---
-
-  /// Effectue une requête GET.
-  ///
-  /// [endpoint] : Chemin de l'endpoint API.
-  /// [queryParameters] : Paramètres de requête.
-  /// [options] : Options Dio supplémentaires.
-  /// [cancelToken] : Jeton pour annuler la requête.
   Future<Response> get(
     String endpoint, {
     Map<String, dynamic>? queryParameters,
@@ -160,12 +161,6 @@ class DioClient {
     }
   }
 
-  /// Effectue une requête POST.
-  ///
-  /// [endpoint] : Chemin de l'endpoint API.
-  /// [data] : Données à envoyer.
-  /// [options] : Options Dio supplémentaires.
-  /// [cancelToken] : Jeton pour annuler la requête.
   Future<Response> post(
     String endpoint, {
     dynamic data,
@@ -187,13 +182,6 @@ class DioClient {
     }
   }
 
-  /// Effectue une requête PUT.
-  ///
-  /// [endpoint] : Chemin de l'endpoint API.
-  /// [data] : Données à envoyer.
-  /// [queryParameters] : Paramètres de requête.
-  /// [options] : Options Dio supplémentaires.
-  /// [cancelToken] : Jeton pour annuler la requête.
   Future<Response> put(
     String endpoint, {
     dynamic data,
@@ -217,12 +205,6 @@ class DioClient {
     }
   }
 
-  /// Effectue une requête DELETE.
-  ///
-  /// [endpoint] : Chemin de l'endpoint API.
-  /// [data] : Données à envoyer.
-  /// [options] : Options Dio supplémentaires.
-  /// [cancelToken] : Jeton pour annuler la requête.
   Future<Response> delete(
     String endpoint, {
     dynamic data,
@@ -244,12 +226,6 @@ class DioClient {
     }
   }
 
-  /// Effectue une requête PATCH.
-  ///
-  /// [endpoint] : Chemin de l'endpoint API.
-  /// [data] : Données à envoyer.
-  /// [options] : Options Dio supplémentaires.
-  /// [cancelToken] : Jeton pour annuler la requête.
   Future<Response> patch(
     String endpoint, {
     dynamic data,
@@ -271,12 +247,6 @@ class DioClient {
     }
   }
 
-  /// Effectue une requête multipart pour l'upload de fichiers.
-  ///
-  /// [endpoint] : Chemin de l'endpoint API.
-  /// [formData] : Données multipartes (ex. fichiers, champs texte).
-  /// [options] : Options Dio supplémentaires.
-  /// [cancelToken] : Jeton pour annuler la requête.
   Future<Response> upload(
     String endpoint, {
     required FormData formData,
@@ -298,30 +268,22 @@ class DioClient {
     }
   }
 
-  /// --- Méthodes utilitaires ---
-
-  /// Rafraîchit le token Firebase.
-  ///
-  /// Retourne un nouveau token ou null si l'utilisateur n'est pas connecté.
   Future<String?> _refreshToken() async {
     try {
       final user = _firebaseAuth.currentUser;
       if (user != null) {
         final idToken = await user.getIdToken(true);
-        AppLogger.info('Token Firebase rafraîchi avec succès.');
+        AppLogger.info('Token Firebase rafraîchi.');
         return idToken;
       }
-      AppLogger.warning('Aucun utilisateur connecté pour rafraîchir le token.');
+      AppLogger.warning('Aucun utilisateur pour rafraîchir le token.');
       return null;
     } catch (e) {
-      AppLogger.error('Échec du rafraîchissement du token Firebase.', error: e);
+      AppLogger.error('Échec rafraîchissement token Firebase.', error: e);
       return null;
     }
   }
 
-  /// Détermine si une requête doit être retentée.
-  ///
-  /// Retourne true pour les erreurs réseau ou les erreurs serveur (5xx).
   bool _shouldRetry(DioException e) {
     return e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.sendTimeout ||
@@ -329,10 +291,6 @@ class DioClient {
         (e.response?.statusCode != null && e.response!.statusCode! >= 500);
   }
 
-  /// Retente une requête avec un délai exponentiel.
-  ///
-  /// [e] : Erreur Dio initiale.
-  /// [handler] : Gestionnaire d'erreur Dio.
   Future<void> _retryWithBackoff(
     DioException e,
     ErrorInterceptorHandler handler,
@@ -342,21 +300,13 @@ class DioClient {
 
     if (retryCount <= _maxRetries) {
       final delay = _retryDelay * retryCount;
-      AppLogger.info(
-        'Retentative de la requête (Tentative $retryCount/$_maxRetries) après $delay.',
+      AppLogger.warning(
+        'Réessai requête ($retryCount/$_maxRetries) après $delay pour ${requestOptions.path}.',
       );
       await Future.delayed(delay);
       requestOptions.extra['retry_count'] = retryCount;
       try {
-        final response = await _dio.request(
-          requestOptions.path,
-          data: requestOptions.data,
-          queryParameters: requestOptions.queryParameters,
-          options: Options(
-            method: requestOptions.method,
-            headers: requestOptions.headers,
-          ),
-        );
+        final response = await _dio.fetch(requestOptions);
         handler.resolve(response);
       } catch (retryError) {
         handler.reject(
@@ -369,29 +319,24 @@ class DioClient {
       }
     } else {
       AppLogger.error(
-        'Nombre maximum de tentatives ($_maxRetries) dépassé pour ${requestOptions.path}.',
+        'Max réessais ($_maxRetries) dépassé pour ${requestOptions.path}.',
       );
       handler.next(e);
     }
   }
 
-  /// Retente une requête après rafraîchissement du token.
-  ///
-  /// [options] : Options de la requête initiale.
-  /// [handler] : Gestionnaire d'erreur Dio.
   void _retryRequest(
     RequestOptions options,
+    Options newOptions,
     ErrorInterceptorHandler handler,
   ) async {
     try {
-      final response = await _dio.request(
-        options.path,
-        data: options.data,
-        queryParameters: options.queryParameters,
-        options: Options(method: options.method, headers: options.headers),
-      );
+      final clonedRequest = options.copyWith(headers: newOptions.headers);
+      final response = await _dio.fetch(clonedRequest);
       handler.resolve(response);
+      AppLogger.info('Requête réessayée avec succès: ${options.path}');
     } catch (e) {
+      AppLogger.error('Échec réessai requête: ${options.path}', error: e);
       handler.reject(
         DioException(
           requestOptions: options,
@@ -402,49 +347,52 @@ class DioClient {
     }
   }
 
-  /// Gère les erreurs Dio et mappe les erreurs Firebase.
-  ///
-  /// [e] : Erreur survenue.
-  /// [endpoint] : Endpoint de la requête.
-  /// [method] : Méthode HTTP utilisée.
   void _handleError(dynamic e, String endpoint, String method) {
-    String message = 'Erreur API : $method $endpoint a échoué.';
+    String message = 'Erreur API: $method $endpoint échoué.';
     int? statusCode;
     dynamic errorData;
 
     if (e is DioException) {
       statusCode = e.response?.statusCode;
       errorData = e.response?.data;
-      message += ' Statut : $statusCode';
+      message += ' Statut: $statusCode';
 
-      // Mapper les erreurs API
       if (errorData is Map && errorData.containsKey('message')) {
         message += ' - ${errorData['message']}';
       } else {
         switch (e.type) {
           case DioExceptionType.connectionTimeout:
-            message += ' - Timeout de connexion.';
+            message += ' - Timeout connexion.';
             break;
           case DioExceptionType.sendTimeout:
-            message += ' - Timeout d\'envoi.';
+            message += ' - Timeout envoi.';
             break;
           case DioExceptionType.receiveTimeout:
-            message += ' - Timeout de réception.';
+            message += ' - Timeout réception.';
             break;
           case DioExceptionType.badResponse:
-            message += ' - Réponse invalide du serveur.';
+            message += ' - Réponse serveur invalide.';
             break;
           case DioExceptionType.cancel:
             message += ' - Requête annulée.';
             break;
-          default:
+          case DioExceptionType.badCertificate:
+            message += ' - Certificat SSL invalide.';
+            break;
+          case DioExceptionType.connectionError:
+            message += ' - Erreur connexion réseau.';
+            break;
+          case DioExceptionType.unknown:
             message += ' - Erreur inconnue.';
+            break;
         }
       }
 
-      // Mapper les erreurs Firebase si présentes
-      if (errorData is Map && errorData.containsKey('error')) {
-        final errorCode = errorData['error']['code'] ?? '';
+      if (errorData is Map &&
+          errorData.containsKey('error') &&
+          errorData['error'] is Map &&
+          errorData['error'].containsKey('code')) {
+        final errorCode = errorData['error']['code'] as String;
         message += ' - ${_mapFirebaseError(errorCode)}';
       }
 
@@ -453,21 +401,23 @@ class DioClient {
       statusCode = 400;
       message += ' - ${_mapFirebaseError(e.code)}';
       AppLogger.error(message, error: e);
+    } else if (e is NetworkException) {
+      message += ' - ${e.message}';
+      AppLogger.error(message, error: e);
     } else {
-      message += ' - Erreur inattendue : $e';
+      message += ' - Erreur inattendue: $e';
       AppLogger.error(message, error: e);
     }
 
     throw ApiException(message, statusCode: statusCode, error: errorData);
   }
 
-  /// Mappe les codes d'erreur Firebase en messages en français.
   String _mapFirebaseError(String code) {
     switch (code) {
       case 'email-already-in-use':
         return 'Cet email est déjà utilisé.';
       case 'invalid-email':
-        return 'Email invalide.';
+        return 'Format email invalide.';
       case 'weak-password':
         return 'Mot de passe trop faible.';
       case 'user-not-found':
@@ -475,11 +425,18 @@ class DioClient {
         return 'Email ou mot de passe incorrect.';
       case 'auth/id-token-expired':
       case 'auth/id-token-revoked':
-        return 'Session expirée. Veuillez vous reconnecter.';
+        return 'Session expirée. Reconnectez-vous.';
       case 'auth/invalid-id-token':
-        return 'Token invalide.';
+        return 'Token d\'authentification invalide.';
+      case 'network-request-failed':
+        return 'Échec requête réseau. Vérifiez votre connexion.';
       default:
-        return 'Erreur d\'authentification : $code';
+        return 'Erreur authentification: $code';
     }
+  }
+
+  void dispose() {
+    _dio.close();
+    AppLogger.info('DioClient disposé.');
   }
 }

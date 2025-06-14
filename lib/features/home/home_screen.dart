@@ -438,12 +438,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             onPressed: () async {
               await ref.read(authProvider.notifier).signOut();
               if (mounted) {
-                SnackbarManager.showSnackbar(
-                  context,
-                  AppStrings.signOutSuccess,
-                  backgroundColor: AppColors.successColor,
-                  textColor: AppColors.textColorPrimary,
-                );
+                SnackbarManager.showSuccess(context, AppStrings.signOutSuccess);
                 context.goNamed(RouteNames.profileAuthOptions);
               }
             },
@@ -522,11 +517,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       );
                   if (mounted) {
                     Navigator.pop(context);
-                    SnackbarManager.showSnackbar(
+                    SnackbarManager.showSuccess(
                       context,
                       AppStrings.profileUpdated,
-                      backgroundColor: AppColors.successColor,
-                      textColor: AppColors.textColorPrimary,
                     );
                   }
                 },

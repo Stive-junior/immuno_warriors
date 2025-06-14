@@ -8,7 +8,7 @@ part of 'cached_session.dart';
 
 class CachedSessionAdapter extends TypeAdapter<CachedSession> {
   @override
-  final int typeId = 16;
+  final int typeId = 3;
 
   @override
   CachedSession read(BinaryReader reader) {

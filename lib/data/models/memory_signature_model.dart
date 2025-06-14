@@ -4,7 +4,7 @@ import '../../../domain/entities/memory_signature.dart';
 
 part 'memory_signature_model.g.dart';
 
-@HiveType(typeId: 19)
+@HiveType(typeId: 7)
 class MemorySignatureModel extends HiveObject {
   @HiveField(0)
   final String id;

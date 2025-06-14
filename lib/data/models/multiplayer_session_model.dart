@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'multiplayer_session_model.g.dart';
 
-@HiveType(typeId: 19)
+@HiveType(typeId: 8)
 class MultiplayerSessionModel extends HiveObject {
   @HiveField(0)
   final String sessionId;

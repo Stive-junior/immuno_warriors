@@ -5,7 +5,7 @@ import '../../../domain/entities/base_virale_entity.dart';
 
 part 'base_viral_model.g.dart';
 
-@HiveType(typeId: 13)
+@HiveType(typeId: 2)
 class BaseViraleModel extends HiveObject {
   @HiveField(0)
   final String id;

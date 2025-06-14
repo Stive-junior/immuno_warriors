@@ -5,7 +5,7 @@ import '../../domain/entities/antibody_entity.dart';
 
 part 'antibody_model.g.dart';
 
-@HiveType(typeId: 14)
+@HiveType(typeId: 1)
 class AntibodyModel extends HiveObject {
   @HiveField(0)
   final String id;

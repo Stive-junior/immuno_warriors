@@ -117,20 +117,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
       if (authState.isSignedIn) {
         AppLogger.info('Utilisateur $email connecté avec succès.');
-        SnackbarManager.showSnackbar(
-          context,
-          AppStrings.loginSuccess,
-          backgroundColor: AppColors.successColor,
-          textColor: AppColors.textColorPrimary,
-        );
+        SnackbarManager.showSuccess(context, AppStrings.loginSuccess);
         context.goNamed(RouteNames.dashboard, extra: authState.userId);
       } else {
         AppLogger.error('Échec de la connexion: ${authState.errorMessage}');
-        SnackbarManager.showSnackbar(
+        SnackbarManager.showError(
           context,
           authState.errorMessage ?? AppStrings.loginFailed,
-          backgroundColor: AppColors.errorColor,
-          textColor: AppColors.textColorPrimary,
         );
       }
     }
@@ -139,12 +132,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   Future<void> _handleForgotPassword() async {
     final email = _emailController.text.trim();
     if (!EmailValidator.validate(email)) {
-      SnackbarManager.showSnackbar(
-        context,
-        AppStrings.invalidEmail,
-        backgroundColor: AppColors.errorColor,
-        textColor: AppColors.textColorPrimary,
-      );
+      SnackbarManager.showError(context, AppStrings.invalidEmail);
       return;
     }
 
@@ -152,45 +140,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       await ref
           .read(authProvider.notifier)
           .sendPasswordResetEmail(email: email);
-      SnackbarManager.showSnackbar(
-        context,
-        AppStrings.passwordResetEmailSent,
-        backgroundColor: AppColors.successColor,
-        textColor: AppColors.textColorPrimary,
-      );
+      SnackbarManager.showSuccess(context, AppStrings.passwordResetEmailSent);
     } catch (e, stackTrace) {
       AppLogger.error(
         'Erreur lors de l\'envoi de l\'email de réinitialisation',
         error: e,
         stackTrace: stackTrace,
       );
-      SnackbarManager.showSnackbar(
-        context,
-        AppStrings.passwordResetFailed,
-        backgroundColor: AppColors.errorColor,
-        textColor: AppColors.textColorPrimary,
-      );
+      SnackbarManager.showError(context, AppStrings.passwordResetFailed);
     }
   }
 
   void _signInWithGoogle() {
     AppLogger.info('Connexion avec Google pressée.');
-    SnackbarManager.showSnackbar(
-      context,
-      AppStrings.socialLoginNotImplemented,
-      backgroundColor: AppColors.warningColor,
-      textColor: AppColors.textColorPrimary,
-    );
+    SnackbarManager.showWarning(context, AppStrings.socialLoginNotImplemented);
   }
 
   void _signInWithFacebook() {
     AppLogger.info('Connexion avec Facebook pressée.');
-    SnackbarManager.showSnackbar(
-      context,
-      AppStrings.socialLoginNotImplemented,
-      backgroundColor: AppColors.warningColor,
-      textColor: AppColors.textColorPrimary,
-    );
+    SnackbarManager.showWarning(context, AppStrings.socialLoginNotImplemented);
   }
 
   void _showThemeDialog(BuildContext context) {

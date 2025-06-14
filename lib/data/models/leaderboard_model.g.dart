@@ -8,7 +8,7 @@ part of 'leaderboard_model.dart';
 
 class LeaderboardModelAdapter extends TypeAdapter<LeaderboardModel> {
   @override
-  final int typeId = 18;
+  final int typeId = 6;
 
   @override
   LeaderboardModel read(BinaryReader reader) {

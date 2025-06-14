@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:immuno_warriors/core/routes/app_router.dart';
+import 'package:immuno_warriors/shared/ui/app_colors.dart';
 import 'package:immuno_warriors/shared/ui/app_theme.dart';
 
 class App extends ConsumerWidget {
@@ -13,7 +14,18 @@ class App extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Immuno Warriors',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: ThemeData(
+        primaryColor: AppColors.primaryColor,
+        colorScheme: ColorScheme.fromSwatch().copyWith(
+          primary: AppColors.primaryColor,
+          secondary: AppColors.secondaryColor,
+        ),
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(color: AppColors.textColorPrimary),
+        ),
+        // Évitez de remplacer iconTheme ou fontFamily ici
+        useMaterial3: true, // Active Material 3 pour des icônes modernes
+      ),
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       routerConfig: appRouter,

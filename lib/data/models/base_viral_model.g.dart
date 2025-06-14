@@ -8,7 +8,7 @@ part of 'base_viral_model.dart';
 
 class BaseViraleModelAdapter extends TypeAdapter<BaseViraleModel> {
   @override
-  final int typeId = 13;
+  final int typeId = 2;
 
   @override
   BaseViraleModel read(BinaryReader reader) {

@@ -5,7 +5,7 @@ import 'package:immuno_warriors/domain/entities/user_entity.dart';
 
 part 'user_model.g.dart';
 
-@HiveType(typeId: 12)
+@HiveType(typeId: 13)
 class UserModel extends HiveObject {
   @HiveField(0)
   final String id;

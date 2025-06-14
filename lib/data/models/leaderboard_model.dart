@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'leaderboard_model.g.dart';
 
-@HiveType(typeId: 18)
+@HiveType(typeId: 6)
 class LeaderboardModel extends HiveObject {
   @HiveField(0)
   final String userId;

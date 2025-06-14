@@ -8,7 +8,7 @@ part of 'pathogen_model.dart';
 
 class PathogenModelAdapter extends TypeAdapter<PathogenModel> {
   @override
-  final int typeId = 17;
+  final int typeId = 10;
 
   @override
   PathogenModel read(BinaryReader reader) {

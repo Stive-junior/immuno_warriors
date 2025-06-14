@@ -8,7 +8,7 @@ part of 'combat_report_model.dart';
 
 class CombatReportModelAdapter extends TypeAdapter<CombatReportModel> {
   @override
-  final int typeId = 11;
+  final int typeId = 4;
 
   @override
   CombatReportModel read(BinaryReader reader) {

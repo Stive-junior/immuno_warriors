@@ -8,7 +8,7 @@ part of 'research_model.dart';
 
 class ResearchModelAdapter extends TypeAdapter<ResearchModel> {
   @override
-  final int typeId = 10;
+  final int typeId = 12;
 
   @override
   ResearchModel read(BinaryReader reader) {

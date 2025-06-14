@@ -5,7 +5,7 @@ import '../../domain/entities/pathogen_entity.dart';
 
 part 'combat_report_model.g.dart';
 
-@HiveType(typeId: 11)
+@HiveType(typeId: 4)
 class CombatReportModel extends HiveObject {
   @HiveField(0)
   final String id;

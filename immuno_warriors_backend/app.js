@@ -8,6 +8,7 @@ const { logger, info, error, warn } = require('./utils/logger');
 const loggingMiddleware = require('./middleware/loggingMiddleware');
 const rateLimitMiddleware = require('./middleware/rateLimitMiddleware');
 const errorMiddleware = require('./middleware/errorMiddleware');
+const dns = require('dns').promises;
 
 // Importation des routes
 const authRoutes = require('./routes/authRoutes');
@@ -30,6 +31,27 @@ const syncRoutes = require('./routes/syncRoutes');
 
 const app = express();
 let ngrokUrl = null;
+let localUrl = null;
+
+// --- Vérification de la connectivité réseau ---
+async function checkNetworkConnectivity(maxRetries = 3, delayMs = 5000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await dns.resolve('firestore.googleapis.com');
+      info('Connexion réseau à Firestore : OK', { attempt });
+      return true;
+    } catch (err) {
+      warn(`Échec de la vérification réseau (tentative ${attempt}/${maxRetries})`, {
+        error: err.message,
+        stack: err.stack,
+      });
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  throw new Error('Impossible de se connecter au réseau pour Firestore');
+}
 
 // --- Vérifications de santé avec réessai ---
 async function healthCheck(maxRetries = 3, delayMs = 5000) {
@@ -88,13 +110,35 @@ async function healthCheck(maxRetries = 3, delayMs = 5000) {
   throw lastError;
 }
 
+// --- Mettre à jour l'URL dans Firestore ---
+async function updateApiUrlInFirestore(url, status) {
+  try {
+    await db.collection('config').doc('api').set({
+      baseUrl: url,
+      status: status,
+      environment: process.env.NODE_ENV || 'development',
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    info(`URL API mise à jour dans Firestore : ${url}`, { status });
+  } catch (err) {
+    error('Échec de la mise à jour de l\'URL dans Firestore', {
+      error: err.message,
+      stack: err.stack,
+    });
+  }
+}
+
 // --- Middlewares globaux ---
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' ? 'https://immuno-warriors.com' : '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
 }));
 app.use(express.json());
+app.use((req, res, next) => {
+  req.headers['ngrok-skip-browser-warning'] = 'true';
+  next();
+});
 app.use(loggingMiddleware);
 app.use(rateLimitMiddleware);
 
@@ -108,21 +152,14 @@ app.get('/', (req, res) => {
   });
 });
 
-// --- Route pour récupérer l'URL ngrok ---
+// --- Route pour récupérer l'URL ngrok (gardée pour compatibilité) ---
 app.get('/api/ngrok-url', (req, res) => {
-  if (ngrokUrl) {
-    res.status(200).json({
-      ngrokUrl,
-      status: 'active',
-      timestamp: new Date().toISOString(),
-    });
-  } else {
-    res.status(503).json({
-      message: 'ngrok non connecté ou serveur non démarré',
-      status: 'inactive',
-      timestamp: new Date().toISOString(),
-    });
-  }
+  res.status(200).json({
+    ngrokUrl: ngrokUrl || localUrl || `http://localhost:${config.port}`,
+    status: ngrokUrl ? 'active' : 'local',
+    message: ngrokUrl ? 'ngrok connecté' : 'ngrok non connecté, utilisant l\'URL locale',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // --- Montage des routes avec routes de base ---
@@ -140,7 +177,7 @@ const routes = [
   { path: '/api/inventory', router: inventoryRoutes, baseMessage: 'API Inventaire' },
   { path: '/api/progression', router: progressionRoutes, baseMessage: 'API Progression' },
   { path: '/api/achievement', router: achievementRoutes, baseMessage: 'API Réalisations' },
-  { path: '/api/threat-scanner', router: threatScannerRoutes, baseMessage: 'API Scanner de Menaces' },
+  { path: '/api/threat-test', router: threatScannerRoutes, baseMessage: 'API Test de Menaces Scanner' },
   { path: '/api/leaderboard', router: leaderboardRoutes, baseMessage: 'API Classement' },
   { path: '/api/multiplayer', router: multiplayerRoutes, baseMessage: 'API Multijoueur' },
   { path: '/api/sync', router: syncRoutes, baseMessage: 'API Synchronisation' },
@@ -198,7 +235,7 @@ process.on('SIGTERM', async () => {
       last_stopped: admin.firestore.FieldValue.serverTimestamp(),
       message: 'API arrêtée',
     });
-    info('Statut Firestore mis à jour pour arrêt');
+    await updateApiUrlInFirestore(localUrl || `http://localhost:${config.port}`, 'stopped');
     if (ngrokUrl) {
       await ngrok.disconnect();
       info('ngrok déconnecté');
@@ -218,7 +255,7 @@ process.on('SIGINT', async () => {
       last_stopped: admin.firestore.FieldValue.serverTimestamp(),
       message: 'API arrêtée',
     });
-    info('Statut Firestore mis à jour pour arrêt');
+    await updateApiUrlInFirestore(localUrl || `http://localhost:${config.port}`, 'stopped');
     if (ngrokUrl) {
       await ngrok.disconnect();
       info('ngrok déconnecté');
@@ -252,40 +289,51 @@ process.on('uncaughtException', (err) => {
 async function startServer() {
   try {
     info('Démarrage du serveur...');
+    await checkNetworkConnectivity(); // Vérifie la connectivité réseau
     await healthCheck();
     const interfaces = os.networkInterfaces();
     const ip = Object.values(interfaces)
       .flat()
       .find(i => i.family === 'IPv4' && !i.internal)?.address || '0.0.0.0';
+    localUrl = `http://${ip}:${config.port}`;
 
     const server = app.listen(config.port, '0.0.0.0', async () => {
-      try {
-        // Démarrer ngrok
-        ngrokUrl = await ngrok.connect({
-          addr: config.port,
-          authtoken: process.env.NGROK_AUTH_TOKEN,
-        });
-        info(`Serveur démarré sur le port ${config.port}`, {
-          localUrl: `http://${ip}:${config.port}/api`,
-          ngrokUrl,
-          environment: process.env.NODE_ENV || 'development',
-        });
+      info(`Serveur démarré sur le port ${config.port}`, {
+        localUrl: `${localUrl}/api`,
+        environment: process.env.NODE_ENV || 'development',
+      });
 
-        // Mise à jour du statut Firestore avec l'URL ngrok
-        await db.collection('status').doc('api_status').set({
-          last_started: admin.firestore.FieldValue.serverTimestamp(),
-          message: 'API démarrée',
-          port: config.port,
-          environment: process.env.NODE_ENV || 'development',
-          ip,
-          ngrokUrl,
-        });
-      } catch (ngrokError) {
-        error('Erreur lors de la connexion ngrok', {
-          error: ngrokError.message,
-          stack: ngrokError.stack,
-        });
+      if (process.env.NGROK_AUTH_TOKEN) {
+        try {
+          ngrokUrl = await ngrok.connect({
+            addr: config.port,
+            authtoken: process.env.NGROK_AUTH_TOKEN,
+          });
+          info(`ngrok connecté avec succès`, { ngrokUrl });
+          await updateApiUrlInFirestore(ngrokUrl, 'active');
+        } catch (ngrokError) {
+          warn(`Impossible de connecter ngrok, utilisant l'URL locale`, {
+            error: ngrokError.message,
+            stack: ngrokError.stack,
+          });
+          ngrokUrl = null;
+          await updateApiUrlInFirestore(localUrl, 'local');
+        }
+      } else {
+        warn('NGROK_AUTH_TOKEN non défini, utilisant l\'URL locale');
+        await updateApiUrlInFirestore(localUrl, 'local');
       }
+
+      // Mise à jour du statut Firestore
+      await db.collection('status').doc('api_status').set({
+        last_started: admin.firestore.FieldValue.serverTimestamp(),
+        message: 'API démarrée',
+        port: config.port,
+        environment: process.env.NODE_ENV || 'development',
+        ip,
+        ngrokUrl: ngrokUrl || null,
+        localUrl,
+      });
     });
 
     process.on('SIGTERM', () => server.close());

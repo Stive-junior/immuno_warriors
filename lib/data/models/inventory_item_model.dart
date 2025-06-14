@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'inventory_item_model.g.dart';
 
-@HiveType(typeId: 17)
+@HiveType(typeId: 5)
 class InventoryItemModel extends HiveObject {
   @HiveField(0)
   final String id;

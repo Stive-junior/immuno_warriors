@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 
 part 'cached_session.g.dart';
 
-@HiveType(typeId: 16)
+@HiveType(typeId: 3)
 class CachedSession extends HiveObject {
   @HiveField(0)
   final String userId;

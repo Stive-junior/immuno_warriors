@@ -3,7 +3,7 @@ import '../../../domain/entities/research_entity.dart';
 
 part 'research_model.g.dart';
 
-@HiveType(typeId: 10)
+@HiveType(typeId: 12)
 class ResearchModel extends HiveObject {
   @HiveField(0)
   final String id;

@@ -8,7 +8,7 @@ part of 'inventory_item_model.dart';
 
 class InventoryItemModelAdapter extends TypeAdapter<InventoryItemModel> {
   @override
-  final int typeId = 17;
+  final int typeId = 5;
 
   @override
   InventoryItemModel read(BinaryReader reader) {

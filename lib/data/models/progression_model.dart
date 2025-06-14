@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'progression_model.g.dart';
 
-@HiveType(typeId: 20)
+@HiveType(typeId: 11)
 class ProgressionModel extends HiveObject {
   @HiveField(0)
   final String userId;

@@ -5,15 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:immuno_warriors/app.dart';
 import 'package:immuno_warriors/core/utils/app_lifecycle_manager.dart';
 import 'package:immuno_warriors/core/utils/app_logger.dart';
-import 'package:immuno_warriors/firebase_options.dart';
+
+//import 'package:immuno_warriors/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  initializeLogger();
+
   // Initialisation de Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp();
 
   await AppLifecycleManager.initializeApp();
 
@@ -25,10 +26,6 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]).then((_) {
     // Lancement de l'application
-    runApp(
-      const ProviderScope(
-        child: App(),
-      ),
-    );
+    runApp(const ProviderScope(child: App()));
   });
 }

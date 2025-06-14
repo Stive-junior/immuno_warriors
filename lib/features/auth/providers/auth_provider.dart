@@ -1,22 +1,20 @@
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:immuno_warriors/core/exceptions/app_exception.dart';
 import 'package:immuno_warriors/core/exceptions/network_exceptions.dart';
 import 'package:immuno_warriors/core/network/dio_client.dart';
+import 'package:immuno_warriors/core/network/network_info.dart';
 import 'package:immuno_warriors/core/services/auth_service.dart';
 import 'package:immuno_warriors/core/services/local_storage_service.dart';
 import 'package:immuno_warriors/core/services/network_service.dart';
 import 'package:immuno_warriors/core/utils/app_logger.dart';
 import 'package:immuno_warriors/core/constants/app_strings.dart';
-import 'package:immuno_warriors/core/network/network_info.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
 import 'package:immuno_warriors/domain/entities/user_entity.dart';
-import 'dart:convert';
-
 import 'package:immuno_warriors/features/auth/providers/user_provider.dart';
 
-// État de l'authentification
 class AuthState {
   final String? userId;
   final String? email;
@@ -37,7 +35,7 @@ class AuthState {
   });
 
   bool get isAuthenticated => userId != null && isSessionValid;
-  bool get isSignedIn => isAuthenticated; // Alias for RegisterScreen
+  bool get isSignedIn => isAuthenticated;
   bool get isSessionValid =>
       sessionExpiry != null && sessionExpiry!.isAfter(DateTime.now());
 
@@ -62,27 +60,30 @@ class AuthState {
   }
 }
 
-// Notifier pour gérer l'état d'authentification
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
   final NetworkService _networkService;
+  final FirebaseFirestore _firestore;
+  StreamSubscription<String>? _baseUrlSubscription;
 
-  AuthNotifier(this._authService, this._networkService) : super(AuthState()) {
+  AuthNotifier(this._authService, this._networkService, this._firestore)
+    : super(AuthState()) {
     _initialize();
   }
 
-  /// Initialiser l'état d'authentification
   Future<void> _initialize() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      await _updateBaseUrl();
+      _baseUrlSubscription = _networkService.baseUrlStream.listen((baseUrl) {
+        AppLogger.info('URL de base mise à jour dans AuthNotifier: $baseUrl');
+      });
 
       if (!await _networkService.isConnected) {
         state = state.copyWith(
           isLoading: false,
           errorMessage: AppStrings.noInternetConnection,
         );
-        AppLogger.warning('No internet connection during initialization');
+        AppLogger.warning('Pas de connexion réseau lors de l\'initialisation');
         return;
       }
 
@@ -91,23 +92,43 @@ class AuthNotifier extends StateNotifier<AuthState> {
           isLoading: false,
           errorMessage: AppStrings.networkError,
         );
-        AppLogger.warning('Server not reachable during initialization');
+        AppLogger.warning('Serveur injoignable lors de l\'initialisation');
         return;
       }
 
       final isAuthenticated = await _authService.verifyToken();
       if (isAuthenticated) {
         final user = FirebaseAuth.instance.currentUser;
-        state = state.copyWith(
-          userId: user?.uid,
-          email: user?.email,
-          username: user?.displayName,
-          avatarUrl: user?.photoURL, // Fetch from Firebase or backend
-          isLoading: false,
-          sessionExpiry: DateTime.now().add(const Duration(days: 7)),
-          errorMessage: null,
-        );
-        AppLogger.info('Initial session valid for user: ${user?.email}');
+        if (user != null) {
+          final userDoc =
+              await _firestore.collection('users').doc(user.uid).get();
+          if (userDoc.exists) {
+            state = state.copyWith(
+              userId: user.uid,
+              email: user.email,
+              username: userDoc.data()?['username'] as String?,
+              avatarUrl: userDoc.data()?['avatarUrl'] as String?,
+              isLoading: false,
+              sessionExpiry: DateTime.now().add(const Duration(days: 7)),
+              errorMessage: null,
+            );
+            AppLogger.info('Session initiale valide pour: ${user.email}');
+          } else {
+            AppLogger.warning(
+              'Document utilisateur introuvable pour ${user.uid}. Déconnexion.',
+            );
+            await _authService.signout();
+            state = state.copyWith(
+              userId: null,
+              email: null,
+              username: null,
+              avatarUrl: null,
+              isLoading: false,
+              sessionExpiry: null,
+              errorMessage: AppStrings.profileNotFound,
+            );
+          }
+        }
       } else {
         state = state.copyWith(
           userId: null,
@@ -118,37 +139,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
           sessionExpiry: null,
           errorMessage: null,
         );
-        AppLogger.info('No valid session found during initialization');
+        AppLogger.info('Aucune session valide trouvée.');
       }
     } catch (e) {
+      AppLogger.error('Erreur initialisation: $e', error: e);
       state = state.copyWith(
         isLoading: false,
         errorMessage: e is ApiException ? e.message : AppStrings.errorMessage,
       );
-      AppLogger.error('Error during initialization: $e');
     }
   }
 
-  // Mettre à jour l'URL de base avec ngrok
-  Future<void> _updateBaseUrl() async {
-    try {
-      final response = await http.get(
-        Uri.parse('http://localhost:3000/api/ngrok-url'),
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final ngrokUrl = data['ngrokUrl'] as String?;
-        if (ngrokUrl != null) {
-          _networkService.setBaseUrl(ngrokUrl);
-          AppLogger.info('ngrok URL updated: $ngrokUrl');
-        }
-      }
-    } catch (e) {
-      AppLogger.error('Failed to retrieve ngrok URL: $e');
-    }
-  }
-
-  // Connexion
   Future<void> signIn({required String email, required String password}) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
@@ -160,26 +161,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       await _authService.signin(email, password);
       final user = FirebaseAuth.instance.currentUser;
-      state = state.copyWith(
-        userId: user?.uid,
-        email: user?.email,
-        username: user?.displayName,
-        avatarUrl: user?.photoURL,
-        isLoading: false,
-        sessionExpiry: DateTime.now().add(const Duration(days: 7)),
-        errorMessage: null,
-      );
-      AppLogger.info('User signed in successfully: ${user?.email}');
+      if (user != null) {
+        final userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          state = state.copyWith(
+            userId: user.uid,
+            email: user.email,
+            username: userDoc.data()?['username'] as String?,
+            avatarUrl: userDoc.data()?['avatarUrl'] as String?,
+            isLoading: false,
+            sessionExpiry: DateTime.now().add(const Duration(days: 7)),
+            errorMessage: null,
+          );
+          AppLogger.info('Connexion réussie: ${user.email}');
+        } else {
+          AppLogger.warning(
+            'Document utilisateur introuvable pour ${user.uid}. Déconnexion.',
+          );
+          await _authService.signout();
+          throw ApiException('Profil utilisateur introuvable.');
+        }
+      } else {
+        throw ApiException('Utilisateur Firebase null après connexion.');
+      }
     } catch (e) {
+      AppLogger.error('Erreur connexion: $e', error: e);
       state = state.copyWith(
         isLoading: false,
         errorMessage: e is ApiException ? e.message : AppStrings.loginFailed,
       );
-      AppLogger.error('Sign in error: $e');
     }
   }
 
-  // Inscription
   Future<void> signUp({
     required String email,
     required String password,
@@ -196,47 +210,52 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       await _authService.signup(email, password, username);
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null && avatarUrl != null) {
-        await user.updatePhotoURL(avatarUrl); // Update Firebase user profile
+      if (user != null) {
+        await _firestore.collection('users').doc(user.uid).set({
+          'email': email,
+          'username': username,
+          'avatarUrl': avatarUrl,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        state = state.copyWith(
+          userId: user.uid,
+          email: user.email,
+          username: username,
+          avatarUrl: avatarUrl,
+          isLoading: false,
+          sessionExpiry: DateTime.now().add(const Duration(days: 7)),
+          errorMessage: null,
+        );
+        AppLogger.info('Inscription réussie: ${user.email}');
+      } else {
+        throw ApiException('Utilisateur Firebase null après inscription.');
       }
-      state = state.copyWith(
-        userId: user?.uid,
-        email: user?.email,
-        username: user?.displayName ?? username,
-        avatarUrl: avatarUrl ?? user?.photoURL,
-        isLoading: false,
-        sessionExpiry: DateTime.now().add(const Duration(days: 7)),
-        errorMessage: null,
-      );
-      AppLogger.info('User signed up successfully: ${user?.email}');
     } catch (e) {
+      AppLogger.error('Erreur inscription: $e', error: e);
       state = state.copyWith(
         isLoading: false,
         errorMessage: e is ApiException ? e.message : AppStrings.registerFailed,
       );
-      AppLogger.error('Sign up error: $e');
     }
   }
 
-  // Réinitialiser le mot de passe
   Future<void> sendPasswordResetEmail({required String email}) async {
     try {
       if (!await _networkService.isConnected) {
         throw NoInternetException();
       }
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      AppLogger.info('Password reset email sent to $email');
+      AppLogger.info('Email de réinitialisation envoyé à $email');
     } catch (e) {
+      AppLogger.error('Erreur réinitialisation mot de passe: $e', error: e);
       state = state.copyWith(
         errorMessage:
             e is ApiException ? e.message : AppStrings.passwordResetFailed,
       );
-      AppLogger.error('Password reset error: $e');
       rethrow;
     }
   }
 
-  // Rafraîchir le token
   Future<void> refreshToken() async {
     try {
       if (!await _networkService.isConnected) {
@@ -247,24 +266,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       await _authService.refreshToken();
       final user = FirebaseAuth.instance.currentUser;
-      state = state.copyWith(
-        userId: user?.uid,
-        email: user?.email,
-        username: user?.displayName,
-        avatarUrl: user?.photoURL,
-        sessionExpiry: DateTime.now().add(const Duration(days: 7)),
-        errorMessage: null,
-      );
-      AppLogger.info('Token refreshed successfully for user: ${user?.email}');
+      if (user != null) {
+        final userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          state = state.copyWith(
+            userId: user.uid,
+            email: user.email,
+            username: userDoc.data()?['username'] as String?,
+            avatarUrl: userDoc.data()?['avatarUrl'] as String?,
+            sessionExpiry: DateTime.now().add(const Duration(days: 7)),
+            errorMessage: null,
+          );
+          AppLogger.info('Token rafraîchi pour: ${user.email}');
+        } else {
+          AppLogger.warning(
+            'Document utilisateur introuvable pour ${user.uid}. Déconnexion.',
+          );
+          await _authService.signout();
+          throw ApiException('Profil utilisateur introuvable.');
+        }
+      } else {
+        throw ApiException('Utilisateur Firebase null après rafraîchissement.');
+      }
     } catch (e) {
+      AppLogger.error('Erreur rafraîchissement token: $e', error: e);
       state = state.copyWith(
         errorMessage: e is ApiException ? e.message : AppStrings.errorMessage,
       );
-      AppLogger.error('Token refresh error: $e');
     }
   }
 
-  // Déconnexion
   Future<void> signOut() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
@@ -278,17 +310,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
         sessionExpiry: null,
         errorMessage: null,
       );
-      AppLogger.info('User signed out successfully');
+      AppLogger.info('Déconnexion réussie');
     } catch (e) {
+      AppLogger.error('Erreur déconnexion: $e', error: e);
       state = state.copyWith(
         isLoading: false,
         errorMessage: e is ApiException ? e.message : AppStrings.signOutFailed,
       );
-      AppLogger.error('Sign out error: $e');
     }
   }
 
-  // Vérifier la validité de la session
   Future<bool> checkSessionValidity() async {
     if (state.isAuthenticated && state.isSessionValid) {
       return true;
@@ -305,75 +336,124 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final isValid = await _authService.verifyToken();
       if (isValid) {
         final user = FirebaseAuth.instance.currentUser;
-        state = state.copyWith(
-          userId: user?.uid,
-          email: user?.email,
-          username: user?.displayName,
-          avatarUrl: user?.photoURL,
-          sessionExpiry: DateTime.now().add(const Duration(days: 7)),
-          errorMessage: null,
-        );
-        AppLogger.info('Session validated for user: ${user?.email}');
-        return true;
-      } else {
-        state = AuthState(
-          userId: null,
-          email: null,
-          username: null,
-          avatarUrl: null,
-          isLoading: false,
-          sessionExpiry: null,
-          errorMessage: null,
-        );
-        AppLogger.info('Session invalid, cleared state');
-        return false;
+        if (user != null) {
+          final userDoc =
+              await _firestore.collection('users').doc(user.uid).get();
+          if (userDoc.exists) {
+            state = state.copyWith(
+              userId: user.uid,
+              email: user.email,
+              username: userDoc.data()?['username'] as String?,
+              avatarUrl: userDoc.data()?['avatarUrl'] as String?,
+              sessionExpiry: DateTime.now().add(const Duration(days: 7)),
+              errorMessage: null,
+            );
+            AppLogger.info('Session validée pour: ${user.email}');
+            return true;
+          } else {
+            AppLogger.warning(
+              'Document utilisateur introuvable pour ${user.uid}. Effacement session.',
+            );
+            await _authService.signout();
+            state = AuthState(
+              userId: null,
+              email: null,
+              username: null,
+              avatarUrl: null,
+              isLoading: false,
+              sessionExpiry: null,
+              errorMessage: AppStrings.profileNotFound,
+            );
+            return false;
+          }
+        } else {
+          AppLogger.info('Utilisateur Firebase null. Effacement session.');
+          state = AuthState(
+            userId: null,
+            email: null,
+            username: null,
+            avatarUrl: null,
+            isLoading: false,
+            sessionExpiry: null,
+            errorMessage: null,
+          );
+          return false;
+        }
       }
+      state = AuthState(
+        userId: null,
+        email: null,
+        username: null,
+        avatarUrl: null,
+        isLoading: false,
+        sessionExpiry: null,
+        errorMessage: null,
+      );
+      AppLogger.info('Session invalide, état effacé');
+      return false;
     } catch (e) {
+      AppLogger.error('Erreur validation session: $e', error: e);
       state = state.copyWith(
         errorMessage: e is ApiException ? e.message : AppStrings.errorMessage,
       );
-      AppLogger.error('Session validation error: $e');
       return false;
     }
   }
 
   Future<bool> authenticateUser(String userId, String password) async {
     try {
-      if (!await _networkService.isConnected) throw NoInternetException();
+      if (!await _networkService.isConnected) {
+        throw NoInternetException();
+      }
       if (!await _networkService.isServerReachable()) {
         throw ServerUnreachableException();
       }
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser?.uid != userId) {
-        throw ApiException('Utilisateur non correspondant.');
+        throw ApiException('Mauvais ID utilisateur.');
       }
       await _authService.signin(currentUser!.email!, password);
-      state = state.copyWith(
-        userId: currentUser.uid,
-        email: currentUser.email,
-        username: currentUser.displayName,
-        avatarUrl: currentUser.photoURL,
-        sessionExpiry: DateTime.now().add(const Duration(days: 7)),
-        errorMessage: null,
-      );
-      AppLogger.info('Utilisateur $userId authentifié avec succès.');
-      return true;
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        state = state.copyWith(
+          userId: currentUser.uid,
+          email: currentUser.email,
+          username: userDoc.data()?['username'] as String?,
+          avatarUrl: userDoc.data()?['avatarUrl'] as String?,
+          sessionExpiry: DateTime.now().add(const Duration(days: 7)),
+          errorMessage: null,
+        );
+        AppLogger.info('Utilisateur $userId ré-authentifié.');
+        return true;
+      } else {
+        AppLogger.warning(
+          'Document utilisateur introuvable pour $userId. Effacement session.',
+        );
+        await _authService.signout();
+        throw ApiException('Profil utilisateur introuvable.');
+      }
     } catch (e) {
+      AppLogger.error('Erreur authentification $userId: $e', error: e);
       state = state.copyWith(
         errorMessage: e is ApiException ? e.message : AppStrings.loginFailed,
       );
-      AppLogger.error('Erreur d\'authentification pour $userId: $e');
       return false;
     }
   }
 
-  // Réinitialiser les erreurs
   void clearError() {
     state = state.copyWith(errorMessage: null);
   }
+
+  @override
+  void dispose() {
+    _baseUrlSubscription?.cancel();
+    AppLogger.info('AuthNotifier disposé');
+    super.dispose();
+  }
 }
 
-// Providers pour les services
+// Providers
 final localStorageServiceProvider = Provider<LocalStorageService>((ref) {
   return LocalStorageService();
 });
@@ -382,12 +462,32 @@ final networkInfoProvider = Provider<NetworkInfo>((ref) {
   return NetworkInfo(Connectivity());
 });
 
+final firestoreProvider = Provider<FirebaseFirestore>((ref) {
+  return FirebaseFirestore.instance;
+});
+
+final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
+  return FirebaseAuth.instance;
+});
+
 final networkServiceProvider = Provider<NetworkService>((ref) {
-  return NetworkService();
+  final service = NetworkService(
+    networkInfo: ref.read(networkInfoProvider),
+    firestore: ref.read(firestoreProvider),
+    ref: ref,
+  );
+  ref.onDispose(service.dispose);
+  return service;
 });
 
 final dioClientProvider = Provider<DioClient>((ref) {
-  return DioClient(ref.read(networkServiceProvider));
+  final client = DioClient(
+    ref: ref,
+    networkService: ref.read(networkServiceProvider),
+    firebaseAuth: ref.read(firebaseAuthProvider),
+  );
+  ref.onDispose(client.dispose);
+  return client;
 });
 
 final authServiceProvider = Provider<AuthService>((ref) {
@@ -399,10 +499,13 @@ final authServiceProvider = Provider<AuthService>((ref) {
 });
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(
+  final notifier = AuthNotifier(
     ref.read(authServiceProvider),
     ref.read(networkServiceProvider),
+    ref.read(firestoreProvider),
   );
+  ref.onDispose(notifier.dispose);
+  return notifier;
 });
 
 final isAuthenticatedProvider = Provider<bool>((ref) {
@@ -429,15 +532,26 @@ final currentEmailProvider = Provider<String?>((ref) {
   return ref.watch(authProvider.select((state) => state.email));
 });
 
-final currentUserDataProvider = FutureProvider<UserEntity?>((ref) async {
+final currentUserDataProvider = FutureProvider.autoDispose<UserEntity?>((
+  ref,
+) async {
   final userService = ref.read(userServiceProvider);
   final userId = ref.read(currentUserIdProvider);
-  if (userId == null) return null;
-  final result = await userService.getUserProfile();
-  return result.fold((error) {
-    AppLogger.error(
-      'Erreur lors du chargement du profil utilisateur: ${error.message}',
-    );
+  if (userId == null) {
+    AppLogger.debug('currentUserDataProvider: Aucun userId, retourne null.');
     return null;
-  }, (user) => user);
+  }
+  try {
+    final result = await userService.getUserProfile();
+    return result.fold((error) {
+      AppLogger.error(
+        'Erreur chargement profil: ${error.message}',
+        error: error,
+      );
+      return null;
+    }, (user) => user);
+  } catch (e) {
+    AppLogger.error('Erreur inattendue chargement profil: $e', error: e);
+    return null;
+  }
 });

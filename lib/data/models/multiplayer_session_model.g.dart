@@ -9,7 +9,7 @@ part of 'multiplayer_session_model.dart';
 class MultiplayerSessionModelAdapter
     extends TypeAdapter<MultiplayerSessionModel> {
   @override
-  final int typeId = 19;
+  final int typeId = 8;
 
   @override
   MultiplayerSessionModel read(BinaryReader reader) {

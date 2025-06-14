@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:immuno_warriors/core/constants/app_animations.dart';
+import 'package:immuno_warriors/core/utils/app_logger.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
 import '../../features/auth/screens/login_screen.dart';
@@ -28,6 +29,7 @@ import 'route_transitions.dart';
 
 /// Provides the app's router.
 final appRouterProvider = Provider<GoRouter>((ref) {
+  AppLogger.info("goooooooooooooooooooooooooooooo");
   final router = GoRouter(
     initialLocation: '/${RouteNames.splash}',
     redirect: (context, state) async {

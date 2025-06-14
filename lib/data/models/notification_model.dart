@@ -4,7 +4,7 @@ import 'package:immuno_warriors/domain/entities/notification.dart';
 
 part 'notification_model.g.dart';
 
-@HiveType(typeId: 18)
+@HiveType(typeId: 9)
 class NotificationModel extends HiveObject {
   @HiveField(0)
   final String id;

@@ -8,7 +8,7 @@ part of 'progression_model.dart';
 
 class ProgressionModelAdapter extends TypeAdapter<ProgressionModel> {
   @override
-  final int typeId = 20;
+  final int typeId = 11;
 
   @override
   ProgressionModel read(BinaryReader reader) {

@@ -1,25 +1,18 @@
-/// Fournit des informations sur la connectivité réseau pour Immuno Warriors.
-///
-/// Gère les vérifications de connectivité, la détection du type de réseau, et le support du mode hors ligne.
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:immuno_warriors/core/utils/app_logger.dart';
+import 'package:http/http.dart' as http;
 
 class NetworkInfo {
   final Connectivity _connectivity;
 
-  /// Crée une instance de [NetworkInfo].
-  ///
-  /// Requiert une instance de [Connectivity] pour surveiller le réseau.
   NetworkInfo(this._connectivity);
-
-  /// --- Vérifications de connectivité ---
 
   /// Vérifie si le dispositif est connecté à un réseau.
   Future<bool> get isConnected async {
     try {
       final result = await _connectivity.checkConnectivity();
-      final connected = result != ConnectivityResult.none;
+      final connected = result.first != ConnectivityResult.none;
       AppLogger.info(
         'Vérification de la connectivité : ${connected ? "Connecté" : "Non connecté"}',
       );
@@ -76,22 +69,75 @@ class NetworkInfo {
     }
   }
 
-  /// --- Flux d'événements ---
+  /// Vérifie si le réseau peut traiter des requêtes HTTP.
+  Future<bool> canHandleRequests(String url) async {
+    try {
+      final response = await http
+          .get(Uri.parse('$url/api/health'))
+          .timeout(Duration(seconds: 5));
+      final canHandle = response.statusCode == 200;
+      AppLogger.info(
+        'Capacité réseau pour $url : ${canHandle ? "OK" : "Échec"}',
+      );
+      return canHandle;
+    } catch (e) {
+      AppLogger.error(
+        'Erreur lors de la vérification de la capacité réseau : $e',
+      );
+      return false;
+    }
+  }
+
+  /// Vérifie si le dispositif est sur le même réseau Wi-Fi qu'une IP donnée.
+  Future<bool> isOnSameWifi(String serverIp) async {
+    try {
+      if (await connectionType != 'Wi-Fi') {
+        AppLogger.info(
+          'Non connecté en Wi-Fi, impossible de vérifier le réseau commun.',
+        );
+        return false;
+      }
+      final interfaces = await NetworkInterface.list();
+      for (var interface in interfaces) {
+        for (var address in interface.addresses) {
+          if (address.type == InternetAddressType.IPv4 && !address.isLoopback) {
+            final clientIp = address.address;
+            final clientSubnet = _getSubnet(clientIp);
+            final serverSubnet = _getSubnet(serverIp);
+            final sameNetwork = clientSubnet == serverSubnet;
+            AppLogger.info(
+              'Vérification réseau commun : Client ($clientIp) vs Serveur ($serverIp) -> $sameNetwork',
+            );
+            return sameNetwork;
+          }
+        }
+      }
+      return false;
+    } catch (e) {
+      AppLogger.error('Erreur lors de la vérification du réseau commun : $e');
+      return false;
+    }
+  }
+
+  /// Extrait le sous-réseau d'une adresse IP (masque /24 par défaut).
+  String _getSubnet(String ip) {
+    final parts = ip.split('.');
+    if (parts.length >= 3) {
+      return '${parts[0]}.${parts[1]}.${parts[2]}';
+    }
+    return ip;
+  }
 
   /// Flux des changements de connectivité.
   Stream<List<ConnectivityResult>> get onConnectivityChanged =>
       _connectivity.onConnectivityChanged;
 
-  /// --- Support hors ligne ---
-
   /// Vérifie si le mode hors ligne est supporté pour une fonctionnalité spécifique.
-  ///
-  /// [feature] spécifie la fonctionnalité du jeu (par exemple, 'combat_log', 'research_tree').
   bool isOfflineSupported(String feature) {
     const offlineFeatures = {
-      'combat_log',
-      'research_tree',
-      'war_archive',
+      'combat_password',
+      'password_archive',
+      'weather_archive',
       'user_profile',
       'inventory',
       'achievements',
@@ -104,8 +150,7 @@ class NetworkInfo {
     return supported;
   }
 
-  /// Nettoie les ressources (optionnel).
   void dispose() {
-    AppLogger.info('NetworkInfo nettoyé.');
+    AppLogger.info('NetworkInfo nettoy.');
   }
 }

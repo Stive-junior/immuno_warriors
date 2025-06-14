@@ -152,41 +152,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
         });
       } else {
         AppLogger.error('Échec de l\'inscription: ${authState.errorMessage}');
-        SnackbarManager.showSnackbar(
+        SnackbarManager.showError(
           context,
           authState.errorMessage ?? AppStrings.registerFailed,
-          backgroundColor: AppColors.errorColor,
-          textColor: AppColors.textColorPrimary,
         );
       }
     } else if (_selectedAvatarUrl == null) {
-      SnackbarManager.showSnackbar(
-        context,
-        AppStrings.selectAvatar,
-        backgroundColor: AppColors.errorColor,
-        textColor: AppColors.textColorPrimary,
-      );
+      SnackbarManager.showError(context, AppStrings.selectAvatar);
     }
   }
 
   void _signInWithGoogle() {
     AppLogger.info('Connexion avec Google pressée.');
-    SnackbarManager.showSnackbar(
-      context,
-      AppStrings.socialLoginNotImplemented,
-      backgroundColor: AppColors.warningColor,
-      textColor: AppColors.textColorPrimary,
-    );
+    SnackbarManager.showInfo(context, AppStrings.socialLoginNotImplemented);
   }
 
   void _signInWithFacebook() {
     AppLogger.info('Connexion avec Facebook pressée.');
-    SnackbarManager.showSnackbar(
-      context,
-      AppStrings.socialLoginNotImplemented,
-      backgroundColor: AppColors.warningColor,
-      textColor: AppColors.textColorPrimary,
-    );
+    SnackbarManager.showInfo(context, AppStrings.socialLoginNotImplemented);
   }
 
   void _showThemeDialog(BuildContext context) {
