@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:immuno_warriors/shared/ui/app_colors.dart';
-import 'package:immuno_warriors/core/constants/app_sizes.dart'; // Import des tailles
+import 'package:immuno_warriors/core/constants/app_sizes.dart';
+import 'package:immuno_warriors/shared/widgets/feedback/snackbar_manager.dart';
 
 class InputField extends StatefulWidget {
   final String labelText;
@@ -30,7 +31,7 @@ class InputField extends StatefulWidget {
     this.inputFormatters,
     this.prefixIcon,
     this.suffixIcon,
-    this.maxLines = 1, // Par défaut une seule ligne
+    this.maxLines = 1,
     this.minLines,
     this.focusNode,
     this.onChanged,
@@ -63,9 +64,27 @@ class InputFieldState extends State<InputField> {
   }
 
   void _onFocusChange() {
-    setState(() {
-      // Rebuild to update border color based on focus
-    });
+    if (!_internalFocusNode.hasFocus &&
+        widget.validator != null &&
+        widget.controller != null) {
+      final error = widget.validator!(widget.controller!.text);
+      if (error != null) {
+        SnackbarManager.showError(context, error);
+      }
+    }
+    setState(() {});
+  }
+
+  void _handleChanged(String value) {
+    if (widget.validator != null) {
+      final error = widget.validator!(value);
+      if (error != null) {
+        SnackbarManager.showError(context, error);
+      }
+    }
+    if (widget.onChanged != null) {
+      widget.onChanged!(value);
+    }
   }
 
   @override
@@ -79,11 +98,10 @@ class InputFieldState extends State<InputField> {
       maxLines: widget.maxLines,
       minLines: widget.minLines,
       focusNode: _internalFocusNode,
-      onChanged: widget.onChanged,
+      onChanged: _handleChanged,
       onEditingComplete: widget.onEditingComplete,
-      cursorColor: AppColors.primaryColor, // Couleur du curseur futuriste
+      cursorColor: AppColors.primaryColor,
       style: TextStyle(
-        // Style du texte de l'entrée
         color: AppColors.textColorPrimary,
         fontSize: AppSizes.fontSizeMedium,
         fontFamily: 'Rajdhani',
@@ -92,7 +110,6 @@ class InputFieldState extends State<InputField> {
       decoration: InputDecoration(
         labelText: widget.labelText,
         labelStyle: TextStyle(
-          // Style du label
           color:
               _internalFocusNode.hasFocus
                   ? AppColors.primaryColor
@@ -103,7 +120,6 @@ class InputFieldState extends State<InputField> {
         ),
         hintText: widget.hintText,
         hintStyle: TextStyle(
-          // Style du hint
           color: AppColors.textColorSecondary.withOpacity(0.6),
           fontSize: AppSizes.fontSizeMedium,
           fontFamily: 'Rajdhani',
@@ -121,7 +137,7 @@ class InputFieldState extends State<InputField> {
                   icon: Icon(
                     _obscureText
                         ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined, // Icônes stylisées
+                        : Icons.visibility_outlined,
                     color: AppColors.textColorSecondary,
                     size: AppSizes.iconSizeMedium,
                   ),
@@ -138,17 +154,13 @@ class InputFieldState extends State<InputField> {
                 )
                 : null,
         filled: true,
-        fillColor: AppColors.secondaryColor.withOpacity(
-          0.4,
-        ), // Fond du champ de saisie
+        fillColor: AppColors.secondaryColor.withOpacity(0.4),
         contentPadding: const EdgeInsets.symmetric(
           vertical: AppSizes.paddingMedium,
           horizontal: AppSizes.paddingMedium,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            AppSizes.formFieldRadius,
-          ), // Rayon de bordure
+          borderRadius: BorderRadius.circular(AppSizes.formFieldRadius),
           borderSide: BorderSide(
             color: AppColors.borderColor.withOpacity(0.6),
             width: 1.5,
@@ -163,10 +175,7 @@ class InputFieldState extends State<InputField> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.formFieldRadius),
-          borderSide: BorderSide(
-            color: AppColors.primaryColor,
-            width: 2.0,
-          ), // Bordure focus plus épaisse et colorée
+          borderSide: BorderSide(color: AppColors.primaryColor, width: 2.0),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.formFieldRadius),
@@ -174,10 +183,7 @@ class InputFieldState extends State<InputField> {
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.formFieldRadius),
-          borderSide: BorderSide(
-            color: AppColors.errorColor,
-            width: 2.5,
-          ), // Bordure focus error plus épaisse
+          borderSide: BorderSide(color: AppColors.errorColor, width: 2.5),
         ),
       ),
     );

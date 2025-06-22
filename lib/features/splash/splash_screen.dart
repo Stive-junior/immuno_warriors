@@ -1,3 +1,4 @@
+
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,9 +7,10 @@ import 'package:immuno_warriors/core/constants/app_strings.dart';
 import 'package:immuno_warriors/features/splash/network_modal.dart';
 import 'package:immuno_warriors/features/splash/painters.dart';
 import 'package:immuno_warriors/features/splash/splash_screen_state.dart';
-import 'package:immuno_warriors/features/splash/splash_screen_widgets.dart';
+import 'package:immuno_warriors/features/splash/splash_screen_widgets.dart' show MiniInputDialog;
 import 'package:immuno_warriors/shared/ui/app_colors.dart';
 import 'package:immuno_warriors/shared/ui/futuristic_text.dart';
+import 'package:immuno_warriors/shared/widgets/buttons/holo.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -17,12 +19,9 @@ class SplashScreen extends ConsumerStatefulWidget {
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends ConsumerState<SplashScreen>
-    with SingleTickerProviderStateMixin {
+class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _buttonAnimation;
   late Animation<double> _orbitAnimation;
-  late Animation<double> _pulseAnimation;
   late Animation<double> _particleAnimation;
   final List<OrbitingElement> _orbitingElements = [];
   final List<Particle> _particles = [];
@@ -35,14 +34,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 12),
-    );
-
-    _buttonAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.8, 1.0, curve: Curves.elasticOut),
-      ),
+      duration: const Duration(seconds: 10),
     );
 
     _orbitAnimation = Tween<double>(begin: 0.0, end: 2 * pi).animate(
@@ -52,20 +44,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       ),
     );
 
-    _pulseAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.2), weight: 50),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.2, end: 1.0), weight: 50),
-    ]).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 1.0, curve: Curves.easeInOut),
-      ),
+    _particleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.linear),
     );
-
-    _particleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -79,24 +60,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final random = Random();
     _orbitingElements.addAll([
       OrbitingElement(
-        radius: 100,
-        speed: 1.5,
-        size: 10,
-        color: AppColors.primaryColor.withOpacity(0.7),
-        startAngle: random.nextDouble() * 2 * pi,
-      ),
-      OrbitingElement(
-        radius: 130,
+        radius: 80,
         speed: 1.2,
-        size: 12,
-        color: AppColors.secondaryColor.withOpacity(0.7),
+        size: 8,
+        color: AppColors.primaryColor.withOpacity(0.4),
         startAngle: random.nextDouble() * 2 * pi,
       ),
       OrbitingElement(
-        radius: 160,
-        speed: 0.8,
-        size: 8,
-        color: AppColors.primaryAccentColor.withOpacity(0.7),
+        radius: 100,
+        speed: 1.0,
+        size: 10,
+        color: AppColors.secondaryColor.withOpacity(0.4),
         startAngle: random.nextDouble() * 2 * pi,
       ),
     ]);
@@ -104,18 +78,33 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   void _initializeParticles() {
     final random = Random();
-    for (int i = 0; i < 30; i++) {
+    for (int i = 0; i < 100; i++) {
       _particles.add(
         Particle(
           x: random.nextDouble(),
           y: random.nextDouble(),
-          speed: random.nextDouble() * 0.3 + 0.1,
-          size: random.nextDouble() * 3 + 1,
-          color: AppColors.primaryColor.withOpacity(
-            random.nextDouble() * 0.4 + 0.2,
-          ),
+          speed: random.nextDouble() * 0.2 + 0.1,
+          size: random.nextDouble() * 2 + 1,
+          color: AppColors.primaryColor.withOpacity(random.nextDouble() * 0.2 + 0.1),
         ),
       );
+    }
+  }
+
+  String _getProgressMessage(double progress) {
+    switch (progress) {
+      case 0.2:
+        return AppStrings.initializing;
+      case 0.4:
+        return AppStrings.networkChecked;
+      case 0.6:
+        return AppStrings.sessionChecked;
+      case 0.8:
+        return AppStrings.profileLoaded;
+      case 1.0:
+        return AppStrings.successMessage;
+      default:
+        return AppStrings.initializing;
     }
   }
 
@@ -131,27 +120,22 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final state = ref.watch(splashScreenProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.backgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Container(
+          constraints: const BoxConstraints.expand(),
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment.center,
+              radius: 1.8,
+              colors: [
+                AppColors.primaryColor.withOpacity(0.08),
+                AppColors.backgroundColor.withOpacity(0.95),
+              ],
+            ),
+          ),
           child: Stack(
             children: [
-              // Fond avec gradient
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: Alignment.center,
-                      radius: 1.5,
-                      colors: [
-                        AppColors.primaryColor.withOpacity(0.03),
-                        AppColors.backgroundColor,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              // Particules
               Positioned.fill(
                 child: CustomPaint(
                   painter: ParticlePainter(
@@ -161,213 +145,187 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ),
                 ),
               ),
-              // Éléments orbitaux
-              CustomPaint(
-                painter: OrbitingElementsPainter(
-                  elements: _orbitingElements,
-                  animationValue: _orbitAnimation.value,
-                  size: size,
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: OrbitingElementsPainter(
+                    elements: _orbitingElements,
+                    animationValue: _orbitAnimation.value,
+                    size: size,
+                  ),
                 ),
               ),
-              // Anneau néon
               Positioned(
-                top: size.height / 2 - 120,
-                left: size.width / 2 - 120,
+                top: size.height / 2 - 100,
+                left: size.width / 2 - 100,
                 child: CustomPaint(
                   painter: NeonRingPainter(
                     progress: state.progress,
                     color: AppColors.primaryColor,
                   ),
-                  size: const Size(240, 240),
+                  size: const Size(200, 200),
                 ),
               ),
-              // Contenu principal
-              SizedBox(
-                height: size.height,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Logo pulsant
-                      ScaleTransition(
-                        scale: _pulseAnimation,
-                        child: Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.secondaryColor.withOpacity(0.4),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.secondaryAccentColor
-                                    .withOpacity(0.2),
-                                blurRadius: 15,
-                                spreadRadius: 3,
-                              ),
-                            ],
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.secondaryColor.withOpacity(0.3),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.secondaryAccentColor.withOpacity(0.15),
+                            blurRadius: 12,
+                            spreadRadius: 2,
                           ),
-                          child: Center(
-                            child: Image.asset(
-                              AppAssets.splashVirus,
-                              width: 90,
-                              height: 90,
-                              errorBuilder:
-                                  (context, error, stackTrace) =>
-                                      Container(color: AppColors.primaryColor),
-                            ),
-                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Image.asset(
+                          AppAssets.splashVirus,
+                          width: 70,
+                          height: 70,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(color: AppColors.primaryColor),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      // Titre
-                      FuturisticText(
-                        'Immuno Warriors',
-                        size: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textColorPrimary,
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: size.width * 0.5,
+                      height: 20,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryAccentColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: AppColors.secondaryColor.withOpacity(0.2),
+                                width: 0.5,
+                              ),
+                            ),
+                          ),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: CustomPaint(
+                              painter: BubbleProgressPainter(
+                                value: state.progress,
+                                color: AppColors.virusGreen,
+                              ),
+                              size: Size(size.width * 0.5, 20),
+                            ),
+                          ),
+                          Center(
+                            child: FuturisticText(
+                              '${(state.progress * 100).toStringAsFixed(0)}%',
+                              size: 10,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textColorPrimary,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                      // Barre de progression
-                      SizedBox(
-                        width: size.width * 0.6,
-                        height: 25,
-                        child: Stack(
+                    ),
+                    const SizedBox(height: 12),
+                    FuturisticText(
+                      _getProgressMessage(state.progress),
+                      size: 11,
+                      color: AppColors.virusGreen,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () => _showMiniInput(context, ref),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundColor.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.primaryColor.withOpacity(0.4)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryColor.withOpacity(0.08),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryAccentColor.withOpacity(
-                                  0.2,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColors.secondaryColor.withOpacity(
-                                    0.3,
-                                  ),
-                                  width: 1,
-                                ),
-                              ),
+                            Icon(
+                              state.networkStatus == AppStrings.networkSuccess
+                                  ? Icons.wifi
+                                  : Icons.wifi_off,
+                              size: 12,
+                              color: state.isInitialized ? AppColors.primaryColor : AppColors.errorColor,
                             ),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: CustomPaint(
-                                painter: BubbleProgressPainter(
-                                  value: state.progress,
-                                  color: AppColors.virusGreen,
-                                ),
-                                size: Size(size.width * 0.6, 25),
-                              ),
-                            ),
-                            Center(
-                              child: FuturisticText(
-                                '${(state.progress * 100).toStringAsFixed(0)}%',
-                                size: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textColorPrimary,
-                              ),
+                            const SizedBox(width: 5),
+                            FuturisticText(
+                              state.currentUrl.isEmpty ? AppStrings.errorMessage : state.currentUrl,
+                              size: 9,
+                              color: AppColors.textColorPrimary,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 15),
-                      // Statut
-                      FuturisticText(
-                        state.statusMessage,
-                        size: 12,
-                        color: AppColors.textColorSecondary,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 10),
-                      // Mini bouton URL
-                      GestureDetector(
-                        onTap: () => _showMiniInput(context, ref),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.backgroundColor.withOpacity(0.8),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: AppColors.primaryColor.withOpacity(0.5),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primaryColor.withOpacity(0.1),
-                                blurRadius: 8,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                state.networkStatus == AppStrings.networkChecked
-                                    ? Icons.wifi
-                                    : Icons.wifi_off,
-                                size: 14,
-                                color:
-                                    state.networkStatus ==
-                                            AppStrings.networkChecked
-                                        ? AppColors.successColor
-                                        : AppColors.errorColor,
-                              ),
-                              const SizedBox(width: 6),
-                              FuturisticText(
-                                state.currentUrl.isEmpty
-                                    ? 'Configurer l\'URL'
-                                    : state.currentUrl,
-                                size: 10,
-                                color: AppColors.textColorPrimary,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Visibility(
+                visible: state.isInitialized && state.progress == 1.0,
+                child: Positioned(
+                  bottom: 30,
+                  left: 30,
+                  right: 30,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      HolographicButton(
+                        onPressed: () => Navigator.pop(context),
+                        width: 100,
+                        height: 36,
+                        child: FuturisticText(
+                          AppStrings.close,
+                          size: 12,
+                          color: AppColors.textColorPrimary,
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      // Bouton Continuer
-                      if (state.showContinueButton)
-                        ScaleTransition(
-                          scale: _buttonAnimation,
-                          child: HolographicButton(
-                            onPressed:
-                                () => ref
-                                    .read(splashScreenProvider.notifier)
-                                    .continueNavigation(context),
-                            width: 160,
-                            height: 40,
-                            child: FuturisticText(
-                              AppStrings.continueButtonText,
-                              size: 14,
-                              color: AppColors.textColorPrimary,
-                            ),
-                          ),
+                      HolographicButton(
+                        onPressed: () => ref.read(splashScreenProvider.notifier).continueNavigation(context),
+                        width: 100,
+                        height: 36,
+                        child: FuturisticText(
+                          AppStrings.continueButtonText,
+                          size: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textColorPrimary,
                         ),
+                      ),
                     ],
                   ),
                 ),
               ),
-              // Dialogue d'erreur
-              if (state.hasCriticalError)
+              if (state.hasCriticalError &&
+                  (state.errorMessage == AppStrings.noInternetConnection ||
+                      state.errorMessage == 'Serveur injoignable. Vérifiez l\'URL.'))
                 Center(
-                  child: _ErrorDialog(
-                    errorMessage: state.errorMessage ?? AppStrings.errorMessage,
-                    onRetry:
-                        () => ref
-                            .read(splashScreenProvider.notifier)
-                            .retry(context),
-                    onCancel:
-                        () =>
-                            ref
-                                .read(splashScreenProvider.notifier)
-                                .clearError(),
+                  child: NetworkErrorModal(
+                    errorMessage: state.errorMessage!,
+                    onRetry: () => ref.read(splashScreenProvider.notifier).retry(context),
                   ),
                 ),
             ],
@@ -380,87 +338,88 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void _showMiniInput(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder:
-          (context) => MiniInputDialog(
-            initialUrl: ref.read(splashScreenProvider).currentUrl,
-            onSubmit: (url) {
-              Navigator.pop(context);
-              ref.read(splashScreenProvider.notifier).updateUrl(url);
-              showNetworkModal(context, ref);
-            },
-          ),
+      builder: (context) => MiniInputDialog(
+        initialUrl: ref.read(splashScreenProvider).currentUrl,
+        onSubmit: (url) {
+          Navigator.pop(context);
+          ref.read(splashScreenProvider.notifier).updateUrl(url);
+          showNetworkModal(context, ref);
+        },
+      ),
     );
   }
 }
 
-class _ErrorDialog extends StatelessWidget {
+class NetworkErrorModal extends StatelessWidget {
   final String errorMessage;
   final VoidCallback onRetry;
-  final VoidCallback onCancel;
 
-  const _ErrorDialog({
+  const NetworkErrorModal({
+    super.key,
     required this.errorMessage,
     required this.onRetry,
-    required this.onCancel,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.8,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundColor.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.errorColor.withOpacity(0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.errorColor.withOpacity(0.2),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FuturisticText(
-            'Erreur',
-            size: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.errorColor,
-          ),
-          const SizedBox(height: 10),
-          FuturisticText(
-            errorMessage,
-            size: 12,
-            color: AppColors.textColorPrimary,
-            textAlign: TextAlign.center,
-            maxLines: 3,
-          ),
-          const SizedBox(height: 16),
-          HolographicButton(
-            onPressed: onRetry,
-            width: 120,
-            height: 36,
-            child: FuturisticText(
-              'Réessayer',
-              size: 12,
-              color: AppColors.textColorPrimary,
+    final size = MediaQuery.of(context).size;
+    return Center(
+      child: Container(
+        width: size.width * 0.7,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.backgroundColor.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.errorColor.withOpacity(0.4)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.errorColor.withOpacity(0.15),
+              blurRadius: 8,
+              spreadRadius: 1,
             ),
-          ),
-          const SizedBox(height: 8),
-          HolographicButton(
-            onPressed: onCancel,
-            width: 120,
-            height: 36,
-            child: FuturisticText(
-              'Annuler',
-              size: 12,
-              color: AppColors.textColorPrimary,
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              AppAssets.splashVirus,
+              width: 50,
+              height: 50,
+              errorBuilder: (context, error, stackTrace) => const Icon(
+                Icons.signal_wifi_off,
+                size: 50,
+                color: AppColors.errorColor,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            FuturisticText(
+              AppStrings.errorTitle,
+              size: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.errorColor,
+            ),
+            const SizedBox(height: 8),
+            FuturisticText(
+              errorMessage,
+              size: 11,
+              color: AppColors.textColorPrimary,
+              textAlign: TextAlign.center,
+              maxLines: 3,
+            ),
+            const SizedBox(height: 12),
+            HolographicButton(
+              onPressed: onRetry,
+              width: 100,
+              height: 36,
+              child: FuturisticText(
+                AppStrings.retry,
+                size: 12,
+                color: AppColors.textColorPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

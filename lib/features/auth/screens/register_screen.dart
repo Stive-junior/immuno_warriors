@@ -1,40 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
-import 'package:animate_do/animate_do.dart';
 import 'package:email_validator/email_validator.dart';
 
-// Core Imports
 import 'package:immuno_warriors/core/constants/app_assets.dart';
 import 'package:immuno_warriors/core/constants/app_strings.dart';
-import 'package:immuno_warriors/core/constants/app_animations.dart';
 import 'package:immuno_warriors/core/routes/route_names.dart';
 import 'package:immuno_warriors/core/utils/app_logger.dart';
-
-// Shared UI Components
 import 'package:immuno_warriors/shared/ui/app_colors.dart';
 import 'package:immuno_warriors/shared/ui/futuristic_text.dart';
 import 'package:immuno_warriors/shared/ui/screen_utils.dart';
-
-// Shared Widgets
-import 'package:immuno_warriors/shared/widgets/cards/glassmorphism_card.dart';
 import 'package:immuno_warriors/shared/widgets/forms/input_field.dart';
-import 'package:immuno_warriors/shared/widgets/animations/scan_effect.dart';
-import 'package:immuno_warriors/shared/widgets/animations/pulse_widget.dart';
-import 'package:immuno_warriors/shared/widgets/buttons/holographic_button.dart';
-import 'package:immuno_warriors/shared/widgets/buttons/animated_icon_button.dart';
 import 'package:immuno_warriors/shared/widgets/feedback/snackbar_manager.dart';
+import 'package:immuno_warriors/features/auth/providers/auth_provider.dart';
+import 'package:immuno_warriors/shared/widgets/buttons/action_button.dart';
 import 'package:immuno_warriors/shared/widgets/common/theme_selection_dialog.dart';
 
-// Feature-specific Imports
-import 'package:immuno_warriors/features/auth/providers/auth_provider.dart';
+import '../../../shared/widgets/buttons/holographic_button.dart';
+import '../../home/home_screen.dart';
 
-/// `RegisterScreen` : Écran d'inscription pour créer un nouveau compte utilisateur.
-///
-/// Gère un flux en deux étapes : sélection d'avatar, puis formulaire d'inscription
-/// (nom d'utilisateur, email, mot de passe). Inclut des options de connexion sociale
-/// et des animations futuristes.
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -49,80 +33,128 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
-  bool _showAvatarSelection = true;
-  String? _selectedAvatarUrl;
+  final PageController _pageController = PageController();
 
-  late AnimationController _scanController;
-  late AnimationController _pulseController;
-  late AnimationController _formSlideController;
-  late AnimationController _themeIconController;
-  late AnimationController _helpIconController;
-  late AnimationController _backArrowController;
+  int _currentStep = 0;
+  String? _selectedAvatarUrl;
+  bool _avatarSelected = false;
+
+  bool _isUsernameValid = false;
+  bool _isEmailValid = false;
+  bool _isPasswordValid = false;
+  bool _isPasswordConfirmValid = false;
 
   @override
   void initState() {
     super.initState();
-    _initAnimationControllers();
+    AppLogger.info('RegisterScreen initialisé');
+
+    _usernameController.addListener(_validateUsernameInput);
+    _emailController.addListener(_validateEmailInput);
+    _passwordController.addListener(_validatePasswordInput);
+    _confirmPasswordController.addListener(_validatePasswordConfirmInput);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.listen<String?>(errorMessageProvider, (previous, next) {
+        if (next != null && next.isNotEmpty && mounted) {
+          SnackbarManager.showError(context, next);
+          ref.read(authProvider.notifier).clearError();
+        }
+      });
+    });
   }
 
-  void _initAnimationControllers() {
-    try {
-      _scanController = AnimationController(
-        duration: AppAnimations.scanEffectDuration,
-        vsync: this,
-      )..repeat(reverse: true);
-      _pulseController = AnimationController(
-        duration: AppAnimations.pulseAnimationDuration,
-        vsync: this,
-      )..repeat(reverse: true);
-      _formSlideController = AnimationController(
-        duration: AppAnimations.fadeInDuration,
-        vsync: this,
-      );
-      _themeIconController = AnimationController(
-        duration: AppAnimations.iconAnimationDuration,
-        vsync: this,
-      )..repeat(reverse: true);
-      _helpIconController = AnimationController(
-        duration: AppAnimations.iconAnimationDuration,
-        vsync: this,
-      )..repeat();
-      _backArrowController = AnimationController(
-        duration: AppAnimations.iconAnimationDuration,
-        vsync: this,
-      )..repeat();
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Échec de l\'initialisation des contrôleurs d\'animation',
-        error: e,
-        stackTrace: stackTrace,
-      );
+  void _validateUsernameInput() {
+    final isValid = _usernameController.text.trim().length >= 3;
+    if (_isUsernameValid != isValid) setState(() => _isUsernameValid = isValid);
+  }
+
+  void _validateEmailInput() {
+    final isValid = EmailValidator.validate(_emailController.text.trim());
+    if (_isEmailValid != isValid) setState(() => _isEmailValid = isValid);
+  }
+
+  void _validatePasswordInput() {
+    final password = _passwordController.text;
+    final isValid = password.length >= 6;
+    if (_isPasswordValid != isValid) setState(() => _isPasswordValid = isValid);
+  }
+
+  void _validatePasswordConfirmInput() {
+    final confirmPassword = _confirmPasswordController.text;
+    final isValid =
+        confirmPassword == _passwordController.text &&
+        confirmPassword.length >= 6;
+    if (_isPasswordConfirmValid != isValid) {
+      setState(() => _isPasswordConfirmValid = isValid);
     }
-  }
-
-  @override
-  void dispose() {
-    _scanController.dispose();
-    _pulseController.dispose();
-    _formSlideController.dispose();
-    _themeIconController.dispose();
-    _helpIconController.dispose();
-    _backArrowController.dispose();
-    _usernameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
   }
 
   void _selectAvatar(String avatarUrl) {
     setState(() {
       _selectedAvatarUrl = avatarUrl;
-      _showAvatarSelection = false;
+      _avatarSelected = true;
     });
-    _formSlideController.forward();
+  }
+
+  void _nextStep() {
+    bool currentStepIsValid = false;
+    if (_currentStep == 0) {
+      currentStepIsValid = _avatarSelected;
+      if (!currentStepIsValid) {
+        SnackbarManager.showError(context, AppStrings.selectAvatar);
+      }
+    } else if (_currentStep == 1) {
+      currentStepIsValid = _isUsernameValid;
+      if (!currentStepIsValid) {
+        SnackbarManager.showError(context, AppStrings.invalidUsername);
+      }
+    } else if (_currentStep == 2) {
+      currentStepIsValid = _isEmailValid;
+      if (!currentStepIsValid) {
+        SnackbarManager.showError(context, AppStrings.invalidEmail);
+      }
+    } else if (_currentStep == 3) {
+      currentStepIsValid = _isPasswordValid;
+      if (!currentStepIsValid) {
+        SnackbarManager.showError(context, AppStrings.weakPassword);
+      }
+    } else if (_currentStep == 4) {
+      currentStepIsValid = _isPasswordConfirmValid;
+      if (!currentStepIsValid) {
+        SnackbarManager.showError(context, AppStrings.passwordMismatch);
+      }
+    }
+
+    if (!currentStepIsValid) return;
+
+    if (_currentStep < 4) {
+      setState(() {
+        _currentStep++;
+        _pageController.animateToPage(
+          _currentStep,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      });
+    } else {
+      _handleSignUp();
+    }
+  }
+
+  void _prevStep() {
+    if (_currentStep > 0) {
+      setState(() {
+        _currentStep--;
+        _pageController.animateToPage(
+          _currentStep,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      });
+    } else {
+      context.goNamed(RouteNames.profileAuthOptions);
+    }
   }
 
   Future<void> _handleSignUp() async {
@@ -132,29 +164,30 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
-      await authNotifier.signUp(
-        email: email,
-        password: password,
-        username: username,
-        avatarUrl: _selectedAvatarUrl,
-      );
+      try {
+        await authNotifier.signUp(
+          email: email,
+          password: password,
+          username: username,
+          avatarUrl: _selectedAvatarUrl,
+        );
 
-      if (!mounted) return;
-      final authState = ref.read(authProvider);
+        if (!mounted) return;
+        final authState = ref.read(authProvider);
 
-      if (authState.isSignedIn) {
-        AppLogger.info('Utilisateur $email inscrit avec succès.');
-        _showSuccessDialog(context, username);
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            context.goNamed(RouteNames.dashboard, extra: authState.userId);
-          }
-        });
-      } else {
-        AppLogger.error('Échec de l\'inscription: ${authState.errorMessage}');
-        SnackbarManager.showError(
-          context,
-          authState.errorMessage ?? AppStrings.registerFailed,
+        if (authState.isSignedIn) {
+          _showSuccessDialog(context, username);
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) {
+              context.goNamed(RouteNames.dashboard, extra: authState.userId);
+            }
+          });
+        }
+      } catch (e, stackTrace) {
+        AppLogger.error(
+          'Erreur lors de l\'inscription',
+          error: e,
+          stackTrace: stackTrace,
         );
       }
     } else if (_selectedAvatarUrl == null) {
@@ -162,633 +195,200 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     }
   }
 
-  void _signInWithGoogle() {
-    AppLogger.info('Connexion avec Google pressée.');
-    SnackbarManager.showInfo(context, AppStrings.socialLoginNotImplemented);
-  }
-
-  void _signInWithFacebook() {
-    AppLogger.info('Connexion avec Facebook pressée.');
-    SnackbarManager.showInfo(context, AppStrings.socialLoginNotImplemented);
-  }
-
-  void _showThemeDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => ThemeSelectionDialog(
-            themeIconController: _themeIconController,
-            onThemeSelected: (themeMode) {
-              AppLogger.info('Thème changé pour : $themeMode');
-            },
-          ),
-    );
-  }
-
   void _showSuccessDialog(BuildContext context, String username) {
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.backgroundColor.withValues(blue: 0.9),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppColors.virusGreen, width: 2),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Lottie.asset(
-                AppAssets.successAnimation,
-                width: 100,
-                height: 100,
-                repeat: false,
-                errorBuilder: (context, error, stackTrace) {
-                  AppLogger.error(
-                    'Erreur de chargement de Lottie: ${AppAssets.successAnimation}',
-                    error: error,
-                    stackTrace: stackTrace,
-                  );
-                  return Icon(
-                    Icons.check_circle,
-                    color: AppColors.successColor,
-                    size: 80,
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              FuturisticText(
-                AppStrings.profileCreated,
-                size: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.successColor,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              FuturisticText(
-                '${AppStrings.welcomeToImmunoWarriors} $username!',
-                size: 16,
-                color: AppColors.textColorPrimary,
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAvatarSelectionSection(
-    double screenWidth,
-    double screenHeight,
-    bool isLandscape,
-  ) {
-    return FadeInUp(
-      duration: AppAnimations.fadeInDuration,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          PulseWidget(
-            controller: _pulseController,
-            minScale: 0.95,
-            maxScale: 1.05,
-            child: FuturisticText(
-              AppStrings.chooseYourAvatar,
-              size: isLandscape ? 36 : 28,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryColor,
-              textAlign: TextAlign.center,
-            ),
-          ),
-          SizedBox(height: screenHeight * 0.04),
-          SizedBox(
-            height: isLandscape ? screenHeight * 0.5 : screenHeight * 0.4,
-            child: GridView.builder(
-              scrollDirection: Axis.horizontal,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1,
-              ),
-              itemCount: AppAssets.availableAvatars.length,
-              itemBuilder: (context, index) {
-                final avatarPath = AppAssets.availableAvatars[index];
-                return VirusButton(
-                  onPressed: () => _selectAvatar(avatarPath),
-                  width: isLandscape ? screenHeight * 0.2 : screenWidth * 0.3,
-                  child: Lottie.asset(
-                    avatarPath,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      AppLogger.error(
-                        'Erreur de chargement de Lottie avatar: $avatarPath',
-                        error: error,
-                        stackTrace: stackTrace,
-                      );
-                      return Icon(
-                        Icons.person,
-                        color: AppColors.textColorPrimary,
-                        size: 60,
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRegistrationFormSection(
-    double screenWidth,
-    double screenHeight,
-    bool isLandscape,
-    bool authLoading,
-  ) {
-    return SlideTransition(
-      position: Tween<Offset>(
-        begin: const Offset(1, 0),
-        end: Offset.zero,
-      ).animate(_formSlideController),
-      child: FadeTransition(
-        opacity: _formSlideController,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            PulseWidget(
-              controller: _pulseController,
-              minScale: 0.95,
-              maxScale: 1.05,
-              child: FuturisticText(
-                AppStrings.registerTitle,
-                size: isLandscape ? 36 : 28,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryColor,
-                textAlign: TextAlign.center,
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.04),
-            GlassmorphismCard(
-              blur: 15,
-              opacity: 0.2,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: AppColors.backgroundColor.withOpacity(0.9),
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      InputField(
-                        controller: _usernameController,
-                        labelText: AppStrings.enterUsername,
-                        keyboardType: TextInputType.text,
-                        prefixIcon: Lottie.asset(
-                          AppAssets.userAvatarAnimation,
-                          width: 24,
-                          height: 24,
-                          errorBuilder: (context, error, stackTrace) {
-                            AppLogger.error(
-                              'Erreur de chargement de Lottie: ${AppAssets.userAvatarAnimation}',
-                              error: error,
-                              stackTrace: stackTrace,
-                            );
-                            return Icon(
-                              Icons.person,
-                              color: AppColors.textColorPrimary,
-                            );
-                          },
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return AppStrings.invalidUsername;
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      InputField(
-                        controller: _emailController,
-                        labelText: AppStrings.emailHint,
-                        keyboardType: TextInputType.emailAddress,
-                        prefixIcon: Lottie.asset(
-                          AppAssets.emailIconAnimation,
-                          width: 24,
-                          height: 24,
-                          errorBuilder: (context, error, stackTrace) {
-                            AppLogger.error(
-                              'Erreur de chargement de Lottie: ${AppAssets.emailIconAnimation}',
-                              error: error,
-                              stackTrace: stackTrace,
-                            );
-                            return Icon(
-                              Icons.email,
-                              color: AppColors.textColorPrimary,
-                            );
-                          },
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return AppStrings.invalidEmail;
-                          }
-                          if (!EmailValidator.validate(value)) {
-                            return AppStrings.invalidEmail;
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      InputField(
-                        controller: _passwordController,
-                        labelText: AppStrings.passwordHint,
-                        obscureText: _obscurePassword,
-                        prefixIcon: Lottie.asset(
-                          AppAssets.lockAnimation,
-                          width: 24,
-                          height: 24,
-                          errorBuilder: (context, error, stackTrace) {
-                            AppLogger.error(
-                              'Erreur de chargement de Lottie: ${AppAssets.lockAnimation}',
-                              error: error,
-                              stackTrace: stackTrace,
-                            );
-                            return Icon(
-                              Icons.lock,
-                              color: AppColors.textColorPrimary,
-                            );
-                          },
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Lottie.asset(
-                            _obscurePassword
-                                ? AppAssets.eyeClosedAnimation
-                                : AppAssets.eyeOpenAnimation,
-                            width: 24,
-                            height: 24,
-                            errorBuilder: (context, error, stackTrace) {
-                              AppLogger.error(
-                                'Erreur de chargement de Lottie: ${_obscurePassword ? AppAssets.eyeClosedAnimation : AppAssets.eyeOpenAnimation}',
-                                error: error,
-                                stackTrace: stackTrace,
-                              );
-                              return Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                                color: AppColors.textColorPrimary,
-                              );
-                            },
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return AppStrings.invalidPassword;
-                          }
-                          if (value.length < 6) {
-                            return AppStrings.weakPassword;
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      InputField(
-                        controller: _confirmPasswordController,
-                        labelText: AppStrings.confirmPasswordHint,
-                        obscureText: _obscureConfirmPassword,
-                        prefixIcon: Lottie.asset(
-                          AppAssets.lockAnimation,
-                          width: 24,
-                          height: 24,
-                          errorBuilder: (context, error, stackTrace) {
-                            AppLogger.error(
-                              'Erreur de chargement de Lottie: ${AppAssets.lockAnimation}',
-                              error: error,
-                              stackTrace: stackTrace,
-                            );
-                            return Icon(
-                              Icons.lock_reset,
-                              color: AppColors.textColorPrimary,
-                            );
-                          },
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Lottie.asset(
-                            _obscureConfirmPassword
-                                ? AppAssets.eyeClosedAnimation
-                                : AppAssets.eyeOpenAnimation,
-                            width: 24,
-                            height: 24,
-                            errorBuilder: (context, error, stackTrace) {
-                              AppLogger.error(
-                                'Erreur de chargement de Lottie: ${_obscureConfirmPassword ? AppAssets.eyeClosedAnimation : AppAssets.eyeOpenAnimation}',
-                                error: error,
-                                stackTrace: stackTrace,
-                              );
-                              return Icon(
-                                _obscureConfirmPassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                                color: AppColors.textColorPrimary,
-                              );
-                            },
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword =
-                                  !_obscureConfirmPassword;
-                            });
-                          },
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return AppStrings.invalidPassword;
-                          }
-                          if (value != _passwordController.text) {
-                            return AppStrings.passwordMismatch;
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      VirusButton(
-                        onPressed: authLoading ? null : _handleSignUp,
-                        width: double.infinity,
-                        child:
-                            authLoading
-                                ? const CircularProgressIndicator(
-                                  color: AppColors.textColorPrimary,
-                                )
-                                : FuturisticText(
-                                  AppStrings.registerButton,
-                                  size: 18,
-                                  color: AppColors.textColorPrimary,
-                                ),
-                      ),
-                    ],
-                  ),
+              side: const BorderSide(color: AppColors.primaryColor, width: 1.5),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.check_circle,
+                  color: AppColors.successColor,
+                  size: 60,
                 ),
-              ),
+                const SizedBox(height: 8),
+                FuturisticText(
+                  AppStrings.profileCreated,
+                  size: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.successColor,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+                FuturisticText(
+                  '${AppStrings.welcomeToImmunoWarriors} $username!',
+                  size: 13,
+                  color: AppColors.textColorPrimary,
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
-            SizedBox(height: screenHeight * 0.04),
-            FadeInUp(
-              delay: Duration(
-                milliseconds: AppAnimations.fadeInDuration.inMilliseconds + 200,
-              ),
-              duration: AppAnimations.fadeInDuration,
-              child: Column(
-                children: [
-                  FuturisticText(
-                    AppStrings.orConnectWith,
-                    color: AppColors.textColorSecondary,
-                    size: 16,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      VirusButton(
-                        onPressed: _signInWithGoogle,
-                        width: 60,
-                        child: Lottie.asset(
-                          AppAssets.googleLogoAnimation,
-                          width: 24,
-                          height: 24,
-                          errorBuilder: (context, error, stackTrace) {
-                            AppLogger.error(
-                              'Erreur de chargement de Lottie: ${AppAssets.googleLogoAnimation}',
-                              error: error,
-                              stackTrace: stackTrace,
-                            );
-                            return Icon(
-                              Icons.g_mobiledata,
-                              color: AppColors.textColorPrimary,
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      VirusButton(
-                        onPressed: _signInWithFacebook,
-                        width: 60,
-                        child: Lottie.asset(
-                          AppAssets.facebookLogoAnimation,
-                          width: 24,
-                          height: 24,
-                          errorBuilder: (context, error, stackTrace) {
-                            AppLogger.error(
-                              'Erreur de chargement de Lottie: ${AppAssets.facebookLogoAnimation}',
-                              error: error,
-                              stackTrace: stackTrace,
-                            );
-                            return Icon(
-                              Icons.facebook,
-                              color: AppColors.textColorPrimary,
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.04),
-            FadeInUp(
-              delay: Duration(
-                milliseconds: AppAnimations.fadeInDuration.inMilliseconds + 400,
-              ),
-              duration: AppAnimations.fadeInDuration,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FuturisticText(
-                    AppStrings.alreadyHaveAccount,
-                    color: AppColors.textColorSecondary,
-                    size: 14,
-                  ),
-                  TextButton(
-                    onPressed: () => context.goNamed(RouteNames.login),
-                    child: FuturisticText(
-                      AppStrings.signInHere,
-                      color: AppColors.primaryColor,
-                      fontWeight: FontWeight.bold,
-                      size: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
   @override
+  void dispose() {
+    _usernameController.removeListener(_validateUsernameInput);
+    _emailController.removeListener(_validateEmailInput);
+    _passwordController.removeListener(_validatePasswordInput);
+    _confirmPasswordController.removeListener(_validatePasswordConfirmInput);
+
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _pageController.dispose();
+    AppLogger.info('RegisterScreen disposé');
+    super.dispose();
+  }
+
+  bool _canGoNext() {
+    if (_currentStep == 0) return _avatarSelected;
+    if (_currentStep == 1) return _isUsernameValid;
+    if (_currentStep == 2) return _isEmailValid;
+    if (_currentStep == 3) return _isPasswordValid;
+    if (_currentStep == 4) return _isPasswordConfirmValid;
+    return false;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final screenWidth = ScreenUtils.getScreenWidth(context);
-    final screenHeight = ScreenUtils.getScreenHeight(context);
     final isLandscape =
-        ScreenUtils.getScreenOrientation(context) == Orientation.landscape;
+        MediaQuery.of(context).orientation == Orientation.landscape;
     final authLoading = ref.watch(authLoadingProvider);
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundColor,
       resizeToAvoidBottomInset: true,
       body: Stack(
-        fit: StackFit.expand,
         children: [
-          Positioned.fill(
-            child: Lottie.asset(
-              AppAssets.backgroundAnimation,
-              fit: BoxFit.cover,
-              repeat: true,
-              errorBuilder: (context, error, stackTrace) {
-                AppLogger.error(
-                  'Erreur de chargement de l\'animation Lottie',
-                  error: error,
-                  stackTrace: stackTrace,
-                );
-                return Container(color: AppColors.backgroundColor);
-              },
-            ),
-          ),
-          AdvancedScanEffect(
-            controller: _scanController,
-            scanColor: AppColors.virusGreen.withValues(blue: 0.3),
-            lineWidth: 2,
-            blendMode: BlendMode.plus,
-          ),
+          HexGridBackground(size: size),
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: screenWidth * (isLandscape ? 0.05 : 0.08),
-                vertical: screenHeight * (isLandscape ? 0.10 : 0.16),
+                horizontal:
+                    ScreenUtils.getScreenWidth(context) *
+                    (isLandscape ? 0.05 : 0.08),
+                vertical: ScreenUtils.getScreenHeight(context) * 0.02,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  FadeInDown(
-                    duration: AppAnimations.fadeInDuration,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        AnimatedIconButton(
-                          animationAsset: AppAssets.backArrowAnimation,
-                          tooltip: AppStrings.back,
-                          onPressed: () {
-                            if (!_showAvatarSelection) {
-                              _formSlideController.reverse().then((_) {
-                                setState(() {
-                                  _showAvatarSelection = true;
-                                  _selectedAvatarUrl = null;
-                                });
-                              });
-                            } else {
-                              context.goNamed(RouteNames.profileAuthOptions);
-                            }
-                          },
-                          backgroundColor: Colors.blue.withValues(blue: 0.2),
-                          errorBuilder: (context, error, stackTrace) {
-                            AppLogger.error(
-                              'Erreur de chargement de Lottie: ${AppAssets.backArrowAnimation}',
-                              error: error,
-                              stackTrace: stackTrace,
-                            );
-                            return Icon(
-                              Icons.arrow_back,
-                              color: AppColors.textColorPrimary,
-                            );
-                          },
-                        ),
-                        Row(
-                          children: [
-                            AnimatedIconButton(
-                              animationAsset: AppAssets.helpIconAnimation,
-                              tooltip: AppStrings.help,
-                              onPressed: () => context.goNamed(RouteNames.help),
-                              backgroundColor: Colors.blue.withValues(
-                                blue: 0.2,
-                              ),
-                              errorBuilder: (context, error, stackTrace) {
-                                AppLogger.error(
-                                  'Erreur de chargement de Lottie: ${AppAssets.helpIconAnimation}',
-                                  error: error,
-                                  stackTrace: stackTrace,
-                                );
-                                return Icon(
-                                  Icons.help,
-                                  color: AppColors.textColorPrimary,
-                                );
-                              },
-                            ),
-                            const SizedBox(width: 12),
-                            AnimatedIconButton(
-                              animationAsset: AppAssets.themeIconAnimation,
-                              tooltip: AppStrings.theme,
-                              onPressed: () => _showThemeDialog(context),
-                              backgroundColor: Colors.blue.withValues(
-                                blue: 0.2,
-                              ),
-                              errorBuilder: (context, error, stackTrace) {
-                                AppLogger.error(
-                                  'Erreur de chargement de Lottie: ${AppAssets.themeIconAnimation}',
-                                  error: error,
-                                  stackTrace: stackTrace,
-                                );
-                                return Icon(
-                                  Icons.palette,
-                                  color: AppColors.textColorPrimary,
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.05),
+                  _buildHeader(context),
+                  SizedBox(height: ScreenUtils.getScreenHeight(context) * 0.01),
                   Expanded(
-                    child: SingleChildScrollView(
-                      child: AnimatedSwitcher(
-                        duration: AppAnimations.fadeInDuration,
-                        transitionBuilder: (
-                          Widget child,
-                          Animation<double> animation,
-                        ) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          );
-                        },
-                        child:
-                            _showAvatarSelection
-                                ? KeyedSubtree(
-                                  key: const ValueKey('avatar_selection'),
-                                  child: _buildAvatarSelectionSection(
-                                    screenWidth,
-                                    screenHeight,
-                                    isLandscape,
-                                  ),
-                                )
-                                : KeyedSubtree(
-                                  key: const ValueKey('registration_form'),
-                                  child: _buildRegistrationFormSection(
-                                    screenWidth,
-                                    screenHeight,
-                                    isLandscape,
-                                    authLoading,
-                                  ),
+                    child: Center(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.zero,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth:
+                                isLandscape
+                                    ? size.width * 0.6
+                                    : size.width * 0.98,
+                          ),
+
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              FuturisticText(
+                                _currentStep == 0
+                                    ? AppStrings.chooseYourAvatar
+                                    : AppStrings.registerTitle,
+                                size: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textColorPrimary,
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 18),
+                              SizedBox(
+                                height:
+                                    _currentStep == 0
+                                        ? (isLandscape
+                                            ? size.height * 0.22
+                                            : size.height * 0.16)
+                                        : (isLandscape
+                                            ? size.height * 0.22
+                                            : size.height * 0.24),
+                                child: PageView(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  controller: _pageController,
+                                  children: [
+                                    _buildAvatarSelection(size, isLandscape),
+                                    _buildUsernameStep(size, isLandscape),
+                                    _buildEmailStep(size, isLandscape),
+                                    _buildPasswordStep(size, isLandscape),
+                                    _buildPasswordConfirmStep(
+                                      size,
+                                      isLandscape,
+                                    ),
+                                  ],
                                 ),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (_currentStep > 0)
+                                    VirusButton(
+                                      borderColor: AppColors.textColorSecondary,
+                                      onPressed: _prevStep,
+                                      width: 60,
+                                      height: 32,
+                                      child: FuturisticText(
+                                        AppStrings.back,
+                                        textAlign: TextAlign.center,
+                                        size: 14,
+                                        color: AppColors.textColorPrimary,
+                                      ),
+                                    ),
+                                  if (_currentStep > 0) SizedBox(width: 16),
+                                  VirusButton(
+                                    borderColor: AppColors.textColorSecondary,
+                                    onPressed:
+                                        (authLoading && _currentStep == 4)
+                                            ? null
+                                            : (_canGoNext() ? _nextStep : null),
+                                    width: 60,
+                                    height: 32,
+                                    child:
+                                        authLoading && _currentStep == 4
+                                            ? const SizedBox(
+                                              width: 18,
+                                              height: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color:
+                                                    AppColors.textColorPrimary,
+                                              ),
+                                            )
+                                            : FuturisticText(
+                                              _currentStep == 4
+                                                  ? AppStrings.registerButton
+                                                  : AppStrings
+                                                      .continueButtonText,
+                                              textAlign: TextAlign.center,
+                                              size: 14,
+                                              color: AppColors.textColorPrimary,
+                                            ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 12),
+                              _buildBottomSection(context, isLandscape),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -799,5 +399,311 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
         ],
       ),
     );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        ActionButton(
+          fallbackIcon: Icons.arrow_back,
+          tooltip: 'Retour',
+          onPressed: _prevStep,
+        ),
+        Row(
+          children: [
+            ActionButton(
+              fallbackIcon: Icons.help,
+              tooltip: 'Aide',
+              onPressed: () => context.goNamed(RouteNames.help),
+            ),
+            const SizedBox(width: 8),
+            ActionButton(
+              fallbackIcon: Icons.palette,
+              tooltip: 'Changer le thème',
+              onPressed:
+                  () => showDialog(
+                    context: context,
+                    builder:
+                        (context) => ThemeSelectionDialog(
+                          onThemeSelected: (themeMode) {
+                            AppLogger.info('Thème sélectionné: $themeMode');
+                            Navigator.of(context).pop();
+                          },
+                          themeIconController: AnimationController(
+                            vsync: this,
+                            duration: const Duration(milliseconds: 400),
+                          ),
+                        ),
+                  ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAvatarSelection(Size size, bool isLandscape) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: isLandscape ? size.height * 0.12 : size.height * 0.12,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: AppAssets.availableAvatars.length,
+            itemBuilder: (context, index) {
+              final avatarPath = AppAssets.availableAvatars[index];
+              return GestureDetector(
+                onTap: () => _selectAvatar(avatarPath),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                  child: Container(
+                    width: isLandscape ? 60 : 54,
+                    height: isLandscape ? 60 : 54,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color:
+                            _selectedAvatarUrl == avatarPath
+                                ? AppColors.textColorPrimary
+                                : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.asset(
+                        avatarPath,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.person,
+                            size: 32,
+                            color: AppColors.textColorPrimary,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        SizedBox(height: 8),
+        FuturisticText(
+          _selectedAvatarUrl == null
+              ? AppStrings.selectAvatar
+              : 'Avatar sélectionné ✅',
+          color:
+              _selectedAvatarUrl == null
+                  ? AppColors.biohazardColor
+                  : AppColors.successColor,
+          size: 13,
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUsernameStep(Size size, bool isLandscape) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InputField(
+            controller: _usernameController,
+            labelText: AppStrings.enterUsername,
+            prefixIcon: const Icon(
+              Icons.person_outline,
+              color: AppColors.textColorPrimary,
+              size: 20,
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return AppStrings.invalidUsername;
+              }
+              if (value.length < 3) {
+                return AppStrings.usernameTooShort;
+              }
+              return null;
+            },
+            onChanged: (value) => _validateUsernameInput(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailStep(Size size, bool isLandscape) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InputField(
+          controller: _emailController,
+          labelText: AppStrings.emailHint,
+          keyboardType: TextInputType.emailAddress,
+          prefixIcon: const Icon(
+            Icons.email_outlined,
+            color: AppColors.textColorPrimary,
+            size: 20,
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) return AppStrings.invalidEmail;
+            if (!EmailValidator.validate(value)) return AppStrings.invalidEmail;
+            return null;
+          },
+          onChanged: (value) => _validateEmailInput(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordStep(Size size, bool isLandscape) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InputField(
+            controller: _passwordController,
+            labelText: AppStrings.passwordHint,
+            obscureText: true,
+            prefixIcon: const Icon(
+              Icons.lock_outline,
+              color: AppColors.textColorPrimary,
+              size: 20,
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return AppStrings.invalidPassword;
+              }
+              if (value.length < 6) return AppStrings.weakPassword;
+              return null;
+            },
+            onChanged: (value) => _validatePasswordInput(),
+          ),
+          SizedBox(height: 18),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPasswordConfirmStep(Size size, bool isLandscape) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InputField(
+            controller: _confirmPasswordController,
+            labelText: AppStrings.confirmPasswordHint,
+            obscureText: true,
+            prefixIcon: const Icon(
+              Icons.lock_reset_outlined,
+              color: AppColors.textColorPrimary,
+              size: 20,
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return AppStrings.invalidPassword;
+              }
+              if (value != _passwordController.text) {
+                return AppStrings.passwordMismatch;
+              }
+              return null;
+            },
+            onChanged: (value) => _validatePasswordConfirmInput(),
+          ),
+          SizedBox(height: 18),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomSection(BuildContext context, bool isLandscape) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10.0, bottom: 6.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FuturisticText(
+                  AppStrings.orConnectWith,
+                  color: AppColors.textColorSecondary,
+                  size: 13,
+                  textAlign: TextAlign.left,
+                ),
+                SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    VirusButton(
+                      onPressed: _signInWithGoogle,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(
+                        Icons.g_mobiledata,
+                        size: 24,
+                        color: AppColors.textColorPrimary,
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    VirusButton(
+                      onPressed: _signInWithFacebook,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(
+                        Icons.facebook,
+                        size: 24,
+                        color: AppColors.textColorPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 14),
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                FuturisticText(
+                  AppStrings.alreadyHaveAccount,
+                  color: AppColors.textColorSecondary,
+                  size: 13,
+                  textAlign: TextAlign.right,
+                ),
+                TextButton(
+                  onPressed: () => context.goNamed(RouteNames.login),
+                  child: FuturisticText(
+                    AppStrings.signInHere,
+                    color: AppColors.primaryColor,
+                    fontWeight: FontWeight.bold,
+                    size: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _signInWithGoogle() {
+    SnackbarManager.showWarning(context, AppStrings.socialLoginNotImplemented);
+  }
+
+  void _signInWithFacebook() {
+    SnackbarManager.showWarning(context, AppStrings.socialLoginNotImplemented);
   }
 }

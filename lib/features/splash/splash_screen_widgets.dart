@@ -1,56 +1,9 @@
+
 import 'package:flutter/material.dart';
+import 'package:immuno_warriors/core/constants/app_strings.dart';
 import 'package:immuno_warriors/shared/ui/app_colors.dart';
 import 'package:immuno_warriors/shared/ui/futuristic_text.dart';
-
-class HolographicButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final double? width;
-  final double height;
-  final Widget child;
-
-  const HolographicButton({
-    super.key,
-    required this.onPressed,
-    this.width,
-    required this.height,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primaryColor.withOpacity(0.3),
-                AppColors.secondaryColor.withOpacity(0.3),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(color: AppColors.primaryColor.withOpacity(0.5)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryColor.withOpacity(0.2),
-                blurRadius: 8,
-                spreadRadius: 1,
-              ),
-            ],
-          ),
-          child: Center(child: child),
-        ),
-      ),
-    );
-  }
-}
+import 'package:immuno_warriors/shared/widgets/buttons/holo.dart';
 
 class MiniInputDialog extends StatefulWidget {
   final String initialUrl;
@@ -86,10 +39,7 @@ class _MiniInputDialogState extends State<MiniInputDialog> {
 
   bool _isValidUrl(String url) {
     final uri = Uri.tryParse(url);
-    return uri != null &&
-        uri.hasScheme &&
-        uri.host.isNotEmpty &&
-        uri.host != 'localhost';
+    return uri != null && uri.hasScheme && uri.host.isNotEmpty && uri.host != 'localhost';
   }
 
   @override
@@ -103,16 +53,16 @@ class _MiniInputDialogState extends State<MiniInputDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.7,
+        width: MediaQuery.of(context).size.width * 0.6,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.backgroundColor.withOpacity(0.95),
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.backgroundColor.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
           boxShadow: [
             BoxShadow(
               color: AppColors.primaryColor.withOpacity(0.1),
-              blurRadius: 8,
+              blurRadius: 6,
               spreadRadius: 1,
             ),
           ],
@@ -121,69 +71,57 @@ class _MiniInputDialogState extends State<MiniInputDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             FuturisticText(
-              'Entrer l\'URL',
-              size: 14,
-              fontWeight: FontWeight.bold,
+              'Entrer l\'URL réseau',
+              size: 13,
+              fontWeight: FontWeight.w600,
               color: AppColors.textColorPrimary,
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _controller,
               decoration: InputDecoration(
-                labelText: 'URL',
+                labelText: AppStrings.emailHint,
                 labelStyle: const TextStyle(
                   color: AppColors.textColorSecondary,
-                  fontSize: 12,
+                  fontSize: 11,
                 ),
                 filled: true,
-                fillColor: AppColors.backgroundColor.withOpacity(0.2),
+                fillColor: AppColors.backgroundColor.withOpacity(0.15),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
-                    color:
-                        _isValid
-                            ? AppColors.primaryColor.withOpacity(0.3)
-                            : AppColors.errorColor,
+                    color: _isValid ? AppColors.primaryColor.withOpacity(0.3) : AppColors.errorColor,
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
-                    color:
-                        _isValid
-                            ? AppColors.primaryColor.withOpacity(0.3)
-                            : AppColors.errorColor,
+                    color: _isValid ? AppColors.primaryColor.withOpacity(0.3) : AppColors.errorColor,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(
                     color: AppColors.secondaryColor,
-                    width: 1.2,
+                    width: 1,
                   ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                errorText: _isValid ? null : 'URL invalide',
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                errorText: _isValid ? null : AppStrings.invalidEmail,
               ),
               style: const TextStyle(
                 color: AppColors.textColorPrimary,
-                fontSize: 12,
+                fontSize: 11,
               ),
               keyboardType: TextInputType.url,
             ),
             const SizedBox(height: 12),
             HolographicButton(
-              onPressed:
-                  _isValid
-                      ? () => widget.onSubmit(_controller.text.trim())
-                      : null,
+              onPressed: _isValid ? () => widget.onSubmit(_controller.text.trim()) : null,
               width: null,
               height: 36,
               child: FuturisticText(
-                'Valider',
+                AppStrings.confirm,
                 size: 12,
                 color: AppColors.textColorPrimary,
               ),
@@ -213,25 +151,25 @@ class VirusButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: Container(
           width: width,
-          height: 40,
+          height: 36,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             gradient: LinearGradient(
               colors: [
-                AppColors.virusGreen.withOpacity(0.4),
-                AppColors.secondaryColor.withOpacity(0.4),
+                AppColors.virusGreen.withOpacity(0.3),
+                AppColors.secondaryColor.withOpacity(0.3),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            border: Border.all(color: AppColors.virusGreen.withOpacity(0.5)),
+            border: Border.all(color: AppColors.virusGreen.withOpacity(0.4)),
             boxShadow: [
               BoxShadow(
-                color: AppColors.virusGreen.withOpacity(0.2),
-                blurRadius: 8,
+                color: AppColors.virusGreen.withOpacity(0.15),
+                blurRadius: 6,
                 spreadRadius: 1,
               ),
             ],

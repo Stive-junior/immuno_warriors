@@ -1,6 +1,7 @@
 /// Constants defining the rules and parameters for Immuno Warriors.
 ///
 /// This file groups constants for resources, combat, research, and other game mechanics.
+/// Includes parameters for features like BioForge, multiplayer, and threat scanner.
 class GameConstants {
   /// --- Resources ---
   /// Initial energy available to the player.
@@ -15,17 +16,23 @@ class GameConstants {
   /// Bio-materials regeneration rate per tick.
   static const int bioMaterialRegenRate = 5;
 
-  /// Energy cost per action.
+  /// Energy cost per action in combat or BioForge.
   static const double energyPerTurn = 10;
 
-  /// Bio-materials cost per action.
+  /// Bio-materials cost per action in BioForge or research.
   static const double bioMaterialsPerTurn = 10;
 
+  /// Maximum energy capacity.
+  static const int maxEnergy = 500;
+
+  /// Maximum bio-materials capacity.
+  static const int maxBioMaterials = 500;
+
   /// --- Immune Memory ---
-  /// Maximum capacity of the immune memory.
+  /// Maximum capacity of the immune memory for storing signatures.
   static const int memoryCapacity = 100;
 
-  /// Bonus per signature in the immune memory.
+  /// Bonus per signature in the immune memory (e.g., damage boost).
   static const double memoryBonusPerSignature = 0.01;
 
   /// Threshold for considering a mutation as major.
@@ -59,6 +66,12 @@ class GameConstants {
   /// Shield regeneration rate per tick.
   static const double shieldRegenRate = 2;
 
+  /// Critical hit chance (percentage).
+  static const double criticalHitChance = 0.1;
+
+  /// Critical hit damage multiplier.
+  static const double criticalHitMultiplier = 1.5;
+
   /// --- Research ---
   /// Research points gained per combat.
   static const int baseResearchPointsPerCombat = 10;
@@ -69,15 +82,21 @@ class GameConstants {
   /// Maximum research level.
   static const int maxResearchLevel = 100;
 
+  /// Research cost multiplier per level.
+  static const double researchCostMultiplier = 1.5;
+
   /// --- BioForge ---
-  /// Maximum number of pathogen slots.
+  /// Maximum number of pathogen slots in BioForge.
   static const int maxPathogenSlots = 9;
 
-  /// Initial number of base slots.
+  /// Initial number of base slots for BioForge.
   static const int initialBaseSlots = 3;
 
   /// Maximum level for bases.
   static const int maxBaseLevel = 10;
+
+  /// BioForge crafting time per antibody (in seconds).
+  static const int bioForgeCraftTime = 15;
 
   /// --- Pathogens ---
   /// Base damage for pathogens.
@@ -91,6 +110,9 @@ class GameConstants {
 
   /// Interval between pathogen spawns (in seconds).
   static const double pathogenSpawnInterval = 5.0;
+
+  /// Pathogen resistance multiplier.
+  static const double pathogenResistance = 0.8;
 
   /// --- Antibodies ---
   /// Base damage for antibodies.
@@ -121,28 +143,44 @@ class GameConstants {
   /// Resistance multiplier for mutations.
   static const double mutationResistanceMultiplier = 1.1;
 
+  /// Mutation chance per combat (percentage).
+  static const double mutationChance = 0.05;
+
   /// --- Gemini AI ---
-  /// Maximum tokens for Gemini requests.
+  /// Maximum tokens for Gemini AI requests.
   static const int maxGeminiTokens = 200;
 
-  /// Prompt for the Gemini AI.
+  /// Prompt for the Gemini AI advisor.
   static const String geminiPrompt =
       'Act as an experienced military advisor in a strategy game of immune defense. '
       'Provide tactical advice, combat analysis, and threat insights.';
 
+  /// Cooldown for Gemini AI requests (in seconds).
+  static const int geminiCooldown = 30;
+
   /// --- Threat Scanner ---
-  /// Radius of the threat scan area.
+  /// Radius of the threat scan area (in game units).
   static const int threatScanRadius = 10;
 
   /// Maximum number of scan results.
   static const int threatScanMaxResults = 20;
 
+  /// Threat scan duration (in seconds).
+  static const double threatScanDuration = 3.0;
+
   /// --- War Archive ---
-  /// Maximum number of archived reports.
+  /// Maximum number of archived combat reports.
   static const int maxArchiveReports = 50;
 
   /// Length of a chronicle (in words).
   static const int chronicleLength = 300;
+
+  /// --- Multiplayer ---
+  /// Maximum players in a multiplayer session.
+  static const int maxMultiplayerPlayers = 4;
+
+  /// Multiplayer session timeout (in minutes).
+  static const int multiplayerSessionTimeout = 30;
 
   /// --- Difficulty Multipliers ---
   /// Multiplier for easy difficulty.
@@ -155,11 +193,14 @@ class GameConstants {
   static const double hardDifficultyMultiplier = 1.2;
 
   /// --- Rewards ---
-  /// Resources gained per win.
+  /// Resources gained per combat win.
   static const int baseResourcesPerWin = 50;
 
-  /// Experience gained per win.
+  /// Experience gained per combat win.
   static const int baseExperiencePerWin = 20;
+
+  /// Multiplayer win resource bonus.
+  static const int multiplayerWinBonus = 100;
 
   /// --- Construction and Upgrades ---
   /// Multiplier for upgrade costs.
@@ -170,4 +211,7 @@ class GameConstants {
 
   /// Time to produce an antibody (in seconds).
   static const int antibodyProductionTime = 10;
+
+  /// Upgrade time per base level (in seconds).
+  static const int baseUpgradeTime = 20;
 }

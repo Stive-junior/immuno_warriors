@@ -3,9 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:immuno_warriors/shared/ui/app_colors.dart';
 import 'package:immuno_warriors/shared/ui/app_styles.dart';
 
-import '../../core/constants/app_assets.dart';
-
-
 class _ImmunoWarriorsTheme extends ThemeExtension<_ImmunoWarriorsTheme> {
   final Color pathogenColor;
   final Color antibodyColor;
@@ -40,9 +37,9 @@ class _ImmunoWarriorsTheme extends ThemeExtension<_ImmunoWarriorsTheme> {
 
   @override
   ThemeExtension<_ImmunoWarriorsTheme> lerp(
-      covariant ThemeExtension<_ImmunoWarriorsTheme>? other,
-      double t,
-      ) {
+    covariant ThemeExtension<_ImmunoWarriorsTheme>? other,
+    double t,
+  ) {
     if (other is! _ImmunoWarriorsTheme) {
       return this;
     }
@@ -72,15 +69,33 @@ class AppTheme {
       onBackground: AppColors.textColorPrimary,
     ),
     textTheme: TextTheme(
-      displayLarge: AppStyles.titleLarge.copyWith(color: AppColors.primaryColor),
-      displayMedium: AppStyles.titleMedium.copyWith(color: AppColors.textColorPrimary),
-      displaySmall: AppStyles.titleSmall.copyWith(color: AppColors.textColorPrimary),
-      bodyLarge: AppStyles.bodyLarge.copyWith(color: AppColors.textColorPrimary),
-      bodyMedium: AppStyles.bodyMedium.copyWith(color: AppColors.textColorPrimary),
-      bodySmall: AppStyles.bodySmall.copyWith(color: AppColors.textColorSecondary),
-      titleLarge: AppStyles.accentLarge.copyWith(color: AppColors.primaryAccentColor),
-      titleMedium: AppStyles.accentMedium.copyWith(color: AppColors.primaryAccentColor),
-      titleSmall: AppStyles.accentSmall.copyWith(color: AppColors.primaryAccentColor),
+      displayLarge: AppStyles.titleLarge.copyWith(
+        color: AppColors.primaryColor,
+      ),
+      displayMedium: AppStyles.titleMedium.copyWith(
+        color: AppColors.textColorPrimary,
+      ),
+      displaySmall: AppStyles.titleSmall.copyWith(
+        color: AppColors.textColorPrimary,
+      ),
+      bodyLarge: AppStyles.bodyLarge.copyWith(
+        color: AppColors.textColorPrimary,
+      ),
+      bodyMedium: AppStyles.bodyMedium.copyWith(
+        color: AppColors.textColorPrimary,
+      ),
+      bodySmall: AppStyles.bodySmall.copyWith(
+        color: AppColors.textColorSecondary,
+      ),
+      titleLarge: AppStyles.accentLarge.copyWith(
+        color: AppColors.primaryAccentColor,
+      ),
+      titleMedium: AppStyles.accentMedium.copyWith(
+        color: AppColors.primaryAccentColor,
+      ),
+      titleSmall: AppStyles.accentSmall.copyWith(
+        color: AppColors.primaryAccentColor,
+      ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -88,20 +103,15 @@ class AppTheme {
         foregroundColor: Colors.black,
         textStyle: AppStyles.buttonText,
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
         elevation: 2.0,
       ),
     ),
-    iconTheme: const IconThemeData(
-      color: AppColors.primaryColor,
-    ),
+    iconTheme: const IconThemeData(color: AppColors.primaryColor),
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
       elevation: 0,
       titleTextStyle: TextStyle(
-        fontFamily: AppAssets.titleFont,
         fontSize: 20.0,
         fontWeight: FontWeight.bold,
         color: AppColors.primaryColor,
@@ -125,8 +135,12 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.grey[100],
-      labelStyle: AppStyles.bodyMedium.copyWith(color: AppColors.textColorSecondary),
-      hintStyle: AppStyles.bodyMedium.copyWith(color: AppColors.textColorSecondary),
+      labelStyle: AppStyles.bodyMedium.copyWith(
+        color: AppColors.textColorSecondary,
+      ),
+      hintStyle: AppStyles.bodyMedium.copyWith(
+        color: AppColors.textColorSecondary,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(color: AppColors.borderColor.withOpacity(0.7)),
@@ -143,7 +157,7 @@ class AppTheme {
         borderRadius: BorderRadius.circular(12.0),
         borderSide: const BorderSide(color: AppColors.errorColor),
       ),
-      focusedErrorBorder:  OutlineInputBorder(
+      focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(color: AppColors.errorColor, width: 2.0),
       ),
@@ -169,7 +183,9 @@ class AppTheme {
         borderRadius: BorderRadius.circular(8.0),
         side: BorderSide(color: AppColors.borderColor.withOpacity(0.5)),
       ),
-      labelStyle: AppStyles.bodySmall.copyWith(color: AppColors.textColorPrimary),
+      labelStyle: AppStyles.bodySmall.copyWith(
+        color: AppColors.textColorPrimary,
+      ),
       secondaryLabelStyle: AppStyles.bodySmall.copyWith(color: Colors.black),
       brightness: Brightness.light,
     ),
@@ -206,15 +222,33 @@ class AppTheme {
       onBackground: AppColors.textColorPrimary,
     ),
     textTheme: TextTheme(
-      displayLarge: AppStyles.titleLarge.copyWith(color: AppColors.primaryColor),
-      displayMedium: AppStyles.titleMedium.copyWith(color: AppColors.textColorPrimary),
-      displaySmall: AppStyles.titleSmall.copyWith(color: AppColors.textColorPrimary),
-      bodyLarge: AppStyles.bodyLarge.copyWith(color: AppColors.textColorPrimary),
-      bodyMedium: AppStyles.bodyMedium.copyWith(color: AppColors.textColorPrimary),
-      bodySmall: AppStyles.bodySmall.copyWith(color: AppColors.textColorSecondary),
-      titleLarge: AppStyles.accentLarge.copyWith(color: AppColors.primaryAccentColor),
-      titleMedium: AppStyles.accentMedium.copyWith(color: AppColors.primaryAccentColor),
-      titleSmall: AppStyles.accentSmall.copyWith(color: AppColors.primaryAccentColor),
+      displayLarge: AppStyles.titleLarge.copyWith(
+        color: AppColors.primaryColor,
+      ),
+      displayMedium: AppStyles.titleMedium.copyWith(
+        color: AppColors.textColorPrimary,
+      ),
+      displaySmall: AppStyles.titleSmall.copyWith(
+        color: AppColors.textColorPrimary,
+      ),
+      bodyLarge: AppStyles.bodyLarge.copyWith(
+        color: AppColors.textColorPrimary,
+      ),
+      bodyMedium: AppStyles.bodyMedium.copyWith(
+        color: AppColors.textColorPrimary,
+      ),
+      bodySmall: AppStyles.bodySmall.copyWith(
+        color: AppColors.textColorSecondary,
+      ),
+      titleLarge: AppStyles.accentLarge.copyWith(
+        color: AppColors.primaryAccentColor,
+      ),
+      titleMedium: AppStyles.accentMedium.copyWith(
+        color: AppColors.primaryAccentColor,
+      ),
+      titleSmall: AppStyles.accentSmall.copyWith(
+        color: AppColors.primaryAccentColor,
+      ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -222,16 +256,12 @@ class AppTheme {
         foregroundColor: Colors.black,
         textStyle: AppStyles.buttonText,
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
         elevation: 4.0,
         shadowColor: AppColors.glowEffect,
       ),
     ),
-    iconTheme: const IconThemeData(
-      color: AppColors.primaryColor,
-    ),
+    iconTheme: const IconThemeData(color: AppColors.primaryColor),
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.secondaryColor,
       elevation: 0,
@@ -260,8 +290,12 @@ class AppTheme {
     ),
     dialogTheme: DialogTheme(
       backgroundColor: AppColors.secondaryColor,
-      titleTextStyle: AppStyles.titleMedium.copyWith(color: AppColors.primaryColor),
-      contentTextStyle: AppStyles.bodyMedium.copyWith(color: AppColors.textColorPrimary),
+      titleTextStyle: AppStyles.titleMedium.copyWith(
+        color: AppColors.primaryColor,
+      ),
+      contentTextStyle: AppStyles.bodyMedium.copyWith(
+        color: AppColors.textColorPrimary,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.0),
         side: BorderSide(
@@ -274,8 +308,12 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: AppColors.secondaryColor.withOpacity(0.7),
-      labelStyle: AppStyles.bodyMedium.copyWith(color: AppColors.textColorSecondary),
-      hintStyle: AppStyles.bodyMedium.copyWith(color: AppColors.textColorSecondary),
+      labelStyle: AppStyles.bodyMedium.copyWith(
+        color: AppColors.textColorSecondary,
+      ),
+      hintStyle: AppStyles.bodyMedium.copyWith(
+        color: AppColors.textColorSecondary,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(color: AppColors.borderColor.withOpacity(0.7)),
@@ -284,7 +322,7 @@ class AppTheme {
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(color: AppColors.borderColor.withOpacity(0.5)),
       ),
-      focusedBorder:  OutlineInputBorder(
+      focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(color: AppColors.primaryColor, width: 2.0),
       ),
@@ -292,7 +330,7 @@ class AppTheme {
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(color: AppColors.errorColor),
       ),
-      focusedErrorBorder:  OutlineInputBorder(
+      focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(color: AppColors.errorColor, width: 2.0),
       ),
@@ -318,7 +356,9 @@ class AppTheme {
         borderRadius: BorderRadius.circular(8.0),
         side: BorderSide(color: AppColors.borderColor.withOpacity(0.5)),
       ),
-      labelStyle: AppStyles.bodySmall.copyWith(color: AppColors.textColorPrimary),
+      labelStyle: AppStyles.bodySmall.copyWith(
+        color: AppColors.textColorPrimary,
+      ),
       secondaryLabelStyle: AppStyles.bodySmall.copyWith(color: Colors.black),
       brightness: Brightness.dark,
     ),

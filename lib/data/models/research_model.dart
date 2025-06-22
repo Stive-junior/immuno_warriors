@@ -1,3 +1,4 @@
+/// Model for storing research data locally in Immuno Warriors.
 import 'package:hive/hive.dart';
 import '../../../domain/entities/research_entity.dart';
 

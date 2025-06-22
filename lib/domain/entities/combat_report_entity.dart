@@ -1,3 +1,4 @@
+/// Represents a combat report in Immuno Warriors.
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:equatable/equatable.dart';
 import 'antibody_entity.dart';
@@ -35,13 +36,6 @@ class CombatReportEntity with _$CombatReportEntity, EquatableMixin {
   double get combatEfficiency =>
       damageTaken > 0 ? damageDealt / damageTaken : double.infinity;
 
-  // Remove these static methods, they are replaced by the converter
-  // static CombatResult _resultFromJson(String value) => CombatResult.values
-  //     .firstWhere((e) => e.toString().split('.').last == value);
-
-  // static String _resultToJson(CombatResult result) =>
-  //     result.toString().split('.').last;
-
   @override
   List<Object?> get props => [
     combatId,
@@ -64,7 +58,7 @@ class CombatResultConverter implements JsonConverter<CombatResult, String> {
   @override
   CombatResult fromJson(String json) {
     return CombatResult.values.firstWhere(
-      (e) => e.toString().split('.').last == json,
+          (e) => e.toString().split('.').last == json,
       orElse: () => CombatResult.draw,
     );
   }

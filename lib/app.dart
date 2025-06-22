@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:immuno_warriors/core/routes/app_router.dart';
 import 'package:immuno_warriors/shared/ui/app_colors.dart';
-import 'package:immuno_warriors/shared/ui/app_theme.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
@@ -23,10 +22,16 @@ class App extends ConsumerWidget {
         textTheme: const TextTheme(
           bodyMedium: TextStyle(color: AppColors.textColorPrimary),
         ),
-        // Évitez de remplacer iconTheme ou fontFamily ici
-        useMaterial3: true, // Active Material 3 pour des icônes modernes
+        iconTheme: IconThemeData(
+          color:
+              AppColors.textColorPrimary, // Couleur explicite pour les icônes
+          size: 24,
+          // Taille par défaut
+        ),
       ),
-      darkTheme: AppTheme.darkTheme,
+      darkTheme: ThemeData.dark().copyWith(
+        iconTheme: IconThemeData(color: AppColors.textColorPrimary, size: 24),
+      ),
       themeMode: ThemeMode.system,
       routerConfig: appRouter,
       builder: (context, child) {

@@ -39,4 +39,5 @@ const _$DefenseTypeEnumMap = {
   DefenseType.trap: 'trap',
   DefenseType.shield: 'shield',
   DefenseType.turret: 'turret',
+  DefenseType.barrier: 'barrier',
 };

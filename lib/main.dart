@@ -20,12 +20,10 @@ void main() async {
 
   AppLogger.info('Immuno Warriors app started');
 
-  // Force landscape orientation
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]).then((_) {
-    // Lancement de l'application
     runApp(const ProviderScope(child: App()));
   });
 }

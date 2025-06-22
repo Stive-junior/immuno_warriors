@@ -1,3 +1,4 @@
+/// Model for storing viral base data locally in Immuno Warriors.
 import 'package:hive/hive.dart';
 import 'package:immuno_warriors/data/models/pathogen_model.dart';
 import '../../../core/constants/pathogen_types.dart';
@@ -36,14 +37,14 @@ class BaseViraleModel extends HiveObject {
       name: json['name'] as String,
       level: json['level'] as int,
       pathogens:
-          (json['pathogens'] as List<dynamic>?)
-              ?.map((p) => PathogenModel.fromJson(p as Map<String, dynamic>))
-              .toList() ??
+      (json['pathogens'] as List<dynamic>?)
+          ?.map((p) => PathogenModel.fromJson(p as Map<String, dynamic>))
+          .toList() ??
           [],
       defenses:
-          (json['defenses'] as Map<dynamic, dynamic>?)?.map(
+      (json['defenses'] as Map<dynamic, dynamic>?)?.map(
             (k, v) => MapEntry(k.toString(), v as int),
-          ) ??
+      ) ??
           {},
     );
   }
@@ -64,9 +65,9 @@ class BaseViraleModel extends HiveObject {
       name: entity.name,
       level: entity.level,
       pathogens:
-          entity.pathogens.map((p) => PathogenModel.fromEntity(p)).toList(),
+      entity.pathogens.map((p) => PathogenModel.fromEntity(p)).toList(),
       defenses: entity.defenses.map(
-        (k, v) => MapEntry(k.toString().split('.').last, v),
+            (k, v) => MapEntry(k.toString().split('.').last, v),
       ),
     );
   }
@@ -79,9 +80,9 @@ class BaseViraleModel extends HiveObject {
       level: level,
       pathogens: pathogens.map((p) => p.toEntity()).toList(),
       defenses: defenses.map(
-        (k, v) => MapEntry(
+            (k, v) => MapEntry(
           DefenseType.values.firstWhere(
-            (e) => e.toString().split('.').last == k,
+                (e) => e.toString().split('.').last == k,
           ),
           v,
         ),

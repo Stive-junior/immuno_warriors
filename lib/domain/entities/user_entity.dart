@@ -15,7 +15,7 @@ class UserEntity with _$UserEntity, EquatableMixin {
     required String id,
     required String email,
     String? username,
-    @JsonKey(name: 'avatarUrl') String? avatar,
+    @JsonKey(name: 'avatar') String? avatar,
     DateTime? createdAt,
     DateTime? lastLogin,
     Map<String, dynamic>? resources,

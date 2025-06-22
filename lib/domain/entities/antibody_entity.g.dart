@@ -43,10 +43,12 @@ const _$AntibodyTypeEnumMap = {
   AntibodyType.igA: 'igA',
   AntibodyType.igD: 'igD',
   AntibodyType.igE: 'igE',
+  AntibodyType.custom: 'custom',
 };
 
 const _$AttackTypeEnumMap = {
   AttackType.physical: 'physical',
   AttackType.chemical: 'chemical',
   AttackType.energy: 'energy',
+  AttackType.bio: 'bio',
 };

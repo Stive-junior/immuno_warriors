@@ -1,6 +1,6 @@
-/// Keys for widgets and testing in Immuno Warriors.
-///
-/// This file organizes keys for UI elements, screens, and tests.
+// Keys for widgets and testing in Immuno Warriors.
+//
+// This file organizes keys for UI elements, screens, and tests.
 import 'package:flutter/material.dart';
 
 class AppKeys {

@@ -23,7 +23,7 @@ mixin _$UserEntity {
   String get id => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   String? get username => throw _privateConstructorUsedError;
-  @JsonKey(name: 'avatarUrl')
+  @JsonKey(name: 'avatar')
   String? get avatar => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
   DateTime? get lastLogin => throw _privateConstructorUsedError;
@@ -52,7 +52,7 @@ abstract class $UserEntityCopyWith<$Res> {
       {String id,
       String email,
       String? username,
-      @JsonKey(name: 'avatarUrl') String? avatar,
+      @JsonKey(name: 'avatar') String? avatar,
       DateTime? createdAt,
       DateTime? lastLogin,
       Map<String, dynamic>? resources,
@@ -160,7 +160,7 @@ abstract class _$$UserEntityImplCopyWith<$Res>
       {String id,
       String email,
       String? username,
-      @JsonKey(name: 'avatarUrl') String? avatar,
+      @JsonKey(name: 'avatar') String? avatar,
       DateTime? createdAt,
       DateTime? lastLogin,
       Map<String, dynamic>? resources,
@@ -248,7 +248,7 @@ class _$UserEntityImpl extends _UserEntity {
       {required this.id,
       required this.email,
       this.username,
-      @JsonKey(name: 'avatarUrl') this.avatar,
+      @JsonKey(name: 'avatar') this.avatar,
       this.createdAt,
       this.lastLogin,
       final Map<String, dynamic>? resources,
@@ -270,7 +270,7 @@ class _$UserEntityImpl extends _UserEntity {
   @override
   final String? username;
   @override
-  @JsonKey(name: 'avatarUrl')
+  @JsonKey(name: 'avatar')
   final String? avatar;
   @override
   final DateTime? createdAt;
@@ -329,7 +329,7 @@ abstract class _UserEntity extends UserEntity {
       {required final String id,
       required final String email,
       final String? username,
-      @JsonKey(name: 'avatarUrl') final String? avatar,
+      @JsonKey(name: 'avatar') final String? avatar,
       final DateTime? createdAt,
       final DateTime? lastLogin,
       final Map<String, dynamic>? resources,
@@ -348,7 +348,7 @@ abstract class _UserEntity extends UserEntity {
   @override
   String? get username;
   @override
-  @JsonKey(name: 'avatarUrl')
+  @JsonKey(name: 'avatar')
   String? get avatar;
   @override
   DateTime? get createdAt;

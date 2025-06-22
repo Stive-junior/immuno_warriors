@@ -1,4 +1,4 @@
-// Represents a notification in Immuno Warriors.
+/// Represents a notification in Immuno Warriors.
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:equatable/equatable.dart';
 import '../../core/constants/app_strings.dart';
@@ -10,8 +10,7 @@ enum NotificationType { combat, research, system, achievement }
 
 @freezed
 class Notification with _$Notification, EquatableMixin {
-  // Add this private constructor
-  const Notification._(); // This is the fix!
+  const Notification._();
 
   const factory Notification({
     required String id,

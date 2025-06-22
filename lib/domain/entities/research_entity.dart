@@ -1,3 +1,4 @@
+/// Represents a research node in Immuno Warriors.
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:equatable/equatable.dart';
 import '../../core/constants/app_strings.dart';
@@ -33,8 +34,8 @@ class ResearchEntity with _$ResearchEntity, EquatableMixin {
     }
     final prereqIds = prerequisites.toSet();
     return allResearches.every(
-      (research) =>
-          prereqIds.contains(research.id) ? research.isUnlocked : true,
+          (research) =>
+      prereqIds.contains(research.id) ? research.isUnlocked : true,
     );
   }
 

@@ -4,7 +4,7 @@ const os = require('os');
 const ngrok = require('ngrok');
 const config = require('./config');
 const { db, admin } = require('./services/firebaseService');
-const { logger, info, error, warn } = require('./utils/logger');
+const { info, error, warn } = require('./utils/logger');
 const loggingMiddleware = require('./middleware/loggingMiddleware');
 const rateLimitMiddleware = require('./middleware/rateLimitMiddleware');
 const errorMiddleware = require('./middleware/errorMiddleware');
@@ -289,7 +289,7 @@ process.on('uncaughtException', (err) => {
 async function startServer() {
   try {
     info('Démarrage du serveur...');
-    await checkNetworkConnectivity(); // Vérifie la connectivité réseau
+    await checkNetworkConnectivity();
     await healthCheck();
     const interfaces = os.networkInterfaces();
     const ip = Object.values(interfaces)

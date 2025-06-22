@@ -1,3 +1,4 @@
+/// Model for storing user data locally in Immuno Warriors.
 import 'package:hive/hive.dart';
 import 'package:immuno_warriors/data/models/inventory_item_model.dart';
 import 'package:immuno_warriors/data/models/progression_model.dart';
@@ -48,27 +49,27 @@ class UserModel extends HiveObject {
       username: json['username'] as String?,
       avatar: json['avatarUrl'] as String?,
       createdAt:
-          json['createdAt'] != null
-              ? DateTime.parse(json['createdAt'] as String)
-              : null,
+      json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : null,
       lastLogin:
-          json['lastLogin'] != null
-              ? DateTime.parse(json['lastLogin'] as String)
-              : null,
+      json['lastLogin'] != null
+          ? DateTime.parse(json['lastLogin'] as String)
+          : null,
       resources: json['resources'] as Map<String, dynamic>?,
       progression:
-          json['progression'] != null
-              ? ProgressionModel.fromJson(json['progression'])
-              : null,
+      json['progression'] != null
+          ? ProgressionModel.fromJson(json['progression'])
+          : null,
       achievements: (json['achievements'] as Map<String, dynamic>?)?.map(
-        (k, v) => MapEntry(k, v as bool),
+            (k, v) => MapEntry(k, v as bool),
       ),
       inventory:
-          (json['inventory'] as List<dynamic>?)
-              ?.map(
-                (e) => InventoryItemModel.fromJson(e as Map<String, dynamic>),
-              )
-              .toList(),
+      (json['inventory'] as List<dynamic>?)
+          ?.map(
+            (e) => InventoryItemModel.fromJson(e as Map<String, dynamic>),
+      )
+          .toList(),
     );
   }
 

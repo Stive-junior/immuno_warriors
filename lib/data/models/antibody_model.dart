@@ -1,4 +1,4 @@
-// Model for storing antibody data locally in Immuno Warriors.
+/// Model for storing antibody data locally in Immuno Warriors.
 import 'package:hive/hive.dart';
 import '../../core/constants/pathogen_types.dart';
 import '../../domain/entities/antibody_entity.dart';

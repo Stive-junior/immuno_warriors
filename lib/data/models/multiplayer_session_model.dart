@@ -1,3 +1,4 @@
+/// Model for storing multiplayer session data locally in Immuno Warriors.
 import 'package:hive/hive.dart';
 
 part 'multiplayer_session_model.g.dart';

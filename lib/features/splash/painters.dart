@@ -43,7 +43,7 @@ class BubbleProgressPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final progressWidth = size.width * value;
     final gradient = LinearGradient(
-      colors: [color.withOpacity(0.7), color.withOpacity(0.3)],
+      colors: [color.withOpacity(0.5), color.withOpacity(0.2)],
     );
     final paint =
         Paint()
@@ -62,12 +62,12 @@ class BubbleProgressPainter extends CustomPainter {
 
     final bubblePaint =
         Paint()
-          ..color = Colors.white.withOpacity(0.4)
+          ..color = Colors.white.withOpacity(0.3)
           ..style = PaintingStyle.fill;
 
     final rng = Random((value * 1000).toInt());
-    for (int i = 0; i < 10; i++) {
-      final bubbleSize = rng.nextDouble() * 6 + 2;
+    for (int i = 0; i < 5; i++) {
+      final bubbleSize = rng.nextDouble() * 4 + 1;
       final bubbleX = rng.nextDouble() * progressWidth;
       final bubbleY = rng.nextDouble() * size.height;
 
@@ -78,10 +78,10 @@ class BubbleProgressPainter extends CustomPainter {
 
     final borderPaint =
         Paint()
-          ..color = color.withOpacity(0.5)
+          ..color = color.withOpacity(0.4)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+          ..strokeWidth = 0.5
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -106,8 +106,8 @@ class NeonRingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    const radius = 120.0;
-    const strokeWidth = 6.0;
+    const radius = 100.0;
+    const strokeWidth = 4.0;
 
     final backgroundPaint =
         Paint()
@@ -123,7 +123,7 @@ class NeonRingPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = strokeWidth
           ..strokeCap = StrokeCap.round
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
 
     final sweepAngle = 2 * pi * progress;
     canvas.drawArc(
@@ -140,10 +140,10 @@ class NeonRingPainter extends CustomPainter {
           center + Offset(cos(progressAngle), sin(progressAngle)) * radius;
       canvas.drawCircle(
         progressPosition,
-        8,
+        6,
         Paint()
-          ..color = color.withOpacity(0.7)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+          ..color = color.withOpacity(0.6)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
       );
     }
   }
@@ -157,11 +157,13 @@ class ParticlePainter extends CustomPainter {
   final List<Particle> particles;
   final double animationValue;
   final Size size;
+  final Offset? touchPosition;
 
   ParticlePainter({
     required this.particles,
     required this.animationValue,
     required this.size,
+    this.touchPosition,
   });
 
   @override
@@ -198,14 +200,14 @@ class OrbitingElementsPainter extends CustomPainter {
     for (var element in elements) {
       final angle = element.startAngle + (animationValue * element.speed);
       final x = cos(angle) * element.radius + size.width / 2 - element.size / 2;
-      final y = sin(angle) * element.radius + size.height / 2 - 80;
+      final y = sin(angle) * element.radius + size.height / 2 - 60;
       canvas.drawCircle(
         Offset(x, y),
         element.size / 2,
         Paint()
           ..color = element.color
           ..style = PaintingStyle.fill
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
       );
     }
   }

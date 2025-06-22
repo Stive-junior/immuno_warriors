@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:immuno_warriors/core/constants/app_assets.dart';
 import 'package:immuno_warriors/shared/ui/app_colors.dart';
 
 class AppStyles {
   static const TextStyle titleLarge = TextStyle(
-    fontFamily: AppAssets.titleFont, // Ensure this font is futuristic
-    fontSize: 36.0,
     fontWeight: FontWeight.bold,
     color: AppColors.primaryColor,
     letterSpacing: 1.2,
@@ -19,7 +16,6 @@ class AppStyles {
   );
 
   static const TextStyle titleMedium = TextStyle(
-    fontFamily: AppAssets.titleFont,
     fontSize: 28.0,
     fontWeight: FontWeight.bold,
     color: AppColors.primaryColor,
@@ -34,7 +30,6 @@ class AppStyles {
   );
 
   static const TextStyle titleSmall = TextStyle(
-    fontFamily: AppAssets.titleFont,
     fontSize: 20.0,
     fontWeight: FontWeight.bold,
     color: AppColors.primaryAccentColor,
@@ -43,21 +38,18 @@ class AppStyles {
 
   // Main body text
   static const TextStyle bodyLarge = TextStyle(
-    fontFamily: AppAssets.mainFont, // Ensure this font is readable
     fontSize: 18.0,
     color: AppColors.textColorPrimary,
     height: 1.4,
   );
 
   static const TextStyle bodyMedium = TextStyle(
-    fontFamily: AppAssets.mainFont,
     fontSize: 16.0,
     color: AppColors.textColorPrimary,
     height: 1.3,
   );
 
   static const TextStyle bodySmall = TextStyle(
-    fontFamily: AppAssets.mainFont,
     fontSize: 14.0,
     color: AppColors.textColorSecondary,
     height: 1.2,
@@ -65,7 +57,6 @@ class AppStyles {
 
   // Accent text
   static const TextStyle accentLarge = TextStyle(
-    fontFamily: AppAssets.mainFont,
     fontSize: 20.0,
     fontWeight: FontWeight.w600,
     color: AppColors.primaryAccentColor,
@@ -73,7 +64,6 @@ class AppStyles {
   );
 
   static const TextStyle accentMedium = TextStyle(
-    fontFamily: AppAssets.mainFont,
     fontSize: 18.0,
     fontWeight: FontWeight.w500,
     color: AppColors.primaryAccentColor,
@@ -81,7 +71,6 @@ class AppStyles {
   );
 
   static const TextStyle accentSmall = TextStyle(
-    fontFamily: AppAssets.mainFont,
     fontSize: 16.0,
     color: AppColors.primaryAccentColor,
     letterSpacing: 0.6,
@@ -89,7 +78,6 @@ class AppStyles {
 
   // Button text
   static const TextStyle buttonText = TextStyle(
-    fontFamily: AppAssets.mainFont,
     fontSize: 18.0,
     fontWeight: FontWeight.bold,
     color: AppColors.textColorPrimary,

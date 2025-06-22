@@ -1,72 +1,82 @@
-/// Styles and theme for Immuno Warriors.
-///
-/// This file defines text styles and the application theme.
+// Styles and theme for Immuno Warriors.
+//
+// This file defines text styles and the application theme for UI consistency.
+// Includes styles for text, buttons, cards, and feature-specific components.
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
-import 'app_assets.dart';
+import 'app_sizes.dart';
 
 class AppStyles {
   /// --- Text Styles ---
-  /// Large title style (28pt, bold).
+  /// Large title style for main headings (28pt, bold).
   static const TextStyle titleLarge = TextStyle(
     fontSize: 28,
     fontWeight: FontWeight.bold,
     color: AppColors.text,
-    fontFamily: AppAssets.titleFont,
   );
 
-  /// Medium title style (22pt, w600).
+  /// Medium title style for subtitles (22pt, w600).
   static const TextStyle titleMedium = TextStyle(
     fontSize: 22,
     fontWeight: FontWeight.w600,
     color: AppColors.text,
-    fontFamily: AppAssets.titleFont,
   );
 
-  /// Small title style (18pt, w500).
+  /// Small title style for minor headings (18pt, w500).
   static const TextStyle titleSmall = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w500,
     color: AppColors.text,
-    fontFamily: AppAssets.titleFont,
   );
 
-  /// Large body style (16pt).
+  /// Large body style for primary content (16pt).
   static const TextStyle bodyLarge = TextStyle(
     fontSize: 16,
     color: AppColors.text,
-    fontFamily: AppAssets.mainFont,
   );
 
-  /// Medium body style (14pt, secondary text).
+  /// Medium body style for secondary content (14pt).
   static const TextStyle bodyMedium = TextStyle(
     fontSize: 14,
-    color: AppColors.textSecondary,
-    fontFamily: AppAssets.mainFont,
+    color: AppColors.text,
   );
 
-  /// Small body style (12pt, secondary text).
+  /// Small body style for captions (12pt, secondary text).
   static const TextStyle bodySmall = TextStyle(
     fontSize: 12,
     color: AppColors.textSecondary,
-    fontFamily: AppAssets.mainFont,
   );
 
-  /// Button text style (16pt, bold).
+  /// Button text style for action buttons (16pt, bold).
   static const TextStyle buttonText = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.bold,
     color: AppColors.buttonTextColor,
-    fontFamily: AppAssets.mainFont,
+  );
+
+  /// Combat log text style for combat screen (14pt).
+  static const TextStyle combatLogText = TextStyle(
+    fontSize: AppSizes.combatLogTextSize,
+    color: AppColors.textSecondary,
+  );
+
+  /// Research node title style for research tree (16pt, w600).
+  static const TextStyle researchNodeTitle = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.text,
   );
 
   /// --- Theme ---
-  /// Application theme.
+  /// Application theme for consistent UI styling.
   static final ThemeData appTheme = ThemeData(
     primaryColor: AppColors.primary,
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primary,
       brightness: Brightness.dark,
+      primary: AppColors.primary,
+      secondary: AppColors.secondary,
+      error: AppColors.error,
     ),
     scaffoldBackgroundColor: AppColors.background,
     textTheme: TextTheme(
@@ -77,10 +87,10 @@ class AppStyles {
       bodyMedium: bodyMedium,
       bodySmall: bodySmall,
     ),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: AppColors.cardBackground,
       titleTextStyle: titleLarge,
-      iconTheme: IconThemeData(color: AppColors.text),
+      iconTheme: const IconThemeData(color: AppColors.text),
       elevation: 0,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -88,8 +98,13 @@ class AppStyles {
         backgroundColor: AppColors.buttonColor,
         foregroundColor: AppColors.buttonTextColor,
         textStyle: buttonText,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.buttonPaddingHorizontal,
+          vertical: AppSizes.buttonPaddingVertical,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
+        ),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -98,38 +113,49 @@ class AppStyles {
       hintStyle: TextStyle(color: AppColors.textFieldHintColor),
       labelStyle: TextStyle(color: AppColors.text),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppSizes.formFieldRadius),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppSizes.formFieldRadius),
         borderSide: BorderSide(color: AppColors.primary),
       ),
     ),
     cardTheme: CardTheme(
       color: AppColors.cardBackground,
-      elevation: 4,
-      margin: const EdgeInsets.all(8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: AppSizes.defaultElevation,
+      margin: const EdgeInsets.all(AppSizes.marginMedium),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.defaultCardRadius),
+      ),
     ),
     dialogTheme: DialogTheme(
       backgroundColor: AppColors.cardBackground,
       titleTextStyle: titleLarge,
       contentTextStyle: bodyMedium,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.defaultCardRadius),
+      ),
     ),
-    snackBarTheme: const SnackBarThemeData(
+    snackBarTheme: SnackBarThemeData(
       backgroundColor: AppColors.cardBackground,
       contentTextStyle: bodyMedium,
       actionTextColor: AppColors.accent,
       behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.defaultCardRadius),
+      ),
     ),
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: AppColors.cardBackground,
       selectedItemColor: AppColors.primary,
       unselectedItemColor: AppColors.textSecondary,
       selectedLabelStyle: bodySmall,
       unselectedLabelStyle: bodySmall,
+    ),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: AppColors.primary,
+      linearTrackColor: AppColors.textFieldBackground,
     ),
   );
 }

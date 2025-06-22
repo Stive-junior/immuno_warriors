@@ -1,3 +1,4 @@
+/// Represents an antibody in Immuno Warriors.
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:equatable/equatable.dart';
 import '../../core/constants/pathogen_types.dart';

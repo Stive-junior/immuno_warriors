@@ -1,4 +1,4 @@
-// Model for storing notification data locally in Immuno Warriors.
+/// Model for storing notification data locally in Immuno Warriors.
 import 'package:hive/hive.dart';
 import 'package:immuno_warriors/domain/entities/notification.dart';
 
@@ -55,7 +55,6 @@ class NotificationModel extends HiveObject {
     );
   }
 
-  // Inside NotificationModel class
   NotificationModel copyWith({
     String? id,
     String? userId,
@@ -66,17 +65,14 @@ class NotificationModel extends HiveObject {
   }) {
     return NotificationModel(
       id: id ?? this.id,
-      message: message ?? this.message,
-      type: type ?? this.type,
-      isRead: isRead ?? this.isRead,
       userId: userId ?? this.userId,
+      message: message ?? this.message,
       timestamp: timestamp ?? this.timestamp,
+      isRead: isRead ?? this.isRead,
+      type: type ?? this.type,
     );
   }
 
   /// Validates if the notification is displayable.
   bool get isValid => message.trim().isNotEmpty && id.isNotEmpty;
-  set isRead(bool value) {
-    isRead = value;
-  }
 }

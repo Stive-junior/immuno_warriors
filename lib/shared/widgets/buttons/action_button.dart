@@ -1,54 +1,62 @@
 // shared/widgets/common/action_button.dart
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
-import 'package:immuno_warriors/core/constants/app_sizes.dart';
 import 'package:immuno_warriors/shared/ui/app_colors.dart';
-import 'package:immuno_warriors/shared/widgets/buttons/holographic_button.dart';
-import 'package:immuno_warriors/core/utils/app_logger.dart';
 
-/// A reusable button with a Lottie animation, fallback icon, and holographic style.
 class ActionButton extends StatelessWidget {
-  final String lottieAsset;
+  final String? imageAsset;
+  final IconData fallbackIcon;
   final String tooltip;
   final VoidCallback onPressed;
-  final AnimationController controller;
-  final IconData fallbackIcon;
 
   const ActionButton({
     super.key,
-    required this.lottieAsset,
+    this.imageAsset,
+    required this.fallbackIcon,
     required this.tooltip,
     required this.onPressed,
-    required this.controller,
-    required this.fallbackIcon,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: tooltip,
-      button: true,
-      child: VirusButton(
-        borderRadius: 12,
-        borderColor: AppColors.primaryAccentColor,
-        elevation: 6,
-        onPressed: onPressed,
-        child: Padding(
-          padding: const EdgeInsets.all(3),
-          child: Lottie.asset(
-            lottieAsset,
-            width: AppSizes.iconLottieSize,
-            height: AppSizes.iconLottieSize,
-            controller: controller,
-            repeat: true,
-            errorBuilder: (context, error, stackTrace) {
-              AppLogger.error('Error loading Lottie: $lottieAsset', error: error, stackTrace: stackTrace);
-              return Icon(
-                fallbackIcon,
-                color: AppColors.primaryColor,
-                size: AppSizes.iconLottieSize,
-              );
-            },
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.backgroundColor.withOpacity(0.8),
+            border: Border.all(color: AppColors.textColorSecondary, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.virusGreen.withOpacity(0.3),
+                blurRadius: 8,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: Center(
+            child:
+                imageAsset != null
+                    ? Image.asset(
+                      imageAsset!,
+                      width: 24,
+                      height: 24,
+                      errorBuilder:
+                          (context, error, stackTrace) => Icon(
+                            fallbackIcon,
+                            color: AppColors.textColorPrimary,
+                            size: 24,
+                          ),
+                    )
+                    : Icon(
+                      fallbackIcon,
+                      color: AppColors.textColorPrimary,
+                      size: 24,
+                    ),
           ),
         ),
       ),

@@ -10,19 +10,24 @@ class RouteNames {
   static const String profileAuthOptions = 'profileAuthOptions';
   static const String login = 'login';
   static const String register = 'register';
-  static const String profileAuth =
-      'profileAuth'; // Parameterized: /profileAuth/:userId
+  static const String profileAuth = 'profileAuth'; // Parameterized: /profileAuth/:userId
   static const String loginFromRegister = 'loginFromRegister';
   static const String registerFromLogin = 'registerFromLogin';
 
   /// --- Main Feature Routes ---
   static const String dashboard = 'dashboard';
   static const String combat = 'combat';
+  static const String combatDetail = 'combatDetail'; // Parameterized: /combat/:combatId
   static const String research = 'research';
+  static const String researchNode = 'researchNode'; // Parameterized: /research/:nodeId
   static const String bioForge = 'bioForge';
+  static const String baseDetail = 'baseDetail'; // Parameterized: /bioForge/:baseId
   static const String warArchive = 'warArchive';
   static const String threatScanner = 'threatScanner';
   static const String gemini = 'gemini';
+  static const String notifications = 'notifications';
+  static const String inventory = 'inventory';
+  static const String achievements = 'achievements';
 
   /// --- Utility Routes ---
   static const String settings = 'settings';
@@ -30,8 +35,5 @@ class RouteNames {
 
   /// --- Future Feature Routes ---
   static const String leaderboard = 'leaderboard';
-  static const String multiplayer =
-      'multiplayer'; // Parameterized: /multiplayer/:gameId
-  static const String researchNode =
-      'researchNode'; // Parameterized: /research/:nodeId
+  static const String multiplayer = 'multiplayer'; // Parameterized: /multiplayer/:gameId
 }

@@ -1,4 +1,4 @@
-// Model for storing memory signature data locally in Immuno Warriors.
+/// Model for storing memory signature data locally in Immuno Warriors.
 import 'package:hive/hive.dart';
 import '../../../domain/entities/memory_signature.dart';
 
@@ -8,19 +8,14 @@ part 'memory_signature_model.g.dart';
 class MemorySignatureModel extends HiveObject {
   @HiveField(0)
   final String id;
-
   @HiveField(1)
   final String userId;
-
   @HiveField(2)
   final String pathogenType;
-
   @HiveField(3)
   final int attackBonus;
-
   @HiveField(4)
   final int defenseBonus;
-
   @HiveField(5)
   final String expiryDate;
 

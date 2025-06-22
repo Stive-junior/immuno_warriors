@@ -1,4 +1,4 @@
-// Represents a memory signature for pathogen encounters in Immuno Warriors.
+/// Represents a memory signature for pathogen encounters in Immuno Warriors.
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:equatable/equatable.dart';
 

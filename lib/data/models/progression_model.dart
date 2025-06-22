@@ -1,3 +1,4 @@
+/// Model for storing progression data locally in Immuno Warriors.
 import 'package:hive/hive.dart';
 
 part 'progression_model.g.dart';
@@ -6,16 +7,12 @@ part 'progression_model.g.dart';
 class ProgressionModel extends HiveObject {
   @HiveField(0)
   final String userId;
-
   @HiveField(1)
   final int level;
-
   @HiveField(2)
   final int xp;
-
   @HiveField(3)
   final String? rank;
-
   @HiveField(4)
   final List<MissionModel> missions;
 
@@ -34,33 +31,33 @@ class ProgressionModel extends HiveObject {
       xp: json['xp'] as int,
       rank: json['rank'] as String?,
       missions:
-          (json['missions'] as List<dynamic>?)
-              ?.map((m) => MissionModel.fromJson(m))
-              .toList() ??
+      (json['missions'] as List<dynamic>?)
+          ?.map((m) => MissionModel.fromJson(m as Map<String, dynamic>))
+          .toList() ??
           [],
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'userId': userId,
-      'level': level,
-      'xp': xp,
-      'rank': rank,
-      'missions': missions.map((m) => m.toJson()).toList(),
-    };
-  }
+  Map<String, dynamic> toJson() => {
+    'userId': userId,
+    'level': level,
+    'xp': xp,
+    'rank': rank,
+    'missions': missions.map((m) => m.toJson()).toList(),
+  };
 }
 
 @HiveType(typeId: 21)
 class MissionModel extends HiveObject {
   @HiveField(0)
   final String id;
-
   @HiveField(1)
   final bool completed;
 
-  MissionModel({required this.id, required this.completed});
+  MissionModel({
+    required this.id,
+    required this.completed,
+  });
 
   factory MissionModel.fromJson(Map<String, dynamic> json) {
     return MissionModel(
@@ -69,7 +66,8 @@ class MissionModel extends HiveObject {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {'id': id, 'completed': completed};
-  }
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'completed': completed,
+  };
 }

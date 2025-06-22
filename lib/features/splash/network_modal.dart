@@ -8,8 +8,9 @@ import 'package:immuno_warriors/features/splash/splash_screen_state.dart';
 import 'package:immuno_warriors/shared/ui/app_colors.dart';
 import 'package:immuno_warriors/shared/ui/futuristic_text.dart';
 import 'package:immuno_warriors/shared/widgets/buttons/holo.dart';
-import 'package:immuno_warriors/shared/widgets/buttons/icon_button.dart'
-    as IconButton;
+import 'package:immuno_warriors/shared/widgets/buttons/icon_button.dart' as IconButton;
+
+import '../../core/constants/app_strings.dart';
 
 void showNetworkModal(BuildContext context, WidgetRef ref) {
   showDialog(
@@ -26,11 +27,14 @@ class NetworkModal extends ConsumerStatefulWidget {
   ConsumerState<NetworkModal> createState() => _NetworkModalState();
 }
 
-class _NetworkModalState extends ConsumerState<NetworkModal> {
+class _NetworkModalState extends ConsumerState<NetworkModal> with SingleTickerProviderStateMixin {
   final TextEditingController _urlController = TextEditingController();
   String _testResult = '';
   bool _isTesting = false;
   Timer? _debounceTimer;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
@@ -38,10 +42,32 @@ class _NetworkModalState extends ConsumerState<NetworkModal> {
     final currentUrl = ref.read(splashScreenProvider).currentUrl;
     _urlController.text = currentUrl.isNotEmpty ? currentUrl : 'https://';
     _urlController.addListener(_onUrlChanged);
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOutSine),
+    );
+
+    _animationController.forward();
+
+    if (currentUrl.isEmpty) {
+      setState(() {
+        _testResult = const JsonEncoder.withIndent('  ').convert({
+          'message': AppStrings.errorMessage,
+          'timestamp': DateTime.now().toIso8601String(),
+        });
+      });
+    }
   }
 
   void _onUrlChanged() {
-    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+    _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
       _testUrl(_urlController.text, auto: true);
     });
@@ -52,7 +78,7 @@ class _NetworkModalState extends ConsumerState<NetworkModal> {
     if (!_isValidUrl(url)) {
       setState(() {
         _testResult = const JsonEncoder.withIndent('  ').convert({
-          'error': 'URL invalide',
+          'error': AppStrings.invalidEmail,
           'timestamp': DateTime.now().toIso8601String(),
         });
         _isTesting = false;
@@ -63,7 +89,7 @@ class _NetworkModalState extends ConsumerState<NetworkModal> {
 
     setState(() {
       _isTesting = !auto;
-      _testResult = auto ? _testResult : 'Test en cours...';
+      _testResult = auto ? _testResult : AppStrings.loading;
     });
 
     try {
@@ -71,10 +97,7 @@ class _NetworkModalState extends ConsumerState<NetworkModal> {
       final dioClient = ref.read(dioClientProvider);
 
       if (auto) {
-        // Test automatique : vérifier la joignabilité
-        final isReachable = await networkService.networkInfo.canHandleRequests(
-          url,
-        );
+        final isReachable = await networkService.networkInfo.canHandleRequests(url);
         if (!mounted) return;
 
         final result = {
@@ -88,8 +111,8 @@ class _NetworkModalState extends ConsumerState<NetworkModal> {
           _isTesting = false;
         });
       } else {
-        // Test manuel : effectuer une requête HTTP GET
-        final response = await dioClient.get('$url/api');
+        networkService.setBaseUrl(url);
+        final response = await dioClient.get('/auth');
         if (!mounted) return;
 
         final result = {
@@ -104,12 +127,10 @@ class _NetworkModalState extends ConsumerState<NetworkModal> {
           _isTesting = false;
         });
 
-        // Définir l'URL si la requête réussit
-        networkService.setBaseUrl(url);
-        AppLogger.info(
-          'Requête réussie pour $url : ${response.statusCode}',
-          stackTrace: StackTrace.current,
-        );
+        if (response.statusCode == 200) {
+          ref.read(splashScreenProvider.notifier).retry(context);
+          AppLogger.info('Requête réussie pour $url : ${response.statusCode}');
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -122,10 +143,7 @@ class _NetworkModalState extends ConsumerState<NetworkModal> {
         _testResult = const JsonEncoder.withIndent('  ').convert(errorResult);
         _isTesting = false;
       });
-      AppLogger.error(
-        'Erreur test URL $url : $e',
-        stackTrace: StackTrace.current,
-      );
+      AppLogger.error('Erreur test URL $url : $e');
     }
   }
 
@@ -134,144 +152,171 @@ class _NetworkModalState extends ConsumerState<NetworkModal> {
     return uri != null && uri.hasScheme && uri.host.isNotEmpty;
   }
 
+  void _hideKeyboard() {
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   void dispose() {
     _urlController.removeListener(_onUrlChanged);
     _urlController.dispose();
     _debounceTimer?.cancel();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     return Dialog(
       backgroundColor: Colors.transparent,
-      child: Container(
-        width: size.width * 0.80,
-        constraints: BoxConstraints(maxHeight: size.height * 0.5),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.backgroundColor.withOpacity(0.95),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.primaryColor, width: 1.2),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryColor.withOpacity(0.25),
-              blurRadius: 12,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.network_wifi,
-                    color: AppColors.primaryColor,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 6),
-                  FuturisticText(
-                    'Configurer l\'URL',
-                    size: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textColorPrimary,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxHeight = constraints.maxHeight;
+          return FadeTransition(
+            opacity: _fadeAnimation,
+            child: Container(
+              width: double.infinity,
+              constraints: BoxConstraints(
+                maxHeight: maxHeight * 0.7, // Limit dialog height to 70% of available space
+              ),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundColor.withOpacity(0.95),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryColor.withOpacity(0.2),
+                    blurRadius: 12,
+                    spreadRadius: 2,
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: TextField(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.network_wifi,
+                          color: AppColors.secondaryColor,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        FuturisticText(
+                          'Network URL Setup',
+                          size: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textColorPrimary,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
                       controller: _urlController,
                       decoration: InputDecoration(
-                        labelText: 'URL',
-                        labelStyle: const TextStyle(
-                          color: AppColors.textColorSecondary,
+                        hintText: 'Enter URL (e.g., https://api.example.com)',
+                        hintStyle: TextStyle(
+                          color: AppColors.textColorSecondary.withOpacity(0.6),
                           fontSize: 12,
                         ),
                         filled: true,
                         fillColor: AppColors.backgroundColor.withOpacity(0.3),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(
-                            color: AppColors.primaryColor,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(
-                            color: AppColors.primaryColor,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(
-                            color: AppColors.secondaryColor,
-                            width: 1.5,
-                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
+                          horizontal: 16,
+                          vertical: 12,
                         ),
+                        suffixIcon: _isTesting
+                            ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.secondaryColor,
+                          ),
+                        )
+                            : null,
                       ),
                       style: const TextStyle(
                         color: AppColors.textColorPrimary,
-                        fontSize: 12,
+                        fontSize: 14,
                       ),
                       keyboardType: TextInputType.url,
+                      onTap: _hideKeyboard,
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  IconButton.IconButton.filled(
-                    icon: _isTesting ? Icons.hourglass_empty : Icons.play_arrow,
-                    onPressed:
-                        _isTesting ? null : () => _testUrl(_urlController.text),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Container(
-                height: 120,
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: AppColors.primaryColor.withOpacity(0.4),
-                  ),
+                    const SizedBox(height: 12),
+                    AnimatedBuilder(
+                      animation: _pulseAnimation,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: _pulseAnimation.value,
+                          child: HolographicButton(
+                            onPressed: _isTesting
+                                ? null
+                                : () {
+                              _hideKeyboard();
+                              _testUrl(_urlController.text);
+                            },
+                            width: double.infinity,
+                            height: 40, // Reduced height
+                            child: FuturisticText(
+                              _isTesting ? 'Testing...' : 'Test URL',
+                              size: 14,
+                              color: AppColors.textColorPrimary,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    if (_testResult.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.primaryColor.withOpacity(0.3),
+                          ),
+                        ),
+                        constraints: BoxConstraints(
+                          maxHeight: maxHeight * 0.25, // Limit result height
+                        ),
+                        child: SingleChildScrollView(
+                          child: FuturisticText(
+                            _testResult,
+                            size: 12,
+                            color: AppColors.textColorSecondary,
+                            maxLines: null,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.center,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: FuturisticText(
+                          'Close',
+                          size: 14,
+                          color: AppColors.secondaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                child: SingleChildScrollView(
-                  child: FuturisticText(
-                    _testResult.isEmpty ? 'Aucun résultat' : _testResult,
-                    size: 10,
-                    color: AppColors.textColorSecondary,
-                    maxLines: null,
-                  ),
-                ),
               ),
-              const SizedBox(height: 10),
-              HolographicButton(
-                onPressed: () => Navigator.pop(context),
-                width: null,
-                height: 36,
-                child: FuturisticText(
-                  'Fermer',
-                  size: 12,
-                  color: AppColors.textColorPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

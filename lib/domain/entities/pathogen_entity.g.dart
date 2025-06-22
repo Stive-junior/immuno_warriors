@@ -42,18 +42,21 @@ const _$PathogenTypeEnumMap = {
   PathogenType.virus: 'virus',
   PathogenType.bacteria: 'bacteria',
   PathogenType.fungus: 'fungus',
+  PathogenType.parasite: 'parasite',
 };
 
 const _$AttackTypeEnumMap = {
   AttackType.physical: 'physical',
   AttackType.chemical: 'chemical',
   AttackType.energy: 'energy',
+  AttackType.bio: 'bio',
 };
 
 const _$ResistanceTypeEnumMap = {
   ResistanceType.physical: 'physical',
   ResistanceType.chemical: 'chemical',
   ResistanceType.energy: 'energy',
+  ResistanceType.bio: 'bio',
 };
 
 const _$PathogenRarityEnumMap = {
